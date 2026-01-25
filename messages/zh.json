@@ -1,0 +1,16 @@
+{
+  "Index": {
+    "title": "ArabianRizz",
+    "subtitle": "您的 AI 僚机正在等待。"
+  },
+  "Dashboard": {
+    "myGirls": "我的女孩",
+    "addGirl": "添加新女孩",
+    "noGirls": "尚未添加女孩。从添加个人资料开始！"
+  },
+  "Wingman": {
+    "chat": "聊天",
+    "upload": "上传截图",
+    "generate": "生成 Rizz"
+  }
+}

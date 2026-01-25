@@ -1,0 +1,164 @@
+"use client";
+
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { createGirl } from "@/lib/actions/girl.actions";
+import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+
+const formSchema = z.object({
+  name: z.string().min(2).max(50),
+  age: z.string().transform((v) => Number(v) || 0).optional(),
+  vibe: z.string().optional(),
+  relationshipStatus: z.string(),
+});
+
+export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDialog?: () => void }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      age: undefined,
+      vibe: "",
+      relationshipStatus: "Just met",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    try {
+      await createGirl({
+        name: values.name,
+        age: values.age,
+        vibe: values.vibe,
+        relationshipStatus: values.relationshipStatus,
+        userId,
+        path: pathname,
+      });
+
+      toast({
+        title: "Success",
+        description: "Girl profile created!",
+        className: "success-toast",
+      });
+      
+      form.reset();
+      if (closeDialog) closeDialog();
+      
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to create profile.",
+        className: "error-toast",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Her name" {...field} className="input-field" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="age"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Age (Optional)</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="25" {...field} className="input-field" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="relationshipStatus"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="select-field">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Just met">Just met</SelectItem>
+                  <SelectItem value="Talking">Talking</SelectItem>
+                  <SelectItem value="Dating">Dating</SelectItem>
+                  <SelectItem value="It's Complicated">It&apos;s Complicated</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="vibe"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vibe & Notes</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="She loves sushi, hates small talk..." 
+                  className="textarea-field rounded-[16px] border-2 border-purple-200/20 shadow-sm p-4" 
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" className="submit-button w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Saving..." : "Create Profile"}
+        </Button>
+      </form>
+    </Form>
+  );
+}

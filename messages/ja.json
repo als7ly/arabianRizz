@@ -1,0 +1,16 @@
+{
+  "Index": {
+    "title": "ArabianRizz",
+    "subtitle": "あなたのAIウィングマンが待っています。"
+  },
+  "Dashboard": {
+    "myGirls": "私のガールズ",
+    "addGirl": "新しいガールを追加",
+    "noGirls": "まだガールが追加されていません。プロフィールを追加して始めましょう！"
+  },
+  "Wingman": {
+    "chat": "チャット",
+    "upload": "スクリーンショットをアップロード",
+    "generate": "Rizzを生成"
+  }
+}

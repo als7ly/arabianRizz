@@ -1,0 +1,16 @@
+{
+  "Index": {
+    "title": "ArabianRizz",
+    "subtitle": "Your AI Wingman awaits."
+  },
+  "Dashboard": {
+    "myGirls": "My Girls",
+    "addGirl": "Add New Girl",
+    "noGirls": "No girls added yet. Start by adding a profile!"
+  },
+  "Wingman": {
+    "chat": "Chat",
+    "upload": "Upload Screenshot",
+    "generate": "Generate Rizz"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "Index": {
+    "title": "ArabianRizz",
+    "subtitle": "Votre ailier IA vous attend."
+  },
+  "Dashboard": {
+    "myGirls": "Mes Filles",
+    "addGirl": "Ajouter une nouvelle fille",
+    "noGirls": "Aucune fille ajoutée pour le moment. Commencez par ajouter un profil !"
+  },
+  "Wingman": {
+    "chat": "Discuter",
+    "upload": "Télécharger une capture d'écran",
+    "generate": "Générer Rizz"
+  }
+}
