@@ -24,8 +24,6 @@ export async function createGirl(girl: CreateGirlParams) {
     await connectToDatabase();
     
     // Security Check: Ensure the author exists and matches the authenticated user
-    // We can rely on the passed userId if we trust the flow, BUT better to verify.
-    // However, CreateGirlParams has userId.
     const user = await getCurrentUser();
     
     if (user._id.toString() !== girl.userId) {
@@ -104,6 +102,7 @@ export async function updateGirl(girl: UpdateGirlParams) {
         name: girl.name,
         age: girl.age,
         vibe: girl.vibe,
+        dialect: girl.dialect,
         relationshipStatus: girl.relationshipStatus,
       },
       { new: true }

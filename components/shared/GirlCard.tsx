@@ -29,7 +29,14 @@ export const GirlCard = ({ girl }: { girl: any }) => {
         <div className="flex justify-between items-start">
             <div>
                 <h3 className="h3-bold text-dark-600">{girl.name}</h3>
-                <p className="p-14-medium text-dark-400">{girl.relationshipStatus}</p>
+                <div className="flex gap-2">
+                    <p className="p-14-medium text-dark-400">{girl.relationshipStatus}</p>
+                    {girl.dialect && (
+                         <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">
+                            {girl.dialect}
+                         </span>
+                    )}
+                </div>
             </div>
             {girl.age && <Badge variant="outline" className="text-purple-500">{girl.age} yo</Badge>}
         </div>

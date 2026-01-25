@@ -22,6 +22,7 @@ declare type CreateGirlParams = {
   name: string;
   age?: number;
   vibe?: string;
+  dialect?: string;
   relationshipStatus?: string;
   userId: string;
   path: string;
@@ -32,6 +33,7 @@ declare type UpdateGirlParams = {
   name?: string;
   age?: number;
   vibe?: string;
+  dialect?: string;
   relationshipStatus?: string;
   path: string;
 };

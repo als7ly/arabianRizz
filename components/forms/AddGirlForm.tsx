@@ -30,6 +30,7 @@ const formSchema = z.object({
   name: z.string().min(2).max(50),
   age: z.string().transform((v) => Number(v) || 0).optional(),
   vibe: z.string().optional(),
+  dialect: z.string().optional(),
   relationshipStatus: z.string(),
 });
 
@@ -45,6 +46,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       name: "",
       age: undefined,
       vibe: "",
+      dialect: "Modern Standard Arabic",
       relationshipStatus: "Just met",
     },
   });
@@ -56,6 +58,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         name: values.name,
         age: values.age,
         vibe: values.vibe,
+        dialect: values.dialect,
         relationshipStatus: values.relationshipStatus,
         userId,
         path: pathname,
@@ -99,37 +102,65 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="age"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Age (Optional)</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="25" {...field} className="input-field" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="age"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Age (Optional)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="25" {...field} className="input-field" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="relationshipStatus"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="select-field">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Just met">Just met</SelectItem>
+                    <SelectItem value="Talking">Talking</SelectItem>
+                    <SelectItem value="Dating">Dating</SelectItem>
+                    <SelectItem value="It's Complicated">It&apos;s Complicated</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
-          name="relationshipStatus"
+          name="dialect"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>Dialect</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger className="select-field">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select dialect" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Just met">Just met</SelectItem>
-                  <SelectItem value="Talking">Talking</SelectItem>
-                  <SelectItem value="Dating">Dating</SelectItem>
-                  <SelectItem value="It's Complicated">It&apos;s Complicated</SelectItem>
+                  <SelectItem value="Modern Standard Arabic">Modern Standard Arabic (MSA)</SelectItem>
+                  <SelectItem value="Egyptian">Egyptian (Masri)</SelectItem>
+                  <SelectItem value="Levantine">Levantine (Shami)</SelectItem>
+                  <SelectItem value="Gulf">Gulf (Khaleeji)</SelectItem>
+                  <SelectItem value="Maghrebi">Maghrebi (Darija)</SelectItem>
+                  <SelectItem value="Iraqi">Iraqi</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
