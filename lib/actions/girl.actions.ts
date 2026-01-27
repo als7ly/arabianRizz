@@ -30,10 +30,16 @@ export async function createGirl(girl: CreateGirlParams) {
          throw new Error("Unauthorized: User ID mismatch");
     }
 
+    if (user.creditBalance < 1) {
+        throw new Error("Insufficient credits");
+    }
+
     const newGirl = await Girl.create({
         ...girl,
         author: user._id
     });
+
+    await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
     
     revalidatePath(girl.path);
 
