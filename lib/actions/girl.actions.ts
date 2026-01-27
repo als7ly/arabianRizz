@@ -30,18 +30,30 @@ export async function createGirl(girl: CreateGirlParams) {
          throw new Error("Unauthorized: User ID mismatch");
     }
 
-    if (user.creditBalance < 1) {
+    // Atomic update to ensure credits are sufficient and deducted
+    const updatedUser = await User.findOneAndUpdate(
+        { _id: user._id, creditBalance: { $gte: 1 } },
+        { $inc: { creditBalance: -1 } },
+        { new: true }
+    );
+
+    if (!updatedUser) {
         throw new Error("Insufficient credits");
     }
 
-    const newGirl = await Girl.create({
-        ...girl,
-        author: user._id
-    });
+    try {
+        const newGirl = await Girl.create({
+            ...girl,
+            author: user._id
+        });
 
-    await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
-    
-    revalidatePath(girl.path);
+        revalidatePath(girl.path);
+        return JSON.parse(JSON.stringify(newGirl));
+    } catch (error) {
+        // Rollback credits if creation fails
+        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: 1 } });
+        throw error;
+    }
 
     return JSON.parse(JSON.stringify(newGirl));
   } catch (error) {

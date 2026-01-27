@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { getTranslations } from 'next-intl/server';
+import CreditBalance from "@/components/shared/CreditBalance";
 
 const Dashboard = async ({ params: { locale } }: { params: { locale: string } }) => {
   const { userId } = auth();
@@ -21,13 +22,24 @@ const Dashboard = async ({ params: { locale } }: { params: { locale: string } })
   return (
     <>
       <section className="home">
-        <h1 className="home-heading">
-          {tIndex('title')}
-        </h1>
-        <p className="text-white mt-4 text-center text-lg opacity-90">{tIndex('subtitle')}</p>
+        <div className="flex justify-between items-start w-full max-w-5xl mx-auto px-5 md:px-10 py-5">
+            <div>
+                <h1 className="home-heading">
+                {tIndex('title')}
+                </h1>
+                <p className="text-white mt-4 text-left text-lg opacity-90">{tIndex('subtitle')}</p>
+            </div>
+            <div className="hidden sm:block">
+                <CreditBalance userId={userId} />
+            </div>
+        </div>
       </section>
 
       <section className="mt-10 wrapper">
+        <div className="sm:hidden mb-6 flex justify-center">
+             <CreditBalance userId={userId} />
+        </div>
+
         <div className="flex-between mb-8">
             <h2 className="h2-bold text-dark-600">{t('myGirls')}</h2>
             

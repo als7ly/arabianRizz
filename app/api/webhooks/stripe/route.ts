@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import stripe from "stripe";
+import Stripe from "stripe";
 import { createTransaction } from "@/lib/actions/transaction.action";
 
 export async function POST(request: Request) {
@@ -7,6 +7,8 @@ export async function POST(request: Request) {
 
   const sig = request.headers.get("stripe-signature") as string;
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   let event;
 
