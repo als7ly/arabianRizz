@@ -21,12 +21,17 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-            <Header title={girl.name} subtitle={girl.relationshipStatus} />
-            {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
-        </div>
-        <DeleteGirlButton girlId={girl._id} />
+      <div className="mb-6">
+        <Header
+            title={girl.name}
+            subtitle={girl.relationshipStatus}
+            rightElement={
+                <div className="flex items-center gap-4">
+                     {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
+                     <DeleteGirlButton girlId={girl._id} />
+                </div>
+            }
+        />
       </div>
 
       <section className="w-full max-w-4xl mx-auto">
