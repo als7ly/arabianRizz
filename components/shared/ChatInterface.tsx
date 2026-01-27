@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2 } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
-import { generateWingmanReply, generateResponseImage } from "@/lib/actions/wingman.actions";
+import { generateWingmanReply, generateResponseImage, generateHookupLine } from "@/lib/actions/wingman.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
@@ -129,6 +129,26 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   }
 
+  const handleGenerateHookupLine = async () => {
+    setIsLoading(true);
+    try {
+        const { line, explanation } = await generateHookupLine(girlId);
+        if (line) {
+            setInputValue(line);
+            toast({
+                title: "Hookup Line Generated",
+                description: explanation,
+                duration: 6000,
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        toast({ title: "Error", description: "Failed to generate hookup line.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden">
       {/* Messages Area */}
@@ -189,6 +209,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         
         <Button variant="ghost" size="icon" onClick={handleGenerateImage} disabled={isLoading} title="Generate Image Response">
             <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
+        </Button>
+
+        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title="Generate Hookup Line">
+            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
         </Button>
 
         <div className="flex-1 relative">
