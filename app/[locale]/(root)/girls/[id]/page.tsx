@@ -5,6 +5,7 @@ import Message from "@/lib/database/models/message.model"; // Direct DB access f
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
 import { ChatInterface } from "@/components/shared/ChatInterface";
+import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
 import { Badge } from "@/components/ui/badge";
 
 const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
@@ -21,8 +22,11 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
   return (
     <>
       <div className="flex justify-between items-center mb-6">
-        <Header title={girl.name} subtitle={girl.relationshipStatus} />
-        {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
+        <div className="flex items-center gap-4">
+            <Header title={girl.name} subtitle={girl.relationshipStatus} />
+            {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
+        </div>
+        <DeleteGirlButton girlId={girl._id} />
       </div>
 
       <section className="w-full max-w-4xl mx-auto">

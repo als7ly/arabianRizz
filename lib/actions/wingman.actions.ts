@@ -98,8 +98,9 @@ export async function analyzeProfile(imageUrl: string) {
       - name: string (Her name)
       - age: number (Her age, or null if not found)
       - vibe: string (A summary of her bio, interests, and personality. Be descriptive.)
+      - socialMediaHandle: string (Instagram/Snapchat handle starting with @ if found, else null)
 
-      If information is missing, use null for age and empty string for vibe.
+      If information is missing, use null for age/socialMediaHandle and empty string for vibe.
       YOU MUST RESPOND IN VALID JSON FORMAT.
     `;
 

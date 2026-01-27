@@ -77,6 +77,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
             if (data.name) form.setValue("name", data.name);
             if (data.age) form.setValue("age", data.age.toString());
             if (data.vibe) form.setValue("vibe", data.vibe);
+            if (data.socialMediaHandle) form.setValue("socialMediaHandle", data.socialMediaHandle);
 
             toast({
                 title: t('MagicFill.successTitle'),
