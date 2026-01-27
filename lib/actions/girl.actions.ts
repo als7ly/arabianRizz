@@ -24,6 +24,7 @@ export async function createGirl(girl: CreateGirlParams) {
     await connectToDatabase();
     
     // Security Check: Ensure the author exists and matches the authenticated user
+    // Note: getCurrentUser retrieves the MongoDB user document
     const user = await getCurrentUser();
     
     if (user._id.toString() !== girl.userId) {
