@@ -28,6 +28,7 @@ import { Sparkles, UploadCloud } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslations } from "next-intl";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
@@ -41,6 +42,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
+  const t = useTranslations('Forms');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -61,8 +63,8 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
 
     setIsAnalyzing(true);
     toast({
-        title: "Analyzing Screenshot...",
-        description: "Extracting details from the profile.",
+        title: t('MagicFill.analyzingToastTitle'),
+        description: t('MagicFill.analyzingToastDesc'),
     });
 
     try {
@@ -73,22 +75,22 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
             if (data.vibe) form.setValue("vibe", data.vibe);
 
             toast({
-                title: "Magic Fill Complete!",
-                description: "Review the details and save.",
+                title: t('MagicFill.successTitle'),
+                description: t('MagicFill.successDesc'),
                 className: "success-toast",
             });
         } else {
             toast({
-                title: "Analysis Failed",
-                description: "Could not extract details.",
+                title: t('MagicFill.failTitle'),
+                description: t('MagicFill.failDesc'),
                 variant: "destructive",
             });
         }
     } catch (e) {
         console.error(e);
         toast({
-            title: "Error",
-            description: "Something went wrong during analysis.",
+            title: t('MagicFill.errorTitle'),
+            description: t('MagicFill.errorDesc'),
             variant: "destructive",
         });
     } finally {
@@ -147,11 +149,11 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
                     disabled={isAnalyzing}
                 >
                     {isAnalyzing ? (
-                        <>Analyzing...</>
+                        <>{t('MagicFill.analyzing')}</>
                     ) : (
                         <>
                             <Sparkles size={18} className="text-yellow-500" />
-                            Magic Fill from Screenshot
+                            {t('MagicFill.button')}
                         </>
                     )}
                 </Button>

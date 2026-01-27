@@ -11,6 +11,7 @@ import { generateWingmanReply, generateResponseImage, generateHookupLine } from 
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslations } from "next-intl";
 
 type Message = {
   _id?: string;
@@ -25,6 +26,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const t = useTranslations('Chat');
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -55,14 +57,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       await addMessage({ girlId, role: "wingman", content: reply || "..." });
 
       toast({
-        title: "Wingman Tip",
+        title: t('wingmanTip'),
         description: explanation,
         duration: 6000,
       });
 
     } catch (error) {
       console.error(error);
-      toast({ title: "Error", description: "Failed to get reply", variant: "destructive" });
+      toast({ title: t('errorTitle'), description: t('errorReply'), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -70,13 +72,13 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
   const handleImageUpload = async (url: string) => {
     setIsLoading(true);
-    toast({ title: "Reading Screenshot...", description: "Analyzing the conversation." });
+    toast({ title: t('readingScreenshot'), description: t('readingScreenshotDesc') });
 
     try {
         // 1. OCR
         const text = await extractTextFromImage(url);
         if (!text) {
-            toast({ title: "Error", description: "Could not read text from image.", variant: "destructive" });
+            toast({ title: t('errorTitle'), description: t('noTextInImage'), variant: "destructive" });
             setIsLoading(false);
             return;
         }
@@ -93,14 +95,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         await addMessage({ girlId, role: "wingman", content: reply || "..." });
 
         toast({
-            title: "Wingman Tip",
+            title: t('wingmanTip'),
             description: explanation,
             duration: 6000,
         });
 
     } catch (error) {
         console.error(error);
-        toast({ title: "Error", description: "Failed to process image", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('errorProcessImage'), variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -109,7 +111,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const handleGenerateImage = async () => {
     const lastMsg = messages[messages.length - 1];
     if (!lastMsg || !lastMsg.content) {
-         toast({ title: "Error", description: "No context to generate image from.", variant: "destructive" });
+         toast({ title: t('errorTitle'), description: t('errorContext'), variant: "destructive" });
          return;
     }
 
@@ -120,7 +122,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
             setMessages((prev) => [...prev, imgMsg]);
         } else {
-             toast({ title: "Error", description: "Image generation failed.", variant: "destructive" });
+             toast({ title: t('errorTitle'), description: t('errorImage'), variant: "destructive" });
         }
     } catch(e) {
         console.error(e);
@@ -136,14 +138,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         if (line) {
             setInputValue(line);
             toast({
-                title: "Hookup Line Generated",
+                title: t('hookupToastTitle'),
                 description: explanation,
                 duration: 6000,
             });
         }
     } catch (e) {
         console.error(e);
-        toast({ title: "Error", description: "Failed to generate hookup line.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('errorHookup'), variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -155,7 +157,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
         {messages.length === 0 && (
             <div className="flex-center h-full text-gray-400">
-                Start by sending a message or uploading a screenshot!
+                {t('startPrompt')}
             </div>
         )}
         {messages.map((msg, idx) => (
@@ -176,8 +178,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                   : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
               )}
             >
-              {msg.role === "wingman" && <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> Wingman</div>}
-              {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">She said</div>}
+              {msg.role === "wingman" && <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> {t('wingman')}</div>}
+              {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">{t('sheSaid')}</div>}
               
               {msg.content.startsWith("[IMAGE]:") ? (
                   <Image 
@@ -197,7 +199,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             <div className="flex justify-start w-full">
                 <div className="bg-white border border-purple-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
                     <Loader2 className="animate-spin text-purple-500" size={16} />
-                    <span className="text-xs text-gray-400">Wingman is thinking...</span>
+                    <span className="text-xs text-gray-400">{t('wingmanThinking')}</span>
                 </div>
             </div>
         )}
@@ -207,11 +209,11 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       <div className="bg-white border-t p-4 flex items-end gap-2">
         <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
         
-        <Button variant="ghost" size="icon" onClick={handleGenerateImage} disabled={isLoading} title="Generate Image Response">
+        <Button variant="ghost" size="icon" onClick={handleGenerateImage} disabled={isLoading} title={t('imageButtonTitle')}>
             <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
         </Button>
 
-        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title="Generate Hookup Line">
+        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')}>
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
         </Button>
 
@@ -220,7 +222,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                placeholder="Type what you want to say..."
+                placeholder={t('inputPlaceholder')}
                 className="pr-10"
                 disabled={isLoading}
             />
