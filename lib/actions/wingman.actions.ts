@@ -3,6 +3,7 @@
 import { openai } from "../openai";
 import { getContext } from "./rag.actions";
 import { getGirlById } from "./girl.actions";
+import { extractTextFromImage } from "./ocr.actions";
 
 export async function generateWingmanReply(girlId: string, userMessage: string) {
   try {
@@ -81,6 +82,58 @@ ${contextString}
         reply: "Error generating reply.",
         explanation: "Something went wrong with the AI."
     };
+  }
+}
+
+export async function analyzeProfile(imageUrl: string) {
+  try {
+    // 1. OCR
+    const text = await extractTextFromImage(imageUrl);
+    if (!text) return null;
+
+    // 2. AI Analysis
+    const systemPrompt = `
+      You are an AI that extracts data from dating profiles (Tinder, Bumble, Hinge, etc.).
+      Extract the following fields from the provided text:
+      - name: string (Her name)
+      - age: number (Her age, or null if not found)
+      - vibe: string (A summary of her bio, interests, and personality. Be descriptive.)
+
+      If information is missing, use null for age and empty string for vibe.
+      YOU MUST RESPOND IN VALID JSON FORMAT.
+    `;
+
+    if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
+        return {
+            name: "Sarah (Mock)",
+            age: 24,
+            vibe: "Loves traveling, sushi, and hiking. Adventurous spirit."
+        };
+    }
+
+    const completion = await openai.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Profile Text:\n${text}` },
+      ],
+      model: "gpt-4o",
+      response_format: { type: "json_object" }
+    });
+
+    const aiContent = completion.choices[0]?.message?.content;
+    if (aiContent) {
+        try {
+            return JSON.parse(aiContent);
+        } catch (e) {
+            console.error("JSON Parse Error:", e);
+            return null;
+        }
+    }
+    return null;
+
+  } catch (error) {
+    console.error("Analyze Profile Error:", error);
+    return null;
   }
 }
 

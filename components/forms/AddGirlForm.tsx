@@ -22,6 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createGirl } from "@/lib/actions/girl.actions";
+import { analyzeProfile } from "@/lib/actions/wingman.actions";
+import { CldUploadWidget } from "next-cloudinary";
+import { Sparkles, UploadCloud } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -39,6 +42,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
   const pathname = usePathname();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,6 +54,47 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       relationshipStatus: "Just met",
     },
   });
+
+  const handleUploadComplete = async (result: any) => {
+    const url = result?.info?.secure_url;
+    if (!url) return;
+
+    setIsAnalyzing(true);
+    toast({
+        title: "Analyzing Screenshot...",
+        description: "Extracting details from the profile.",
+    });
+
+    try {
+        const data = await analyzeProfile(url);
+        if (data) {
+            if (data.name) form.setValue("name", data.name);
+            if (data.age) form.setValue("age", data.age.toString());
+            if (data.vibe) form.setValue("vibe", data.vibe);
+
+            toast({
+                title: "Magic Fill Complete!",
+                description: "Review the details and save.",
+                className: "success-toast",
+            });
+        } else {
+            toast({
+                title: "Analysis Failed",
+                description: "Could not extract details.",
+                variant: "destructive",
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        toast({
+            title: "Error",
+            description: "Something went wrong during analysis.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsAnalyzing(false);
+    }
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -87,6 +132,33 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
 
   return (
     <Form {...form}>
+      <div className="mb-6">
+          <CldUploadWidget
+            uploadPreset="jsm_ArabianRizz"
+            options={{ multiple: false, resourceType: "image" }}
+            onSuccess={handleUploadComplete}
+          >
+            {({ open }) => (
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50"
+                    onClick={() => open()}
+                    disabled={isAnalyzing}
+                >
+                    {isAnalyzing ? (
+                        <>Analyzing...</>
+                    ) : (
+                        <>
+                            <Sparkles size={18} className="text-yellow-500" />
+                            Magic Fill from Screenshot
+                        </>
+                    )}
+                </Button>
+            )}
+          </CldUploadWidget>
+      </div>
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
