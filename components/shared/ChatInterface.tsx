@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2 } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2 } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
-import { generateWingmanReply, generateResponseImage, generateHookupLine, clearChat } from "@/lib/actions/wingman.actions";
+import { generateWingmanReply, generateResponseImage, generateHookupLine, clearChat, generateSpeech } from "@/lib/actions/wingman.actions";
 import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -25,6 +25,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
@@ -68,6 +69,26 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       toast({ title: t('errorTitle'), description: t('errorReply'), variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePlayAudio = async (text: string, msgIndex: number) => {
+    try {
+        setPlayingAudioId(msgIndex.toString());
+        const audioUrl = await generateSpeech(text);
+
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.onended = () => setPlayingAudioId(null);
+            await audio.play();
+        } else {
+             toast({ title: t('errorTitle'), description: "Could not generate audio.", variant: "destructive" });
+             setPlayingAudioId(null);
+        }
+    } catch (e) {
+        console.error(e);
+        toast({ title: t('errorTitle'), description: "Audio playback failed.", variant: "destructive" });
+        setPlayingAudioId(null);
     }
   };
 
@@ -210,7 +231,20 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     className="rounded-lg max-w-full h-auto" 
                   />
               ) : (
-                  msg.content
+                  <div className="flex items-start gap-2">
+                      <span className="flex-1">{msg.content}</span>
+                      {msg.role === "wingman" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-purple-400 hover:text-purple-600"
+                            onClick={() => handlePlayAudio(msg.content, idx)}
+                            disabled={playingAudioId !== null}
+                          >
+                              {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
+                          </Button>
+                      )}
+                  </div>
               )}
             </div>
           </div>

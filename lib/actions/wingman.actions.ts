@@ -162,6 +162,28 @@ export async function generateResponseImage(prompt: string) {
   }
 }
 
+export async function generateSpeech(text: string) {
+  try {
+    if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
+        return null; // Mock fallback not implemented for audio
+    }
+
+    const mp3 = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "onyx",
+      input: text,
+    });
+
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    const base64 = buffer.toString('base64');
+    return `data:audio/mp3;base64,${base64}`;
+
+  } catch (error) {
+    console.error("Speech Gen Error:", error);
+    return null;
+  }
+}
+
 export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
