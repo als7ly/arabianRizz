@@ -5,6 +5,7 @@ import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "../utils";
 import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
+import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
 
 async function getCurrentUser() {
@@ -27,7 +28,8 @@ export async function createGirl(girl: CreateGirlParams) {
     // Note: getCurrentUser retrieves the MongoDB user document
     const user = await getCurrentUser();
     
-    if (user._id.toString() !== girl.userId) {
+    // girl.userId is the Clerk ID passed from the client
+    if (user.clerkId !== girl.userId) {
          throw new Error("Unauthorized: User ID mismatch");
     }
 
@@ -57,6 +59,29 @@ export async function createGirl(girl: CreateGirlParams) {
     }
 
     return JSON.parse(JSON.stringify(newGirl));
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// CLEAR CHAT
+export async function clearChat(girlId: string) {
+  try {
+    await connectToDatabase();
+
+    // Security Check
+    const user = await getCurrentUser();
+
+    // Verify ownership of the girl profile first
+    const girl = await Girl.findById(girlId);
+    if (!girl) throw new Error("Girl not found");
+
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    await Message.deleteMany({ girl: girlId });
+    revalidatePath(`/girls/${girlId}`);
   } catch (error) {
     handleError(error);
   }

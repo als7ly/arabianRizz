@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2 } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
-import { generateWingmanReply, generateResponseImage, generateHookupLine } from "@/lib/actions/wingman.actions";
+import { generateWingmanReply, generateResponseImage, generateHookupLine, clearChat } from "@/lib/actions/wingman.actions";
+import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
@@ -151,6 +152,25 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   };
 
+  const handleClearChat = async () => {
+    if (confirm("Are you sure you want to clear the chat history? This cannot be undone.")) {
+        setIsLoading(true);
+        try {
+            await clearChatAction(girlId);
+            setMessages([]);
+            toast({
+                title: "Chat Cleared",
+                description: "All messages have been deleted.",
+            });
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to clear chat.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden">
       {/* Messages Area */}
@@ -215,6 +235,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
         <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')}>
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
+        </Button>
+
+        <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat">
+            <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
         </Button>
 
         <div className="flex-1 relative">
