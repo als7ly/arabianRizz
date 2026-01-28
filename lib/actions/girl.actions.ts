@@ -177,6 +177,7 @@ export async function deleteGirl(girlId: string) {
         throw new Error("Unauthorized");
     }
 
+    await Message.deleteMany({ girl: girlId });
     await Girl.findByIdAndDelete(girlId);
     revalidatePath("/");
   } catch (error) {
