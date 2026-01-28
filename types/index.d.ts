@@ -24,6 +24,8 @@ declare type CreateGirlParams = {
   vibe?: string;
   dialect?: string;
   relationshipStatus?: string;
+  rating?: number;
+  socialMediaHandle?: string;
   userId: string;
   path: string;
 };
@@ -35,6 +37,8 @@ declare type UpdateGirlParams = {
   vibe?: string;
   dialect?: string;
   relationshipStatus?: string;
+  rating?: number;
+  socialMediaHandle?: string;
   path: string;
 };
 

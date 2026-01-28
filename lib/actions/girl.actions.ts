@@ -104,6 +104,8 @@ export async function updateGirl(girl: UpdateGirlParams) {
         vibe: girl.vibe,
         dialect: girl.dialect,
         relationshipStatus: girl.relationshipStatus,
+        rating: girl.rating,
+        socialMediaHandle: girl.socialMediaHandle,
       },
       { new: true }
     );

@@ -37,6 +37,16 @@ export const GirlCard = ({ girl }: { girl: any }) => {
                          </span>
                     )}
                 </div>
+                <div className="flex gap-2 mt-1 items-center">
+                   <div className="text-xs text-yellow-500 font-bold flex items-center">
+                     ⭐ {girl.rating || 5}
+                   </div>
+                   {girl.socialMediaHandle && (
+                     <div className="text-xs text-blue-500 truncate max-w-[100px]">
+                       @{girl.socialMediaHandle.replace('@', '')}
+                     </div>
+                   )}
+                </div>
             </div>
             {girl.age && <Badge variant="outline" className="text-purple-500">{girl.age} yo</Badge>}
         </div>
