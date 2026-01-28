@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
+import Feedback from "./Feedback";
 
 type Message = {
   _id?: string;
@@ -234,15 +235,18 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                   <div className="flex items-start gap-2">
                       <span className="flex-1">{msg.content}</span>
                       {msg.role === "wingman" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-purple-400 hover:text-purple-600"
-                            onClick={() => handlePlayAudio(msg.content, idx)}
-                            disabled={playingAudioId !== null}
-                          >
-                              {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
-                          </Button>
+                          <div className="flex flex-col gap-1">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-purple-400 hover:text-purple-600 self-start"
+                                onClick={() => handlePlayAudio(msg.content, idx)}
+                                disabled={playingAudioId !== null}
+                            >
+                                {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
+                            </Button>
+                            {msg._id && <Feedback messageId={msg._id} />}
+                          </div>
                       )}
                   </div>
               )}

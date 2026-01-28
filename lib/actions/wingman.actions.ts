@@ -4,6 +4,19 @@ import { openai } from "../openai";
 import { getContext } from "./rag.actions";
 import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
+import Message from "../database/models/message.model";
+import { connectToDatabase } from "../database/mongoose";
+
+export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
+  try {
+    await connectToDatabase();
+    await Message.findByIdAndUpdate(messageId, { feedback });
+    return { success: true };
+  } catch (error) {
+    console.error("Feedback Error:", error);
+    return { success: false };
+  }
+}
 
 export async function generateWingmanReply(girlId: string, userMessage: string) {
   try {
