@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2 } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -70,6 +70,43 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       toast({ title: t('errorTitle'), description: t('errorReply'), variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRegenerate = async (index: number) => {
+    // Ensure there is a preceding user message
+    if (index <= 0) return;
+    const userMsg = messages[index - 1];
+    if (userMsg.role !== "user" && userMsg.role !== "girl") return; // Only regenerate if responding to user/girl
+
+    setIsLoading(true);
+    try {
+        // Optimistically show loading
+        const newMsgs = [...messages];
+        newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
+        setMessages(newMsgs);
+
+        const { reply, explanation } = await generateWingmanReply(girlId, userMsg.content);
+
+        const updatedMsgs = [...messages];
+        updatedMsgs[index] = { ...updatedMsgs[index], content: reply || "Error" };
+        setMessages(updatedMsgs);
+
+        // Don't add to DB again, or update existing?
+        // For simplicity, we just show the new one.
+        // Ideally we might update the DB record if we had the ID.
+
+        toast({
+            title: "Regenerated Tip",
+            description: explanation,
+            duration: 6000,
+        });
+
+    } catch (e) {
+        console.error(e);
+        toast({ title: t('errorTitle'), description: "Failed to regenerate.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -236,15 +273,28 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                       <span className="flex-1">{msg.content}</span>
                       {msg.role === "wingman" && (
                           <div className="flex flex-col gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-purple-400 hover:text-purple-600 self-start"
-                                onClick={() => handlePlayAudio(msg.content, idx)}
-                                disabled={playingAudioId !== null}
-                            >
-                                {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
-                            </Button>
+                            <div className="flex gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-purple-400 hover:text-purple-600"
+                                    onClick={() => handlePlayAudio(msg.content, idx)}
+                                    disabled={playingAudioId !== null}
+                                    title="Play Audio"
+                                >
+                                    {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-blue-400 hover:text-blue-600"
+                                    onClick={() => handleRegenerate(idx)}
+                                    disabled={isLoading}
+                                    title="Regenerate Response"
+                                >
+                                    <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
+                                </Button>
+                            </div>
                             {msg._id && <Feedback messageId={msg._id} />}
                           </div>
                       )}
