@@ -9,17 +9,19 @@ import { Plus } from "lucide-react";
 import { getTranslations } from 'next-intl/server';
 import CreditBalance from "@/components/shared/CreditBalance";
 import Pagination from "@/components/shared/Pagination";
+import Search from "@/components/shared/Search";
 
 const Dashboard = async ({ params: { locale }, searchParams }: { params: { locale: string }, searchParams: SearchParamProps['searchParams'] }) => {
   const { userId } = auth();
   const t = await getTranslations('Dashboard');
   const tIndex = await getTranslations('Index');
   const page = Number(searchParams?.page) || 1;
+  const searchQuery = (searchParams?.query as string) || "";
 
   if (!userId) return null;
 
   const user = await getUserById(userId);
-  const girlsData = await getUserGirls({ userId: user._id, page });
+  const girlsData = await getUserGirls({ userId: user._id, page, query: searchQuery });
   const girls = girlsData?.data || [];
   const totalPages = girlsData?.totalPages || 0;
 
@@ -64,6 +66,10 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                     <AddGirlForm userId={user._id} />
                 </DialogContent>
             </Dialog>
+        </div>
+
+        <div className="mb-8">
+            <Search placeholder="Search girls by name or vibe..." />
         </div>
 
         {girls.length > 0 ? (

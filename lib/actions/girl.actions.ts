@@ -108,7 +108,7 @@ export async function getGirlById(girlId: string) {
 }
 
 // GET ALL GIRLS FOR USER
-export async function getUserGirls({ userId, page = 1, limit = 9 }: { userId: string, page?: number, limit?: number }) {
+export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: { userId: string, page?: number, limit?: number, query?: string }) {
   try {
     await connectToDatabase();
     
@@ -120,13 +120,23 @@ export async function getUserGirls({ userId, page = 1, limit = 9 }: { userId: st
 
     const skipAmount = (Number(page) - 1) * limit;
 
-    const girlsQuery = Girl.find({ author: userId })
+    const condition = {
+        author: userId,
+        ...(query && {
+            $or: [
+                { name: { $regex: query, $options: 'i' } },
+                { vibe: { $regex: query, $options: 'i' } }
+            ]
+        })
+    };
+
+    const girlsQuery = Girl.find(condition)
       .sort({ createdAt: -1 })
       .skip(skipAmount)
       .limit(limit);
 
     const girls = await girlsQuery.exec();
-    const girlsCount = await Girl.countDocuments({ author: userId });
+    const girlsCount = await Girl.countDocuments(condition);
 
     return {
       data: JSON.parse(JSON.stringify(girls)),
