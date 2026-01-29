@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createTransaction } from "@/lib/actions/transaction.action";
+import { createTransaction } from "@/lib/services/transaction.service";
 
 export async function POST(request: Request) {
   const body = await request.text();
