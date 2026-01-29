@@ -8,16 +8,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus } from "lucide-react";
 import { getTranslations } from 'next-intl/server';
 import CreditBalance from "@/components/shared/CreditBalance";
+import Pagination from "@/components/shared/Pagination";
 
-const Dashboard = async ({ params: { locale } }: { params: { locale: string } }) => {
+const Dashboard = async ({ params: { locale }, searchParams }: { params: { locale: string }, searchParams: SearchParamProps['searchParams'] }) => {
   const { userId } = auth();
   const t = await getTranslations('Dashboard');
   const tIndex = await getTranslations('Index');
+  const page = Number(searchParams?.page) || 1;
 
   if (!userId) return null;
 
   const user = await getUserById(userId);
-  const girls = await getUserGirls(user._id);
+  const girlsData = await getUserGirls({ userId: user._id, page });
+  const girls = girlsData?.data || [];
+  const totalPages = girlsData?.totalPages || 0;
 
   return (
     <>
@@ -63,11 +67,16 @@ const Dashboard = async ({ params: { locale } }: { params: { locale: string } })
         </div>
 
         {girls.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-            {girls.map((girl: any) => (
-              <GirlCard key={girl._id} girl={girl} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 mb-10">
+              {girls.map((girl: any) => (
+                <GirlCard key={girl._id} girl={girl} />
+              ))}
+            </div>
+            <div className="flex-center">
+                <Pagination page={page} totalPages={totalPages} />
+            </div>
+          </>
         ) : (
           <div className="w-full bg-white rounded-xl border border-purple-100 shadow-sm p-8 text-center space-y-6">
             <div className="max-w-md mx-auto space-y-4">

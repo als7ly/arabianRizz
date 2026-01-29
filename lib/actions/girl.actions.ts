@@ -108,7 +108,7 @@ export async function getGirlById(girlId: string) {
 }
 
 // GET ALL GIRLS FOR USER
-export async function getUserGirls(userId: string) {
+export async function getUserGirls({ userId, page = 1, limit = 9 }: { userId: string, page?: number, limit?: number }) {
   try {
     await connectToDatabase();
     
@@ -118,9 +118,20 @@ export async function getUserGirls(userId: string) {
          throw new Error("Unauthorized");
     }
 
-    const girls = await Girl.find({ author: userId }).sort({ createdAt: -1 });
+    const skipAmount = (Number(page) - 1) * limit;
 
-    return JSON.parse(JSON.stringify(girls));
+    const girlsQuery = Girl.find({ author: userId })
+      .sort({ createdAt: -1 })
+      .skip(skipAmount)
+      .limit(limit);
+
+    const girls = await girlsQuery.exec();
+    const girlsCount = await Girl.countDocuments({ author: userId });
+
+    return {
+      data: JSON.parse(JSON.stringify(girls)),
+      totalPages: Math.ceil(girlsCount / limit),
+    };
   } catch (error) {
     handleError(error);
   }
