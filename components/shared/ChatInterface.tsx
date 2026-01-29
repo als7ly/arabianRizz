@@ -3,20 +3,32 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2 } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, RotateCw, Trash2, ThumbsUp, ThumbsDown } from "lucide-react";
 import ChatUploader from "./ChatUploader";
-import { addMessage } from "@/lib/actions/rag.actions";
+import { addMessage, clearChat, submitFeedback } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateResponseImage } from "@/lib/actions/wingman.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Message = {
   _id?: string;
   role: string;
   content: string;
   createdAt?: string;
+  feedback?: "up" | "down" | null;
 };
 
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
@@ -45,27 +57,82 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
     try {
       await addMessage({ girlId, role: "user", content: userMsg });
-
-      // 2. Generate Wingman Reply
-      const { reply, explanation } = await generateWingmanReply(girlId, userMsg);
-      
-      const aiMsg: Message = { role: "wingman", content: reply || "..." }; // Ensure string
-      setMessages((prev) => [...prev, aiMsg]);
-      
-      await addMessage({ girlId, role: "wingman", content: reply || "..." });
-
-      toast({
-        title: "Wingman Tip",
-        description: explanation,
-        duration: 6000,
-      });
-
+      await generateResponse(userMsg);
     } catch (error) {
       console.error(error);
-      toast({ title: "Error", description: "Failed to get reply", variant: "destructive" });
-    } finally {
+      toast({ title: "Error", description: "Failed to send message", variant: "destructive" });
       setIsLoading(false);
     }
+  };
+
+  const generateResponse = async (contextText: string) => {
+      try {
+        // 2. Generate Wingman Reply
+        const { reply, explanation } = await generateWingmanReply(girlId, contextText);
+
+        const aiMsg: Message = { role: "wingman", content: reply || "..." };
+        setMessages((prev) => [...prev, aiMsg]);
+
+        const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+        // Update the last message with the real ID for feedback
+        setMessages((prev) => prev.map((msg, i) =>
+            i === prev.length - 1 ? { ...msg, _id: savedMsg._id } : msg
+        ));
+
+        toast({
+            title: "Wingman Tip",
+            description: explanation,
+            duration: 6000,
+        });
+      } catch (error) {
+          console.error(error);
+          toast({ title: "Error", description: "Wingman failed to reply.", variant: "destructive" });
+      } finally {
+          setIsLoading(false);
+      }
+  }
+
+  const handleRegenerate = async () => {
+      // Find last user message
+      const lastUserMsg = [...messages].reverse().find(m => m.role === "user" || m.role === "girl"); // User or Girl context
+      if (!lastUserMsg) {
+          toast({ title: "Error", description: "No context to regenerate from.", variant: "destructive" });
+          return;
+      }
+
+      setIsLoading(true);
+      await generateResponse(lastUserMsg.content);
+  };
+
+  const handleClearChat = async () => {
+      try {
+          await clearChat(girlId);
+          setMessages([]);
+          toast({ title: "Success", description: "Chat history cleared." });
+      } catch (error) {
+          toast({ title: "Error", description: "Failed to clear chat.", variant: "destructive" });
+      }
+  };
+
+  const handleFeedback = async (index: number, type: "up" | "down") => {
+      const msg = messages[index];
+      if (!msg._id) return; // Can't rate unsaved message
+
+      // Optimistic Update
+      const newMessages = [...messages];
+      newMessages[index].feedback = type;
+      setMessages(newMessages);
+
+      try {
+          await submitFeedback(msg._id, type);
+          toast({ title: "Thanks!", description: "Feedback submitted." });
+      } catch (error) {
+          console.error(error);
+          // Revert on failure
+          newMessages[index].feedback = msg.feedback;
+          setMessages([...newMessages]);
+      }
   };
 
   const handleImageUpload = async (url: string) => {
@@ -84,24 +151,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         // 2. Add Girl Message (Context)
         const newMsg: Message = { role: "girl", content: `(Screenshot): ${text}` };
         setMessages((prev) => [...prev, newMsg]);
-        await addMessage({ girlId, role: "girl", content: text }); // Store raw text for better embedding
+        await addMessage({ girlId, role: "girl", content: text });
 
         // 3. Generate Reply
-        const { reply, explanation } = await generateWingmanReply(girlId, text);
-        const aiMsg: Message = { role: "wingman", content: reply || "..." };
-        setMessages((prev) => [...prev, aiMsg]);
-        await addMessage({ girlId, role: "wingman", content: reply || "..." });
-
-        toast({
-            title: "Wingman Tip",
-            description: explanation,
-            duration: 6000,
-        });
+        await generateResponse(text);
 
     } catch (error) {
         console.error(error);
         toast({ title: "Error", description: "Failed to process image", variant: "destructive" });
-    } finally {
         setIsLoading(false);
     }
   };
@@ -130,7 +187,33 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative">
+
+      {/* Top Bar for Actions */}
+      <div className="absolute top-2 right-2 z-10 flex gap-2">
+          {messages.length > 0 && (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm" title="Clear Chat">
+                        <Trash2 size={16} />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete all messages with this girl. This action cannot be undone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearChat} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          )}
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
         {messages.length === 0 && (
@@ -142,34 +225,69 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           <div
             key={idx}
             className={cn(
-              "flex w-full",
+              "flex w-full group",
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
           >
-            <div
-              className={cn(
-                "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap",
-                msg.role === "user"
-                  ? "bg-purple-600 text-white rounded-br-none"
-                  : msg.role === "wingman"
-                  ? "bg-white border border-purple-100 text-dark-600 rounded-bl-none shadow-sm"
-                  : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
-              )}
-            >
-              {msg.role === "wingman" && <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> Wingman</div>}
-              {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">She said</div>}
-              
-              {msg.content.startsWith("[IMAGE]:") ? (
-                  <Image 
-                    src={msg.content.replace("[IMAGE]: ", "")} 
-                    alt="Generated" 
-                    width={500}
-                    height={500}
-                    className="rounded-lg max-w-full h-auto" 
-                  />
-              ) : (
-                  msg.content
-              )}
+            <div className={cn("flex flex-col max-w-[80%]", msg.role === "user" ? "items-end" : "items-start")}>
+                <div
+                className={cn(
+                    "rounded-2xl p-4 text-sm whitespace-pre-wrap relative",
+                    msg.role === "user"
+                    ? "bg-purple-600 text-white rounded-br-none"
+                    : msg.role === "wingman"
+                    ? "bg-white border border-purple-100 text-dark-600 rounded-bl-none shadow-sm"
+                    : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
+                )}
+                >
+                {msg.role === "wingman" && <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> Wingman</div>}
+                {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">She said</div>}
+
+                {msg.content.startsWith("[IMAGE]:") ? (
+                    <Image
+                        src={msg.content.replace("[IMAGE]: ", "")}
+                        alt="Generated"
+                        width={500}
+                        height={500}
+                        className="rounded-lg max-w-full h-auto"
+                    />
+                ) : (
+                    msg.content
+                )}
+                </div>
+
+                {/* Wingman Actions (Feedback & Regenerate) */}
+                {msg.role === "wingman" && (
+                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn("h-6 w-6", msg.feedback === "up" ? "text-green-500" : "text-gray-400 hover:text-green-500")}
+                            onClick={() => handleFeedback(idx, "up")}
+                        >
+                            <ThumbsUp size={14} />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn("h-6 w-6", msg.feedback === "down" ? "text-red-500" : "text-gray-400 hover:text-red-500")}
+                            onClick={() => handleFeedback(idx, "down")}
+                        >
+                            <ThumbsDown size={14} />
+                        </Button>
+                        {idx === messages.length - 1 && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-purple-500 ml-2"
+                                onClick={handleRegenerate}
+                                title="Regenerate"
+                            >
+                                <RotateCw size={14} />
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
           </div>
         ))}
