@@ -144,7 +144,11 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       <div className="mb-6">
           <CldUploadWidget
             uploadPreset="jsm_ArabianRizz"
-            options={{ multiple: false, resourceType: "image" }}
+            options={{
+                multiple: false,
+                resourceType: "image",
+                maxFileSize: 5000000 // 5MB
+            }}
             onSuccess={handleUploadComplete}
           >
             {({ open }) => (

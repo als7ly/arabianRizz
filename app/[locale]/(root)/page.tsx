@@ -69,10 +69,29 @@ const Dashboard = async ({ params: { locale } }: { params: { locale: string } })
             ))}
           </div>
         ) : (
-          <div className="flex-center w-full h-60 border-2 border-dashed border-purple-200/20 rounded-[16px] bg-purple-50/50">
-            <div className="text-center">
-                <p className="p-20-semibold text-purple-500">{t('noGirls')}</p>
-                <p className="p-14-regular mt-2 text-dark-400">Click the button above to add one.</p>
+          <div className="w-full bg-white rounded-xl border border-purple-100 shadow-sm p-8 text-center space-y-6">
+            <div className="max-w-md mx-auto space-y-4">
+                <h3 className="h3-bold text-dark-600">Welcome to ArabianRizz! 🧞‍♂️</h3>
+                <p className="p-16-regular text-dark-400">
+                    Your personal AI Wingman is ready. Follow these steps to get started:
+                </p>
+                <ul className="text-left bg-purple-50 p-6 rounded-lg space-y-3">
+                    <li className="flex items-center gap-3">
+                        <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex-center text-xs font-bold">1</span>
+                        <p className="p-14-medium">Create a profile for the girl you like.</p>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex-center text-xs font-bold">2</span>
+                        <p className="p-14-medium">Use <b>Magic Fill</b> to extract details from a screenshot.</p>
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex-center text-xs font-bold">3</span>
+                        <p className="p-14-medium">Start chatting and ask for <b>Hookup Lines</b>!</p>
+                    </li>
+                </ul>
+                <div className="pt-4">
+                    <p className="p-14-regular text-gray-400 mb-2">{t('noGirls')}</p>
+                </div>
             </div>
           </div>
         )}
