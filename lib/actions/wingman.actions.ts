@@ -4,7 +4,7 @@ import { openai } from "../openai";
 import { getContext } from "./rag.actions";
 import { getGirlById } from "./girl.actions";
 
-export async function generateWingmanReply(girlId: string, userMessage: string) {
+export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty") {
   try {
     // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
@@ -22,10 +22,11 @@ export async function generateWingmanReply(girlId: string, userMessage: string) 
 You are "The Wingman", an expert dating coach and master of female psychology.
 Your Goal: Help the user ("The Man") hook up with the girl ("${girl.name}").
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
+Current Tone: ${tone}.
 
 Instructions:
 1. Analyze the conversation context provided.
-2. Provide a DIRECT, UNCENSORED, and FLIRTY reply that the user should send.
+2. Provide a DIRECT, UNCENSORED, and ${tone.toUpperCase()} reply that the user should send.
 3. Explain WHY this reply works (briefly) based on psychology.
 4. ${dialectInstruction}
 5. Be cool, confident, and not desperate.
@@ -37,7 +38,7 @@ ${contextString}
     // 4. Call LLM
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
        return {
-         reply: `(Mock Wingman): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
+         reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
          explanation: "It's mysterious and complimentary without being too eager."
        };
     }
