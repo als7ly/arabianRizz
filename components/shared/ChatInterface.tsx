@@ -3,14 +3,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2 } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Copy, RotateCw, Trash2, Check } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateResponseImage } from "@/lib/actions/wingman.actions";
+import { clearChat } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePathname } from "next/navigation";
 
 type Message = {
   _id?: string;
@@ -23,8 +32,12 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [tone, setTone] = useState("Flirty");
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -47,9 +60,9 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       await addMessage({ girlId, role: "user", content: userMsg });
 
       // 2. Generate Wingman Reply
-      const { reply, explanation } = await generateWingmanReply(girlId, userMsg);
+      const { reply, explanation } = await generateWingmanReply(girlId, userMsg, tone);
       
-      const aiMsg: Message = { role: "wingman", content: reply || "..." }; // Ensure string
+      const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
       await addMessage({ girlId, role: "wingman", content: reply || "..." });
@@ -87,7 +100,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         await addMessage({ girlId, role: "girl", content: text }); // Store raw text for better embedding
 
         // 3. Generate Reply
-        const { reply, explanation } = await generateWingmanReply(girlId, text);
+        const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
         await addMessage({ girlId, role: "wingman", content: reply || "..." });
@@ -127,28 +140,115 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     } finally {
         setIsLoading(false);
     }
+  };
+
+  const handleCopy = (content: string, idx: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+    toast({ description: "Copied to clipboard" });
+  };
+
+  const handleRegenerate = async () => {
+    if (messages.length === 0) return;
+
+    setIsLoading(true);
+    try {
+       // Find last user/girl message
+       let lastContextMsg = "";
+       for(let i = messages.length - 1; i >= 0; i--) {
+         if (messages[i].role !== 'wingman') {
+            lastContextMsg = messages[i].content;
+            break;
+         }
+       }
+
+       if (!lastContextMsg) lastContextMsg = "What should I say?";
+
+       const { reply, explanation } = await generateWingmanReply(girlId, lastContextMsg, tone);
+
+       const aiMsg: Message = { role: "wingman", content: reply || "..." };
+       setMessages((prev) => [...prev, aiMsg]);
+       await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+       toast({
+         title: "Regenerated Tip",
+         description: explanation,
+         duration: 6000,
+       });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Error", description: "Failed to regenerate", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearChat = async () => {
+    if(!confirm("Are you sure you want to clear the chat? This cannot be undone.")) return;
+
+    setIsLoading(true);
+    try {
+        await clearChat(girlId, pathname);
+        setMessages([]);
+        toast({ description: "Chat cleared." });
+    } catch (e) {
+        console.error(e);
+        toast({ title: "Error", description: "Failed to clear chat", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden">
+
+      {/* Toolbar */}
+      <div className="bg-white border-b px-4 py-2 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-500">Wingman Tone:</span>
+            <Select value={tone} onValueChange={setTone}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                    <SelectValue placeholder="Tone" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Flirty">Flirty 🔥</SelectItem>
+                    <SelectItem value="Funny">Funny 😂</SelectItem>
+                    <SelectItem value="Serious">Serious 🧐</SelectItem>
+                    <SelectItem value="Mysterious">Mysterious 🕵️</SelectItem>
+                    <SelectItem value="Rizz God">Rizz God 👑</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+        <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-400 hover:text-red-600 hover:bg-red-50"
+            onClick={handleClearChat}
+        >
+            <Trash2 size={16} />
+        </Button>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
         {messages.length === 0 && (
-            <div className="flex-center h-full text-gray-400">
-                Start by sending a message or uploading a screenshot!
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+                <Sparkles className="text-purple-200" size={48} />
+                <p>Start by sending a message or uploading a screenshot!</p>
             </div>
         )}
         {messages.map((msg, idx) => (
           <div
             key={idx}
             className={cn(
-              "flex w-full",
+              "flex w-full group",
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
           >
             <div
               className={cn(
-                "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap",
+                "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap relative",
                 msg.role === "user"
                   ? "bg-purple-600 text-white rounded-br-none"
                   : msg.role === "wingman"
@@ -156,7 +256,21 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                   : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
               )}
             >
-              {msg.role === "wingman" && <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> Wingman</div>}
+              {msg.role === "wingman" && (
+                  <div className="flex justify-between items-center mb-1">
+                     <div className="text-xs font-bold text-purple-500 flex items-center gap-1">
+                        <Sparkles size={12}/> Wingman
+                     </div>
+                     <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-gray-400 hover:text-purple-500"
+                        onClick={() => handleCopy(msg.content, idx)}
+                     >
+                        {copiedIndex === idx ? <Check size={12} /> : <Copy size={12} />}
+                     </Button>
+                  </div>
+              )}
               {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">She said</div>}
               
               {msg.content.startsWith("[IMAGE]:") ? (
@@ -190,6 +304,12 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         <Button variant="ghost" size="icon" onClick={handleGenerateImage} disabled={isLoading} title="Generate Image Response">
             <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
         </Button>
+
+        {messages.length > 0 && messages[messages.length - 1].role === 'wingman' && (
+             <Button variant="ghost" size="icon" onClick={handleRegenerate} disabled={isLoading} title="Regenerate Response">
+                <RotateCw size={24} className="text-dark-400 hover:text-purple-500"/>
+            </Button>
+        )}
 
         <div className="flex-1 relative">
              <Input

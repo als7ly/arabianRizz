@@ -5,6 +5,7 @@ import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "../utils";
 import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
+import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
 
 async function getCurrentUser() {
@@ -131,8 +132,32 @@ export async function deleteGirl(girlId: string) {
         throw new Error("Unauthorized");
     }
 
+    // Delete associated messages first
+    await Message.deleteMany({ girl: girlId });
+
     await Girl.findByIdAndDelete(girlId);
     revalidatePath("/");
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// CLEAR CHAT
+export async function clearChat(girlId: string, path: string) {
+  try {
+    await connectToDatabase();
+
+    const girl = await Girl.findById(girlId);
+    if (!girl) throw new Error("Girl not found");
+
+    // Security Check
+    const user = await getCurrentUser();
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    await Message.deleteMany({ girl: girlId });
+    revalidatePath(path);
   } catch (error) {
     handleError(error);
   }
