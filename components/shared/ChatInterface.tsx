@@ -3,12 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Copy, RotateCw, Trash2, Check } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Copy, RotateCw, Trash2, Check, Volume2, ThumbsUp, ThumbsDown } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateResponseImage } from "@/lib/actions/wingman.actions";
 import { clearChat } from "@/lib/actions/girl.actions";
+import { generateSpeech } from "@/lib/actions/audio.actions";
+import { submitFeedback } from "@/lib/actions/feedback.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
@@ -26,6 +28,7 @@ type Message = {
   role: string;
   content: string;
   createdAt?: string;
+  feedback?: 'up' | 'down' | null;
 };
 
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
@@ -34,8 +37,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [isLoading, setIsLoading] = useState(false);
   const [tone, setTone] = useState("Flirty");
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const pathname = usePathname();
 
@@ -65,7 +70,17 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
-      await addMessage({ girlId, role: "wingman", content: reply || "..." });
+      // We need to fetch the newly created message to get its ID for feedback
+      // For now, we will optimistically update and rely on revalidation or refetch if needed
+      // Ideally, `addMessage` should return the full message object
+      const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+      // Update the last message with the real ID from DB
+      setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = savedMsg;
+          return updated;
+      });
 
       toast({
         title: "Wingman Tip",
@@ -103,7 +118,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
-        await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+        const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+        setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = savedMsg;
+            return updated;
+        });
 
         toast({
             title: "Wingman Tip",
@@ -169,7 +191,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
        const aiMsg: Message = { role: "wingman", content: reply || "..." };
        setMessages((prev) => [...prev, aiMsg]);
-       await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+       const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+       setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = savedMsg;
+            return updated;
+       });
 
        toast({
          title: "Regenerated Tip",
@@ -198,7 +227,50 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     } finally {
         setIsLoading(false);
     }
-  }
+  };
+
+  const handlePlayAudio = async (text: string, idx: number) => {
+    if (playingIndex === idx) {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            setPlayingIndex(null);
+        }
+        return;
+    }
+
+    try {
+        setPlayingIndex(idx);
+        const audioSrc = await generateSpeech(text);
+
+        if (audioSrc) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            audioRef.current = new Audio(audioSrc);
+            audioRef.current.onended = () => setPlayingIndex(null);
+            audioRef.current.play();
+        } else {
+            toast({ description: "Could not generate audio.", variant: "destructive" });
+            setPlayingIndex(null);
+        }
+    } catch (e) {
+        console.error(e);
+        setPlayingIndex(null);
+    }
+  };
+
+  const handleFeedback = async (messageId: string, feedback: 'up' | 'down') => {
+      try {
+          await submitFeedback(messageId, feedback, pathname);
+          setMessages((prev) => prev.map(msg =>
+              msg._id === messageId ? { ...msg, feedback } : msg
+          ));
+          toast({ description: "Thanks for the feedback!" });
+      } catch (e) {
+          console.error(e);
+          toast({ title: "Error", description: "Failed to submit feedback", variant: "destructive" });
+      }
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden">
@@ -261,14 +333,49 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                      <div className="text-xs font-bold text-purple-500 flex items-center gap-1">
                         <Sparkles size={12}/> Wingman
                      </div>
-                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-gray-400 hover:text-purple-500"
-                        onClick={() => handleCopy(msg.content, idx)}
-                     >
-                        {copiedIndex === idx ? <Check size={12} /> : <Copy size={12} />}
-                     </Button>
+                     <div className="flex gap-1">
+                        {/* Feedback Buttons */}
+                        {msg._id && (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn("h-6 w-6 text-gray-400 hover:text-green-500", msg.feedback === 'up' && "text-green-500")}
+                                    onClick={() => handleFeedback(msg._id!, 'up')}
+                                    title="Good Response"
+                                >
+                                    <ThumbsUp size={12} />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn("h-6 w-6 text-gray-400 hover:text-red-500", msg.feedback === 'down' && "text-red-500")}
+                                    onClick={() => handleFeedback(msg._id!, 'down')}
+                                    title="Bad Response"
+                                >
+                                    <ThumbsDown size={12} />
+                                </Button>
+                            </>
+                        )}
+                        <Button
+                           variant="ghost"
+                           size="icon"
+                           className={cn("h-6 w-6 text-gray-400 hover:text-purple-500", playingIndex === idx && "text-purple-500 animate-pulse")}
+                           onClick={() => handlePlayAudio(msg.content, idx)}
+                           title="Read Aloud"
+                        >
+                           <Volume2 size={12} />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-gray-400 hover:text-purple-500"
+                            onClick={() => handleCopy(msg.content, idx)}
+                            title="Copy"
+                        >
+                            {copiedIndex === idx ? <Check size={12} /> : <Copy size={12} />}
+                        </Button>
+                     </div>
                   </div>
               )}
               {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">She said</div>}
