@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Trash2 } from "lucide-react";
+import { MessageCircle, Trash2, Star, AtSign } from "lucide-react";
 import { deleteGirl } from "@/lib/actions/girl.actions";
 import { useTransition } from "react";
 import { usePathname } from "next/navigation";
@@ -28,12 +28,21 @@ export const GirlCard = ({ girl }: { girl: any }) => {
       <div className="group relative flex flex-col gap-4 rounded-xl border border-purple-200/20 bg-white p-5 shadow-lg shadow-purple-200/10 transition-all hover:shadow-purple-200/20">
         <div className="flex justify-between items-start">
             <div>
-                <h3 className="h3-bold text-dark-600">{girl.name}</h3>
-                <div className="flex gap-2">
+                <div className="flex justify-between w-full">
+                    <h3 className="h3-bold text-dark-600">{girl.name}</h3>
+                    {girl.age && <Badge variant="outline" className="text-purple-500">{girl.age} yo</Badge>}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-1">
                     <p className="p-14-medium text-dark-400">{girl.relationshipStatus}</p>
                     {girl.dialect && (
                          <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">
                             {girl.dialect}
+                         </span>
+                    )}
+                     {girl.rating && (
+                         <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Star size={10} fill="currentColor" /> {girl.rating}/10
                          </span>
                     )}
                 </div>
@@ -48,7 +57,6 @@ export const GirlCard = ({ girl }: { girl: any }) => {
                    )}
                 </div>
             </div>
-            {girl.age && <Badge variant="outline" className="text-purple-500">{girl.age} yo</Badge>}
         </div>
         
         <p className="p-16-medium line-clamp-2 text-dark-400/80 min-h-[3rem]">

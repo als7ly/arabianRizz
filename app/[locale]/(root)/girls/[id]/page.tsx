@@ -5,6 +5,8 @@ import Message from "@/lib/database/models/message.model"; // Direct DB access f
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
 import { ChatInterface } from "@/components/shared/ChatInterface";
+import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
+import { EditGirlButton } from "@/components/shared/EditGirlButton";
 import { Badge } from "@/components/ui/badge";
 
 const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
