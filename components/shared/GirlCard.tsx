@@ -73,6 +73,8 @@ export const GirlCard = ({ girl }: { girl: any }) => {
                 size="icon" 
                 className="text-red-400 hover:bg-red-50 hover:text-red-600 z-10"
                 onClick={handleDelete}
+                aria-label="Delete profile"
+                title="Delete profile"
             >
                 <Trash2 size={18} />
             </Button>
