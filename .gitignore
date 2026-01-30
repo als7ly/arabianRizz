@@ -2,7 +2,8 @@ node_modules/
 .next/
 out/
 build/
+dist/
 .env
-.env.local
 .DS_Store
+.env.local
 lint_output.txt

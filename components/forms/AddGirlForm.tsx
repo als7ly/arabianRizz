@@ -33,6 +33,8 @@ import { useTranslations } from "next-intl";
 const formSchema = z.object({
   name: z.string().min(2).max(50),
   age: z.string().transform((v) => Number(v) || 0).optional(),
+  rating: z.string().transform((v) => Number(v) || 5).optional(),
+  socialMediaHandle: z.string().optional(),
   vibe: z.string().optional(),
   dialect: z.string().optional(),
   relationshipStatus: z.string(),
@@ -53,6 +55,8 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
     defaultValues: {
       name: "",
       age: undefined,
+      rating: "5",
+      socialMediaHandle: "",
       vibe: "",
       dialect: "Modern Standard Arabic",
       relationshipStatus: "Just met",
@@ -109,6 +113,8 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       await createGirl({
         name: values.name,
         age: values.age,
+        rating: values.rating,
+        socialMediaHandle: values.socialMediaHandle,
         vibe: values.vibe,
         dialect: values.dialect,
         relationshipStatus: values.relationshipStatus,
@@ -193,7 +199,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
             name="age"
             render={({ field }) => (
               <FormItem className="flex-1">
-                <FormLabel>Age (Optional)</FormLabel>
+                <FormLabel>Age</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="25" {...field} className="input-field" />
                 </FormControl>
@@ -202,6 +208,22 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="rating"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Rating</FormLabel>
+                <FormControl>
+                  <Input type="number" min="1" max="10" placeholder="5" {...field} className="input-field" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex gap-4">
           <FormField
             control={form.control}
             name="relationshipStatus"
@@ -221,6 +243,20 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
                     <SelectItem value="It's Complicated">It&apos;s Complicated</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+           <FormField
+            control={form.control}
+            name="socialMediaHandle"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Social Handle</FormLabel>
+                <FormControl>
+                  <Input placeholder="@username" {...field} className="input-field" />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

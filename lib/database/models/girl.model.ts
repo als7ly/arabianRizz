@@ -21,9 +21,9 @@ const GirlSchema = new Schema({
   },
   rating: {
     type: Number,
+    default: 5,
     min: 1,
     max: 10,
-    default: 5,
   },
   socialMediaHandle: {
     type: String,

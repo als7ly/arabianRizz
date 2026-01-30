@@ -22,18 +22,21 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <>
-      <div className="mb-6">
-        <Header
-            title={girl.name}
-            subtitle={girl.relationshipStatus}
-            rightElement={
-                <div className="flex items-center gap-2">
-                     {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1 mr-2">{girl.age}</Badge>}
-                     <EditGirlButton girl={girl} />
-                     <DeleteGirlButton girlId={girl._id} />
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <Header title={girl.name} subtitle={girl.relationshipStatus} />
+          <div className="flex gap-4 mt-2 ml-1">
+            <div className="text-yellow-500 font-bold flex items-center gap-1 text-sm">
+                ⭐ {girl.rating || 5}/10
+            </div>
+            {girl.socialMediaHandle && (
+                <div className="text-blue-500 font-medium text-sm">
+                    @{girl.socialMediaHandle.replace('@', '')}
                 </div>
-            }
-        />
+            )}
+          </div>
+        </div>
+        {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
       </div>
 
       <section className="w-full max-w-4xl mx-auto">
