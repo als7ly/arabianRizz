@@ -1,6 +1,6 @@
-import { createTransaction } from "@/lib/services/transaction.service";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { createTransaction } from "@/lib/services/transaction.service";
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -15,13 +15,15 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
   } catch (err) {
-    return NextResponse.json({ message: "Webhook error", error: err }, { status: 400 });
+    return NextResponse.json({ message: "Webhook error", error: err });
   }
 
+  // Get the ID and type
   const eventType = event.type;
 
+  // CREATE
   if (eventType === "checkout.session.completed") {
-    const { id, amount_total, metadata } = event.data.object as any;
+    const { id, amount_total, metadata } = event.data.object;
 
     const transaction = {
       stripeId: id,

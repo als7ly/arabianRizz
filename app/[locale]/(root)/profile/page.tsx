@@ -1,14 +1,18 @@
 import { auth } from "@clerk/nextjs";
 import Image from "next/image";
-import { redirect } from "next/navigation";
 import Header from "@/components/shared/Header";
-import { getUserById } from "@/lib/actions/user.actions";
 import { plans } from "@/constants";
 import Checkout from "@/components/shared/Checkout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check } from "lucide-react";
+import { auth, SignOutButton } from "@clerk/nextjs";
+import { getUserById } from "@/lib/actions/user.actions";
+import CreditBalance from "@/components/shared/CreditBalance";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 const Profile = async () => {
   const { userId } = auth();
@@ -19,75 +23,47 @@ const Profile = async () => {
 
   return (
     <>
-      <Header title="Profile" subtitle="Manage your account and credits" />
+      <Header title="Profile" subtitle="Manage your account settings" />
 
-      <section className="profile">
-        <div className="profile-balance flex items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-purple-100">
-          <div className="relative h-20 w-20">
-             <Image
-                src={user.photo}
-                alt="user"
-                fill
-                className="rounded-full object-cover"
-             />
-          </div>
-          <div>
-             <h2 className="text-2xl font-bold text-gray-800">{user.username}</h2>
-             <div className="flex items-center gap-2 mt-2">
-                 <Image src="/assets/icons/coins.svg" alt="coins" width={24} height={24} />
-                 <span className="text-xl font-semibold text-purple-600">{user.creditBalance} Credits</span>
-             </div>
-          </div>
-        </div>
-      </section>
+      <section className="profile mt-10">
+        <div className="profile-card p-5 bg-white rounded-xl border border-purple-200/20 shadow-lg space-y-6">
+            {/* User Info */}
+            <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-purple-100 flex-center text-purple-600 text-2xl font-bold">
+                    {user.firstName?.[0] || user.username?.[0]}
+                </div>
+                <div>
+                    <h2 className="h3-bold text-dark-600">{user.firstName} {user.lastName}</h2>
+                    <p className="p-16-regular text-dark-400">@{user.username}</p>
+                    <p className="p-14-regular text-gray-400">{user.email}</p>
+                </div>
+            </div>
 
-      <section className="mt-10">
-         <h3 className="h3-bold text-dark-600 mb-6">Buy Credits</h3>
-
-         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-             {plans.map((plan) => (
-                 <Card key={plan._id} className="flex flex-col justify-between border-2 border-purple-200/20 hover:border-purple-200 transition-all shadow-sm">
-                     <CardHeader>
-                         <CardTitle className="text-purple-600">{plan.name}</CardTitle>
-                         <CardDescription>
-                            <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-                            {plan.price > 0 && <span className="text-gray-500"> / one-time</span>}
-                         </CardDescription>
-                     </CardHeader>
-                     <CardContent>
-                        <div className="flex items-center gap-2 mb-4">
-                            <Badge className="bg-purple-100 text-purple-600 hover:bg-purple-200">{plan.credits} Credits</Badge>
+            {/* Credits Section */}
+            <div className="border-t border-gray-100 pt-6">
+                <h3 className="h4-medium text-dark-600 mb-4">Subscription & Credits</h3>
+                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <p className="p-16-semibold text-dark-600">Current Plan: <span className="text-purple-600">Free</span></p>
+                        <div className="mt-2">
+                            <CreditBalance userId={user.clerkId} />
                         </div>
-                        <ul className="space-y-3">
-                            {plan.inclusions.map((inclusion) => (
-                                <li key={inclusion.label} className="flex items-center gap-2 text-sm text-gray-600">
-                                    {inclusion.isIncluded ? (
-                                        <Check className="text-green-500 h-4 w-4" />
-                                    ) : (
-                                        <Check className="text-gray-300 h-4 w-4" />
-                                    )}
-                                    <span className={!inclusion.isIncluded ? "text-gray-400 line-through" : ""}>
-                                        {inclusion.label}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                     </CardContent>
-                     <CardFooter>
-                         {plan.price > 0 ? (
-                            <Checkout
-                                plan={plan.name}
-                                amount={plan.price}
-                                credits={plan.credits}
-                                buyerId={user._id}
-                            />
-                         ) : (
-                            <Button variant="outline" className="w-full rounded-full cursor-default">Free Plan</Button>
-                         )}
-                     </CardFooter>
-                 </Card>
-             ))}
-         </div>
+                    </div>
+                    <Link href="/credits">
+                        <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
+                            Upgrade Plan
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div className="border-t border-gray-100 pt-6 flex justify-end">
+                <SignOutButton>
+                    <Button variant="destructive">Sign Out</Button>
+                </SignOutButton>
+            </div>
+        </div>
       </section>
     </>
   );
