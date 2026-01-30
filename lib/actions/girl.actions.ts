@@ -5,6 +5,7 @@ import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "../utils";
 import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
+import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
 
 async function getCurrentUser() {
@@ -24,20 +25,63 @@ export async function createGirl(girl: CreateGirlParams) {
     await connectToDatabase();
     
     // Security Check: Ensure the author exists and matches the authenticated user
+    // Note: getCurrentUser retrieves the MongoDB user document
     const user = await getCurrentUser();
     
-    if (user._id.toString() !== girl.userId) {
+    // girl.userId is the Clerk ID passed from the client
+    if (user.clerkId !== girl.userId) {
          throw new Error("Unauthorized: User ID mismatch");
     }
 
-    const newGirl = await Girl.create({
-        ...girl,
-        author: user._id
-    });
-    
-    revalidatePath(girl.path);
+    // Atomic update to ensure credits are sufficient and deducted
+    const updatedUser = await User.findOneAndUpdate(
+        { _id: user._id, creditBalance: { $gte: 1 } },
+        { $inc: { creditBalance: -1 } },
+        { new: true }
+    );
+
+    if (!updatedUser) {
+        throw new Error("Insufficient credits");
+    }
+
+    try {
+        const newGirl = await Girl.create({
+            ...girl,
+            author: user._id
+        });
+
+        revalidatePath(girl.path);
+        return JSON.parse(JSON.stringify(newGirl));
+    } catch (error) {
+        // Rollback credits if creation fails
+        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: 1 } });
+        throw error;
+    }
 
     return JSON.parse(JSON.stringify(newGirl));
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// CLEAR CHAT
+export async function clearChat(girlId: string) {
+  try {
+    await connectToDatabase();
+
+    // Security Check
+    const user = await getCurrentUser();
+
+    // Verify ownership of the girl profile first
+    const girl = await Girl.findById(girlId);
+    if (!girl) throw new Error("Girl not found");
+
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    await Message.deleteMany({ girl: girlId });
+    revalidatePath(`/girls/${girlId}`);
   } catch (error) {
     handleError(error);
   }
@@ -64,7 +108,7 @@ export async function getGirlById(girlId: string) {
 }
 
 // GET ALL GIRLS FOR USER
-export async function getUserGirls(userId: string) {
+export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: { userId: string, page?: number, limit?: number, query?: string }) {
   try {
     await connectToDatabase();
     
@@ -74,9 +118,30 @@ export async function getUserGirls(userId: string) {
          throw new Error("Unauthorized");
     }
 
-    const girls = await Girl.find({ author: userId }).sort({ createdAt: -1 });
+    const skipAmount = (Number(page) - 1) * limit;
 
-    return JSON.parse(JSON.stringify(girls));
+    const condition = {
+        author: userId,
+        ...(query && {
+            $or: [
+                { name: { $regex: query, $options: 'i' } },
+                { vibe: { $regex: query, $options: 'i' } }
+            ]
+        })
+    };
+
+    const girlsQuery = Girl.find(condition)
+      .sort({ createdAt: -1 })
+      .skip(skipAmount)
+      .limit(limit);
+
+    const girls = await girlsQuery.exec();
+    const girlsCount = await Girl.countDocuments(condition);
+
+    return {
+      data: JSON.parse(JSON.stringify(girls)),
+      totalPages: Math.ceil(girlsCount / limit),
+    };
   } catch (error) {
     handleError(error);
   }
@@ -104,6 +169,8 @@ export async function updateGirl(girl: UpdateGirlParams) {
         vibe: girl.vibe,
         dialect: girl.dialect,
         relationshipStatus: girl.relationshipStatus,
+        rating: girl.rating,
+        socialMediaHandle: girl.socialMediaHandle,
       },
       { new: true }
     );
@@ -131,6 +198,7 @@ export async function deleteGirl(girlId: string) {
         throw new Error("Unauthorized");
     }
 
+    await Message.deleteMany({ girl: girlId });
     await Girl.findByIdAndDelete(girlId);
     revalidatePath("/");
   } catch (error) {

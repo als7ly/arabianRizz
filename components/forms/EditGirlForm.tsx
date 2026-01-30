@@ -21,11 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createGirl } from "@/lib/actions/girl.actions";
-import { analyzeProfile } from "@/lib/actions/wingman.actions";
-import { CldUploadWidget } from "next-cloudinary";
-import { Sparkles, UploadCloud } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { updateGirl } from "@/lib/actions/girl.actions";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
@@ -40,73 +37,30 @@ const formSchema = z.object({
   socialMediaHandle: z.string().optional(),
 });
 
-export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDialog?: () => void }) {
-  const router = useRouter();
+export function EditGirlForm({ girl, closeDialog }: { girl: any, closeDialog?: () => void }) {
   const pathname = usePathname();
   const { toast } = useToast();
   const t = useTranslations('Forms');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      age: undefined,
-      vibe: "",
-      dialect: "Modern Standard Arabic",
-      relationshipStatus: "Just met",
-      rating: 5,
-      socialMediaHandle: "",
+      name: girl.name,
+      age: girl.age,
+      vibe: girl.vibe,
+      dialect: girl.dialect,
+      relationshipStatus: girl.relationshipStatus,
+      rating: girl.rating || 5,
+      socialMediaHandle: girl.socialMediaHandle || "",
     },
   });
-
-  const handleUploadComplete = async (result: any) => {
-    const url = result?.info?.secure_url;
-    if (!url) return;
-
-    setIsAnalyzing(true);
-    toast({
-        title: t('MagicFill.analyzingToastTitle'),
-        description: t('MagicFill.analyzingToastDesc'),
-    });
-
-    try {
-        const data = await analyzeProfile(url);
-        if (data) {
-            if (data.name) form.setValue("name", data.name);
-            if (data.age) form.setValue("age", data.age.toString());
-            if (data.vibe) form.setValue("vibe", data.vibe);
-            if (data.socialMediaHandle) form.setValue("socialMediaHandle", data.socialMediaHandle);
-
-            toast({
-                title: t('MagicFill.successTitle'),
-                description: t('MagicFill.successDesc'),
-                className: "success-toast",
-            });
-        } else {
-            toast({
-                title: t('MagicFill.failTitle'),
-                description: t('MagicFill.failDesc'),
-                variant: "destructive",
-            });
-        }
-    } catch (e) {
-        console.error(e);
-        toast({
-            title: t('MagicFill.errorTitle'),
-            description: t('MagicFill.errorDesc'),
-            variant: "destructive",
-        });
-    } finally {
-        setIsAnalyzing(false);
-    }
-  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      await createGirl({
+      await updateGirl({
+        _id: girl._id,
         name: values.name,
         age: values.age,
         vibe: values.vibe,
@@ -114,24 +68,22 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         relationshipStatus: values.relationshipStatus,
         rating: values.rating,
         socialMediaHandle: values.socialMediaHandle,
-        userId,
         path: pathname,
       });
 
       toast({
         title: "Success",
-        description: "Girl profile created!",
+        description: "Profile updated!",
         className: "success-toast",
       });
-      
-      form.reset();
+
       if (closeDialog) closeDialog();
-      
+
     } catch (error) {
       console.error(error);
       toast({
         title: "Error",
-        description: "Failed to create profile.",
+        description: "Failed to update profile.",
         className: "error-toast",
       });
     } finally {
@@ -141,37 +93,6 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
 
   return (
     <Form {...form}>
-      <div className="mb-6">
-          <CldUploadWidget
-            uploadPreset="jsm_ArabianRizz"
-            options={{
-                multiple: false,
-                resourceType: "image",
-                maxFileSize: 5000000 // 5MB
-            }}
-            onSuccess={handleUploadComplete}
-          >
-            {({ open }) => (
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50"
-                    onClick={() => open()}
-                    disabled={isAnalyzing}
-                >
-                    {isAnalyzing ? (
-                        <>{t('MagicFill.analyzing')}</>
-                    ) : (
-                        <>
-                            <Sparkles size={18} className="text-yellow-500" />
-                            {t('MagicFill.button')}
-                        </>
-                    )}
-                </Button>
-            )}
-          </CldUploadWidget>
-      </div>
-
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
@@ -289,10 +210,10 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
             <FormItem>
               <FormLabel>Vibe & Notes</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="She loves sushi, hates small talk..." 
-                  className="textarea-field rounded-[16px] border-2 border-purple-200/20 shadow-sm p-4" 
-                  {...field} 
+                <Textarea
+                  placeholder="She loves sushi, hates small talk..."
+                  className="textarea-field rounded-[16px] border-2 border-purple-200/20 shadow-sm p-4"
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -301,7 +222,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         />
 
         <Button type="submit" className="submit-button w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Create Profile"}
+          {isSubmitting ? "Saving..." : "Update Profile"}
         </Button>
       </form>
     </Form>

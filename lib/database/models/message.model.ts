@@ -19,6 +19,10 @@ const MessageSchema = new Schema({
     type: [Number], // Vector embedding for RAG
     default: [],
   },
+  feedback: {
+    type: String,
+    enum: ["positive", "negative"],
+  },
   createdAt: {
     type: Date,
     default: Date.now,

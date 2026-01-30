@@ -19,6 +19,15 @@ const GirlSchema = new Schema({
     type: String, // e.g., "Just met", "Talking", "Dating"
     default: "Just met",
   },
+  rating: {
+    type: Number,
+    min: 1,
+    max: 10,
+    default: 5,
+  },
+  socialMediaHandle: {
+    type: String,
+  },
   author: {
     type: Schema.Types.ObjectId,
     ref: "User",

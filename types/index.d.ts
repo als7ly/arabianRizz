@@ -5,14 +5,14 @@ declare type CreateUserParams = {
   clerkId: string;
   email: string;
   username: string;
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
   photo: string;
 };
 
 declare type UpdateUserParams = {
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
   username: string;
   photo: string;
 };
@@ -24,6 +24,8 @@ declare type CreateGirlParams = {
   vibe?: string;
   dialect?: string;
   relationshipStatus?: string;
+  rating?: number;
+  socialMediaHandle?: string;
   userId: string;
   path: string;
 };
@@ -35,6 +37,8 @@ declare type UpdateGirlParams = {
   vibe?: string;
   dialect?: string;
   relationshipStatus?: string;
+  rating?: number;
+  socialMediaHandle?: string;
   path: string;
 };
 

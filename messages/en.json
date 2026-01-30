@@ -12,5 +12,39 @@
     "chat": "Chat",
     "upload": "Upload Screenshot",
     "generate": "Generate Rizz"
+  },
+  "Forms": {
+    "MagicFill": {
+      "button": "Magic Fill from Screenshot",
+      "analyzing": "Analyzing...",
+      "analyzingToastTitle": "Analyzing Screenshot...",
+      "analyzingToastDesc": "Extracting details from the profile.",
+      "successTitle": "Magic Fill Complete!",
+      "successDesc": "Review the details and save.",
+      "failTitle": "Analysis Failed",
+      "failDesc": "Could not extract details.",
+      "errorTitle": "Error",
+      "errorDesc": "Something went wrong during analysis."
+    }
+  },
+  "Chat": {
+    "wingmanThinking": "Wingman is thinking...",
+    "hookupButtonTitle": "Generate Hookup Line",
+    "imageButtonTitle": "Generate Image Response",
+    "hookupToastTitle": "Hookup Line Generated",
+    "errorTitle": "Error",
+    "errorHookup": "Failed to generate hookup line.",
+    "errorImage": "Image generation failed.",
+    "errorContext": "No context to generate image from.",
+    "errorReply": "Failed to get reply",
+    "errorProcessImage": "Failed to process image",
+    "readingScreenshot": "Reading Screenshot...",
+    "readingScreenshotDesc": "Analyzing the conversation.",
+    "noTextInImage": "Could not read text from image.",
+    "startPrompt": "Start by sending a message or uploading a screenshot!",
+    "sheSaid": "She said",
+    "wingman": "Wingman",
+    "inputPlaceholder": "Type what you want to say...",
+    "wingmanTip": "Wingman Tip"
   }
 }
