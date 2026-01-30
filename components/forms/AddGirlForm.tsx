@@ -32,9 +32,7 @@ import { useTranslations } from "next-intl";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
-  age: z.string().transform((v) => Number(v) || 0).optional(),
-  rating: z.string().transform((v) => Number(v) || 5).optional(),
-  socialMediaHandle: z.string().optional(),
+  age: z.coerce.number().optional(),
   vibe: z.string().optional(),
   dialect: z.string().optional(),
   relationshipStatus: z.string(),
@@ -55,8 +53,6 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
     defaultValues: {
       name: "",
       age: undefined,
-      rating: "5",
-      socialMediaHandle: "",
       vibe: "",
       dialect: "Modern Standard Arabic",
       relationshipStatus: "Just met",
@@ -118,8 +114,6 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         vibe: values.vibe,
         dialect: values.dialect,
         relationshipStatus: values.relationshipStatus,
-        rating: values.rating,
-        socialMediaHandle: values.socialMediaHandle,
         userId,
         path: pathname,
       });
@@ -179,26 +173,6 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
-        <CldUploadWidget
-            uploadPreset="arabian_rizz_preset"
-            onSuccess={onUploadSuccess}
-            options={{ maxFileSize: 5000000 }} // 5MB limit
-        >
-          {({ open }) => (
-            <div className="flex justify-center mb-4">
-               <Button
-                 type="button"
-                 variant="outline"
-                 onClick={() => open()}
-                 className="flex gap-2 items-center bg-purple-50 text-purple-700 border-purple-200"
-               >
-                 <Camera className="w-4 h-4" />
-                 Magic Fill from Screenshot
-               </Button>
-            </div>
-          )}
-        </CldUploadWidget>
 
         <FormField
           control={form.control}
@@ -282,35 +256,6 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
               </FormItem>
             )}
           />
-        </div>
-
-        <div className="flex gap-4">
-             <FormField
-                control={form.control}
-                name="rating"
-                render={({ field }) => (
-                <FormItem className="flex-1">
-                    <FormLabel>Rating (1-10)</FormLabel>
-                    <FormControl>
-                    <Input type="number" min={1} max={10} {...field} className="input-field" />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="socialMediaHandle"
-                render={({ field }) => (
-                <FormItem className="flex-1">
-                    <FormLabel>Social Handle</FormLabel>
-                    <FormControl>
-                    <Input placeholder="@username" {...field} className="input-field" />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
         </div>
 
         <FormField
