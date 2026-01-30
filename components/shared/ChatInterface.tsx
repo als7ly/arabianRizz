@@ -187,7 +187,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       <div className="bg-white border-t p-4 flex items-end gap-2">
         <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
         
-        <Button variant="ghost" size="icon" onClick={handleGenerateImage} disabled={isLoading} title="Generate Image Response">
+        <Button variant="ghost" size="icon" onClick={handleGenerateImage} disabled={isLoading} title="Generate Image Response" aria-label="Generate Image Response">
             <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
         </Button>
 
@@ -199,6 +199,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                 placeholder="Type what you want to say..."
                 className="pr-10"
                 disabled={isLoading}
+                aria-label="Message input"
             />
         </div>
         
@@ -206,6 +207,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             onClick={handleSendMessage} 
             disabled={!inputValue.trim() || isLoading}
             className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center"
+            aria-label="Send message"
+            title="Send message"
         >
             <Send size={18} className="text-white ml-0.5" />
         </Button>
