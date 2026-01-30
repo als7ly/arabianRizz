@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
 import Feedback from "./Feedback";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Message = {
   _id?: string;
@@ -25,6 +26,7 @@ type Message = {
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
+  const [tone, setTone] = useState("Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       await addMessage({ girlId, role: "user", content: userMsg });
 
       // 2. Generate Wingman Reply
-      const { reply, explanation } = await generateWingmanReply(girlId, userMsg);
+      const { reply, explanation } = await generateWingmanReply(girlId, userMsg, tone);
       
       const aiMsg: Message = { role: "wingman", content: reply || "..." }; // Ensure string
       setMessages((prev) => [...prev, aiMsg]);
@@ -86,7 +88,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
         setMessages(newMsgs);
 
-        const { reply, explanation } = await generateWingmanReply(girlId, userMsg.content);
+        const { reply, explanation } = await generateWingmanReply(girlId, userMsg.content, tone);
 
         const updatedMsgs = [...messages];
         updatedMsgs[index] = { ...updatedMsgs[index], content: reply || "Error" };
@@ -149,7 +151,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         await addMessage({ girlId, role: "girl", content: text }); // Store raw text for better embedding
 
         // 3. Generate Reply
-        const { reply, explanation } = await generateWingmanReply(girlId, text);
+        const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
         await addMessage({ girlId, role: "wingman", content: reply || "..." });
@@ -328,6 +330,18 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat">
             <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
         </Button>
+
+        <Select value={tone} onValueChange={setTone}>
+            <SelectTrigger className="w-[100px] h-10 border-0 focus:ring-0 px-2 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg">
+                <SelectValue placeholder="Tone" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Flirty">Flirty</SelectItem>
+                <SelectItem value="Funny">Funny</SelectItem>
+                <SelectItem value="Serious">Serious</SelectItem>
+                <SelectItem value="Mysterious">Mysterious</SelectItem>
+            </SelectContent>
+        </Select>
 
         <div className="flex-1 relative">
              <Input
