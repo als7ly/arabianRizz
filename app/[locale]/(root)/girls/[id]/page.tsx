@@ -5,13 +5,8 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
 import { ChatInterface } from "@/components/shared/ChatInterface";
 import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
-import { EditGirlButton } from "@/components/shared/EditGirlButton";
 import { Badge } from "@/components/ui/badge";
 import { EditGirlAction } from "@/components/shared/EditGirlAction";
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { EditGirlForm } from "@/components/forms/EditGirlForm";
 
 const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
   const { userId } = auth();
@@ -26,7 +21,7 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-start mb-6">
         <div>
           <Header title={girl.name} subtitle={girl.relationshipStatus} />
           <div className="flex gap-4 mt-2 ml-1">
@@ -40,7 +35,13 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
             )}
           </div>
         </div>
-        {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
+        <div className="flex flex-col items-end gap-3">
+            {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
+            <div className="flex items-center gap-2">
+                <EditGirlAction girl={girl} />
+                <DeleteGirlButton girlId={girl._id} />
+            </div>
+        </div>
       </div>
 
       <section className="w-full max-w-4xl mx-auto">

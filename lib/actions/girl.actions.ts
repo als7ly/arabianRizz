@@ -28,10 +28,8 @@ export async function createGirl(girl: CreateGirlParams) {
     // Note: getCurrentUser retrieves the MongoDB user document
     const user = await getCurrentUser();
     
-    // girl.userId is the Clerk ID passed from the client
-    if (user.clerkId !== girl.userId) {
-         throw new Error("Unauthorized: User ID mismatch");
-    }
+    // Authorization is implicitly handled by getCurrentUser() and overriding the author field below.
+    // We do not trust the client-provided userId for authorization.
 
     // Atomic update to ensure credits are sufficient and deducted
     const updatedUser = await User.findOneAndUpdate(
@@ -64,28 +62,6 @@ export async function createGirl(girl: CreateGirlParams) {
   }
 }
 
-// CLEAR CHAT
-export async function clearChat(girlId: string) {
-  try {
-    await connectToDatabase();
-
-    // Security Check
-    const user = await getCurrentUser();
-
-    // Verify ownership of the girl profile first
-    const girl = await Girl.findById(girlId);
-    if (!girl) throw new Error("Girl not found");
-
-    if (girl.author.toString() !== user._id.toString()) {
-        throw new Error("Unauthorized");
-    }
-
-    await Message.deleteMany({ girl: girlId });
-    revalidatePath(`/girls/${girlId}`);
-  } catch (error) {
-    handleError(error);
-  }
-}
 
 // GET GIRL BY ID
 export async function getGirlById(girlId: string) {
@@ -207,7 +183,7 @@ export async function deleteGirl(girlId: string) {
 }
 
 // CLEAR CHAT
-export async function clearChat(girlId: string, path: string) {
+export async function clearChat(girlId: string, path?: string) {
   try {
     await connectToDatabase();
 
@@ -221,7 +197,7 @@ export async function clearChat(girlId: string, path: string) {
     }
 
     await Message.deleteMany({ girl: girlId });
-    revalidatePath(path);
+    if (path) revalidatePath(path);
   } catch (error) {
     handleError(error);
   }
