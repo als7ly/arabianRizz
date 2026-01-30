@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -110,6 +110,15 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     } finally {
         setIsLoading(false);
     }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: "Copied!",
+        description: "Message copied to clipboard.",
+        duration: 3000,
+    });
   };
 
   const handlePlayAudio = async (text: string, msgIndex: number) => {
@@ -271,10 +280,11 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     className="rounded-lg max-w-full h-auto" 
                   />
               ) : (
-                  <div className="flex items-start gap-2">
-                      <span className="flex-1">{msg.content}</span>
-                      {msg.role === "wingman" && (
-                          <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1">
+                      <div className="flex items-start gap-2">
+                          <span className="flex-1">{msg.content}</span>
+                          {msg.role === "wingman" && (
+                              <div className="flex flex-col gap-1">
                             <div className="flex gap-1">
                                 <Button
                                     variant="ghost"
@@ -296,10 +306,23 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                 >
                                     <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
                                 </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                                    onClick={() => handleCopy(msg.content)}
+                                    title="Copy to Clipboard"
+                                >
+                                    <Copy size={14} />
+                                </Button>
                             </div>
                             {msg._id && <Feedback messageId={msg._id} />}
                           </div>
-                      )}
+                          )}
+                      </div>
+                      <span className="text-[10px] text-gray-400 self-end">
+                        {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                   </div>
               )}
             </div>
