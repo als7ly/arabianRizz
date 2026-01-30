@@ -31,6 +31,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
 
@@ -57,10 +58,20 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       // 2. Generate Wingman Reply
       const { reply, explanation } = await generateWingmanReply(girlId, userMsg, tone);
       
-      const aiMsg: Message = { role: "wingman", content: reply || "..." }; // Ensure string
+      const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
-      await addMessage({ girlId, role: "wingman", content: reply || "..." });
+      // We need to fetch the newly created message to get its ID for feedback
+      // For now, we will optimistically update and rely on revalidation or refetch if needed
+      // Ideally, `addMessage` should return the full message object
+      const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+      // Update the last message with the real ID from DB
+      setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = savedMsg;
+          return updated;
+      });
 
       toast({
         title: t('wingmanTip'),
@@ -164,7 +175,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
-        await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+        const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+        setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = savedMsg;
+            return updated;
+        });
 
         toast({
             title: t('wingmanTip'),
@@ -201,7 +219,115 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     } finally {
         setIsLoading(false);
     }
-  }
+  };
+
+  const handleCopy = (content: string, idx: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+    toast({ description: "Copied to clipboard" });
+  };
+
+  const handleRegenerate = async () => {
+    if (messages.length === 0) return;
+
+    setIsLoading(true);
+    try {
+       // Find last user/girl message
+       let lastContextMsg = "";
+       for(let i = messages.length - 1; i >= 0; i--) {
+         if (messages[i].role !== 'wingman') {
+            lastContextMsg = messages[i].content;
+            break;
+         }
+       }
+
+       if (!lastContextMsg) lastContextMsg = "What should I say?";
+
+       const { reply, explanation } = await generateWingmanReply(girlId, lastContextMsg, tone);
+
+       const aiMsg: Message = { role: "wingman", content: reply || "..." };
+       setMessages((prev) => [...prev, aiMsg]);
+
+       const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+       setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = savedMsg;
+            return updated;
+       });
+
+       toast({
+         title: "Regenerated Tip",
+         description: explanation,
+         duration: 6000,
+       });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Error", description: "Failed to regenerate", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearChat = async () => {
+    if(!confirm("Are you sure you want to clear the chat? This cannot be undone.")) return;
+
+    setIsLoading(true);
+    try {
+        await clearChat(girlId, pathname);
+        setMessages([]);
+        toast({ description: "Chat cleared." });
+    } catch (e) {
+        console.error(e);
+        toast({ title: "Error", description: "Failed to clear chat", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handlePlayAudio = async (text: string, idx: number) => {
+    if (playingIndex === idx) {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            setPlayingIndex(null);
+        }
+        return;
+    }
+
+    try {
+        setPlayingIndex(idx);
+        const audioSrc = await generateSpeech(text);
+
+        if (audioSrc) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            audioRef.current = new Audio(audioSrc);
+            audioRef.current.onended = () => setPlayingIndex(null);
+            audioRef.current.play();
+        } else {
+            toast({ description: "Could not generate audio.", variant: "destructive" });
+            setPlayingIndex(null);
+        }
+    } catch (e) {
+        console.error(e);
+        setPlayingIndex(null);
+    }
+  };
+
+  const handleFeedback = async (messageId: string, feedback: 'up' | 'down') => {
+      try {
+          await submitFeedback(messageId, feedback, pathname);
+          setMessages((prev) => prev.map(msg =>
+              msg._id === messageId ? { ...msg, feedback } : msg
+          ));
+          toast({ description: "Thanks for the feedback!" });
+      } catch (e) {
+          console.error(e);
+          toast({ title: "Error", description: "Failed to submit feedback", variant: "destructive" });
+      }
+  };
 
   const handleGenerateHookupLine = async () => {
     setIsLoading(true);
@@ -287,7 +413,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           >
             <div
               className={cn(
-                "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap",
+                "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap relative",
                 msg.role === "user"
                   ? "bg-purple-600 text-white rounded-br-none"
                   : msg.role === "wingman"

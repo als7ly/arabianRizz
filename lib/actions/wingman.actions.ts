@@ -53,7 +53,7 @@ ${contextString}
     // 4. Call LLM
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
        return {
-         reply: `(Mock Wingman): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
+         reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
          explanation: "It's mysterious and complimentary without being too eager."
        };
     }

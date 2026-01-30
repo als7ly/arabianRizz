@@ -205,3 +205,24 @@ export async function deleteGirl(girlId: string) {
     handleError(error);
   }
 }
+
+// CLEAR CHAT
+export async function clearChat(girlId: string, path: string) {
+  try {
+    await connectToDatabase();
+
+    const girl = await Girl.findById(girlId);
+    if (!girl) throw new Error("Girl not found");
+
+    // Security Check
+    const user = await getCurrentUser();
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    await Message.deleteMany({ girl: girlId });
+    revalidatePath(path);
+  } catch (error) {
+    handleError(error);
+  }
+}

@@ -7,6 +7,7 @@ import { ChatInterface } from "@/components/shared/ChatInterface";
 import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
 import { EditGirlButton } from "@/components/shared/EditGirlButton";
 import { Badge } from "@/components/ui/badge";
+import { EditGirlAction } from "@/components/shared/EditGirlAction";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

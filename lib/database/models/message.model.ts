@@ -29,9 +29,6 @@ const MessageSchema = new Schema({
   },
 });
 
-// Index for vector search (This is usually defined in Atlas UI, but keeping it here for reference)
-// MessageSchema.index({ embedding: "vector" }); 
-
-const Message = models?.Message || model("Message", MessageSchema);
+const Message = models.Message || model("Message", MessageSchema);
 
 export default Message;

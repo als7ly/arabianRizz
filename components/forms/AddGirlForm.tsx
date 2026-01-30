@@ -179,6 +179,27 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+        <CldUploadWidget
+            uploadPreset="arabian_rizz_preset"
+            onSuccess={onUploadSuccess}
+            options={{ maxFileSize: 5000000 }} // 5MB limit
+        >
+          {({ open }) => (
+            <div className="flex justify-center mb-4">
+               <Button
+                 type="button"
+                 variant="outline"
+                 onClick={() => open()}
+                 className="flex gap-2 items-center bg-purple-50 text-purple-700 border-purple-200"
+               >
+                 <Camera className="w-4 h-4" />
+                 Magic Fill from Screenshot
+               </Button>
+            </div>
+          )}
+        </CldUploadWidget>
+
         <FormField
           control={form.control}
           name="name"
