@@ -1,13 +1,16 @@
 import { auth } from "@clerk/nextjs";
 import { getGirlById } from "@/lib/actions/girl.actions";
-import { getContext } from "@/lib/actions/rag.actions"; // We can reuse this or create getHistory
-import Message from "@/lib/database/models/message.model"; // Direct DB access for initial load
+import Message from "@/lib/database/models/message.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
 import { ChatInterface } from "@/components/shared/ChatInterface";
 import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
 import { EditGirlButton } from "@/components/shared/EditGirlButton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { EditGirlForm } from "@/components/forms/EditGirlForm";
 
 const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
   const { userId } = auth();

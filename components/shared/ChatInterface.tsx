@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy } from "lucide-react";
 import ChatUploader from "./ChatUploader";
-import { addMessage } from "@/lib/actions/rag.actions";
+import { addMessage, clearChat, submitFeedback } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateResponseImage, generateHookupLine, clearChat, generateSpeech } from "@/lib/actions/wingman.actions";
 import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
@@ -21,6 +21,7 @@ type Message = {
   role: string;
   content: string;
   createdAt?: string;
+  feedback?: "up" | "down" | null;
 };
 
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
@@ -157,7 +158,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         // 2. Add Girl Message (Context)
         const newMsg: Message = { role: "girl", content: `(Screenshot): ${text}` };
         setMessages((prev) => [...prev, newMsg]);
-        await addMessage({ girlId, role: "girl", content: text }); // Store raw text for better embedding
+        await addMessage({ girlId, role: "girl", content: text });
 
         // 3. Generate Reply
         const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
@@ -242,7 +243,33 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative">
+
+      {/* Top Bar for Actions */}
+      <div className="absolute top-2 right-2 z-10 flex gap-2">
+          {messages.length > 0 && (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm" title="Clear Chat">
+                        <Trash2 size={16} />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete all messages with this girl. This action cannot be undone.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearChat} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          )}
+      </div>
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
         {messages.length === 0 && (
@@ -254,7 +281,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           <div
             key={idx}
             className={cn(
-              "flex w-full",
+              "flex w-full group",
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
           >
