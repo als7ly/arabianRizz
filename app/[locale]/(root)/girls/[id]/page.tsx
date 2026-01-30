@@ -1,11 +1,11 @@
 import { auth } from "@clerk/nextjs";
 import { getGirlById } from "@/lib/actions/girl.actions";
-import { getContext } from "@/lib/actions/rag.actions"; // We can reuse this or create getHistory
-import Message from "@/lib/database/models/message.model"; // Direct DB access for initial load
+import Message from "@/lib/database/models/message.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
 import { ChatInterface } from "@/components/shared/ChatInterface";
 import { Badge } from "@/components/ui/badge";
+import { EditGirlAction } from "@/components/shared/EditGirlAction";
 
 const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
   const { userId } = auth();
@@ -20,10 +20,16 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
-        <Header title={girl.name} subtitle={girl.relationshipStatus} />
-        {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
-      </div>
+      <Header
+        title={girl.name}
+        subtitle={girl.relationshipStatus}
+        rightElement={
+           <div className="flex items-center gap-4">
+             {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1 h-10">{girl.age}</Badge>}
+             <EditGirlAction girl={girl} />
+           </div>
+        }
+      />
 
       <section className="w-full max-w-4xl mx-auto">
         <ChatInterface girlId={girl._id} initialMessages={serializedMessages} />

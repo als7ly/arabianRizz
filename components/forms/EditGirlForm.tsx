@@ -21,14 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createGirl } from "@/lib/actions/girl.actions";
+import { updateGirl } from "@/lib/actions/girl.actions";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { CldUploadWidget } from "next-cloudinary";
-import { extractTextFromImage } from "@/lib/actions/ocr.actions";
-import { analyzeProfile } from "@/lib/actions/analysis.actions";
-import { Camera } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
@@ -38,7 +34,7 @@ const formSchema = z.object({
   relationshipStatus: z.string(),
 });
 
-export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDialog?: () => void }) {
+export function EditGirlForm({ girl, closeDialog }: { girl: any, closeDialog?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -47,71 +43,40 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      age: undefined,
-      vibe: "",
-      dialect: "Modern Standard Arabic",
-      relationshipStatus: "Just met",
+      name: girl.name,
+      age: girl.age ? String(girl.age) : undefined,
+      vibe: girl.vibe || "",
+      dialect: girl.dialect || "Modern Standard Arabic",
+      relationshipStatus: girl.relationshipStatus || "Just met",
     },
   });
-
-  const onUploadSuccess = async (result: any) => {
-    const url = result?.info?.secure_url;
-    if (url) {
-      toast({ title: "Processing...", description: "Extracting text from image..." });
-      try {
-        const text = await extractTextFromImage(url);
-        if (text) {
-          toast({ title: "Analyzing...", description: "AI is analyzing the profile..." });
-          const analysis = await analyzeProfile(text);
-          if (analysis) {
-            form.setValue("name", analysis.name || "");
-            if(analysis.age) form.setValue("age", String(analysis.age));
-            form.setValue("vibe", analysis.vibe || "");
-            if (analysis.dialect) form.setValue("dialect", analysis.dialect);
-            if (analysis.relationshipStatus) form.setValue("relationshipStatus", analysis.relationshipStatus);
-
-            toast({ title: "Magic Fill", description: "Profile details auto-filled!", className: "success-toast" });
-          } else {
-             toast({ title: "Warning", description: "Could not analyze the text.", variant: "destructive" });
-          }
-        } else {
-             toast({ title: "Warning", description: "No text found in image.", variant: "destructive" });
-        }
-      } catch (e) {
-        console.error(e);
-        toast({ title: "Error", description: "Failed to process image.", variant: "destructive" });
-      }
-    }
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      await createGirl({
+      await updateGirl({
+        _id: girl._id,
         name: values.name,
         age: values.age,
         vibe: values.vibe,
         dialect: values.dialect,
         relationshipStatus: values.relationshipStatus,
-        userId,
         path: pathname,
       });
 
       toast({
         title: "Success",
-        description: "Girl profile created!",
+        description: "Girl profile updated!",
         className: "success-toast",
       });
-      
-      form.reset();
+
       if (closeDialog) closeDialog();
-      
+
     } catch (error) {
       console.error(error);
       toast({
         title: "Error",
-        description: "Failed to create profile.",
+        description: "Failed to update profile.",
         className: "error-toast",
       });
     } finally {
@@ -122,27 +87,6 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
-        <CldUploadWidget
-            uploadPreset="arabian_rizz_preset"
-            onSuccess={onUploadSuccess}
-            options={{ maxFileSize: 5000000 }} // 5MB limit
-        >
-          {({ open }) => (
-            <div className="flex justify-center mb-4">
-               <Button
-                 type="button"
-                 variant="outline"
-                 onClick={() => open()}
-                 className="flex gap-2 items-center bg-purple-50 text-purple-700 border-purple-200"
-               >
-                 <Camera className="w-4 h-4" />
-                 Magic Fill from Screenshot
-               </Button>
-            </div>
-          )}
-        </CldUploadWidget>
-
         <FormField
           control={form.control}
           name="name"
@@ -230,10 +174,10 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
             <FormItem>
               <FormLabel>Vibe & Notes</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="She loves sushi, hates small talk..." 
-                  className="textarea-field rounded-[16px] border-2 border-purple-200/20 shadow-sm p-4" 
-                  {...field} 
+                <Textarea
+                  placeholder="She loves sushi, hates small talk..."
+                  className="textarea-field rounded-[16px] border-2 border-purple-200/20 shadow-sm p-4"
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -242,7 +186,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         />
 
         <Button type="submit" className="submit-button w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Create Profile"}
+          {isSubmitting ? "Saving..." : "Update Profile"}
         </Button>
       </form>
     </Form>
