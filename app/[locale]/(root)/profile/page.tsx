@@ -10,6 +10,7 @@ import { Check } from "lucide-react";
 import { auth, SignOutButton } from "@clerk/nextjs";
 import { getUserById } from "@/lib/actions/user.actions";
 import CreditBalance from "@/components/shared/CreditBalance";
+import PersonaManager from "@/components/shared/PersonaManager";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -55,6 +56,11 @@ const Profile = async () => {
                         </Button>
                     </Link>
                 </div>
+            </div>
+
+            {/* Persona Section */}
+            <div className="border-t border-gray-100 pt-6">
+                <PersonaManager />
             </div>
 
             {/* Actions */}

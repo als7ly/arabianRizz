@@ -3,6 +3,7 @@ import { IBM_Plex_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider, useMessages } from 'next-intl';
+import { Toaster } from "@/components/ui/toaster";
 
 import "../globals.css";
 
@@ -35,6 +36,7 @@ export default function RootLayout({
         <body className={cn("font-IBMPlex antialiased", IBMPlex.variable)}>
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
+            <Toaster />
           </NextIntlClientProvider>
         </body>
       </html>

@@ -8,7 +8,8 @@ import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, Rota
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
-import { generateWingmanReply, generateResponseImage, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
+import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
+import { generateArt } from "@/lib/actions/image.actions";
 import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -16,6 +17,26 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
 import Feedback from "./Feedback";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Message = {
   _id?: string;
@@ -200,24 +221,30 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   };
 
-  const handleGenerateImage = async () => {
-    const lastMsg = messages[messages.length - 1];
-    if (!lastMsg || !lastMsg.content) {
-         toast({ title: t('errorTitle'), description: t('errorContext'), variant: "destructive" });
-         return;
-    }
+  const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
+  const [artPrompt, setArtPrompt] = useState("");
 
+  const handleGenerateArt = async () => {
+    if (!artPrompt.trim()) return;
+
+    setIsArtDialogOpen(false);
     setIsLoading(true);
+    toast({ title: "Generating Art", description: "This may take a few seconds..." });
+
     try {
-        const imageUrl = await generateResponseImage(lastMsg.content);
+        const { imageUrl, error } = await generateArt(artPrompt, girlId);
+
         if (imageUrl) {
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
             setMessages((prev) => [...prev, imgMsg]);
+            await addMessage({ girlId, role: "wingman", content: `[IMAGE]: ${imageUrl}` });
+            setArtPrompt("");
         } else {
-             toast({ title: t('errorTitle'), description: t('errorImage'), variant: "destructive" });
+             toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
         }
     } catch(e) {
         console.error(e);
+        toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -389,16 +416,35 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       <div className="bg-white border-t p-4 flex items-end gap-2">
         <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
         
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleGenerateImage}
-            disabled={isLoading}
-            title="Generate Image Response"
-            aria-label="Generate Image Response"
-        >
-            <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
-        </Button>
+        <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art">
+                    <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Generate Art</DialogTitle>
+                    <DialogDescription>
+                        Describe the scene or outfit you want to see her in. The AI will use her persona.
+                        <br/><span className="text-xs text-purple-500 font-semibold">Cost: 3 Credits</span>
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Input
+                        value={artPrompt}
+                        onChange={(e) => setArtPrompt(e.target.value)}
+                        placeholder="e.g., Wearing a red dress at a cafe..."
+                        onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600">
+                        Generate
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
         <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')}>
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
