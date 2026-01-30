@@ -32,7 +32,6 @@ const ChatUploader = ({ onUploadComplete, disabled }: ChatUploaderProps) => {
             disabled={disabled}
             className="text-dark-400 hover:text-purple-500"
             aria-label="Upload screenshot"
-            title="Upload screenshot"
         >
             <Paperclip size={24} />
         </Button>
