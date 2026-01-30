@@ -4,6 +4,8 @@ import Message from "@/lib/database/models/message.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
 import { ChatInterface } from "@/components/shared/ChatInterface";
+import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
+import { EditGirlButton } from "@/components/shared/EditGirlButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
@@ -23,30 +25,21 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
 
   return (
     <>
-      <div className="mb-6">
-        <Header
-            title={girl.name}
-            subtitle={girl.relationshipStatus}
-            rightElement={
-                <div className="flex items-center gap-2">
-                    {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-9 w-9">
-                                <Edit size={16} className="text-gray-500" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Edit Profile</DialogTitle>
-                                <DialogDescription>Update details for {girl.name}</DialogDescription>
-                            </DialogHeader>
-                            <EditGirlForm girl={girl} />
-                        </DialogContent>
-                    </Dialog>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <Header title={girl.name} subtitle={girl.relationshipStatus} />
+          <div className="flex gap-4 mt-2 ml-1">
+            <div className="text-yellow-500 font-bold flex items-center gap-1 text-sm">
+                ⭐ {girl.rating || 5}/10
+            </div>
+            {girl.socialMediaHandle && (
+                <div className="text-blue-500 font-medium text-sm">
+                    @{girl.socialMediaHandle.replace('@', '')}
                 </div>
-            }
-        />
+            )}
+          </div>
+        </div>
+        {girl.age && <Badge variant="secondary" className="text-lg px-4 py-1">{girl.age}</Badge>}
       </div>
 
       <section className="w-full max-w-4xl mx-auto">

@@ -21,8 +21,7 @@ const MessageSchema = new Schema({
   },
   feedback: {
     type: String,
-    enum: ["up", "down", null],
-    default: null,
+    enum: ["positive", "negative"],
   },
   createdAt: {
     type: Date,

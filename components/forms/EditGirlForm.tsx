@@ -22,9 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateGirl } from "@/lib/actions/girl.actions";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslations } from "next-intl";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
@@ -32,22 +33,26 @@ const formSchema = z.object({
   vibe: z.string().optional(),
   dialect: z.string().optional(),
   relationshipStatus: z.string(),
+  rating: z.coerce.number().min(1).max(10).default(5),
+  socialMediaHandle: z.string().optional(),
 });
 
 export function EditGirlForm({ girl, closeDialog }: { girl: any, closeDialog?: () => void }) {
-  const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
+  const t = useTranslations('Forms');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: girl.name,
-      age: girl.age ? String(girl.age) : undefined,
-      vibe: girl.vibe || "",
-      dialect: girl.dialect || "Modern Standard Arabic",
-      relationshipStatus: girl.relationshipStatus || "Just met",
+      age: girl.age,
+      vibe: girl.vibe,
+      dialect: girl.dialect,
+      relationshipStatus: girl.relationshipStatus,
+      rating: girl.rating || 5,
+      socialMediaHandle: girl.socialMediaHandle || "",
     },
   });
 
@@ -61,12 +66,14 @@ export function EditGirlForm({ girl, closeDialog }: { girl: any, closeDialog?: (
         vibe: values.vibe,
         dialect: values.dialect,
         relationshipStatus: values.relationshipStatus,
+        rating: values.rating,
+        socialMediaHandle: values.socialMediaHandle,
         path: pathname,
       });
 
       toast({
         title: "Success",
-        description: "Girl profile updated!",
+        description: "Profile updated!",
         className: "success-toast",
       });
 
@@ -139,6 +146,35 @@ export function EditGirlForm({ girl, closeDialog }: { girl: any, closeDialog?: (
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="flex gap-4">
+             <FormField
+                control={form.control}
+                name="rating"
+                render={({ field }) => (
+                <FormItem className="flex-1">
+                    <FormLabel>Rating (1-10)</FormLabel>
+                    <FormControl>
+                    <Input type="number" min={1} max={10} {...field} className="input-field" />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="socialMediaHandle"
+                render={({ field }) => (
+                <FormItem className="flex-1">
+                    <FormLabel>Social Handle</FormLabel>
+                    <FormControl>
+                    <Input placeholder="@username" {...field} className="input-field" />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
         </div>
 
         <FormField
