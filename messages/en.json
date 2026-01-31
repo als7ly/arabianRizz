@@ -6,7 +6,61 @@
   "Dashboard": {
     "myGirls": "My Girls",
     "addGirl": "Add New Girl",
-    "noGirls": "No girls added yet. Start by adding a profile!"
+    "noGirls": "No girls added yet. Start by adding a profile!",
+    "welcomeTitle": "Welcome to ArabianRizz! 🧞‍♂️",
+    "welcomeDesc": "Your personal AI Wingman is ready. Follow these steps to get started:",
+    "step1": "Create a profile for the girl you like.",
+    "step2": "Use <b>Magic Fill</b> to extract details from a screenshot.",
+    "step3": "Start chatting and ask for <b>Hookup Lines</b>!",
+    "balance": "My Balance",
+    "createProfileDesc": "Create a profile for the girl you want to hook up with.",
+    "searchPlaceholder": "Search girls by name or vibe..."
+  },
+  "Sidebar": {
+    "home": "Home",
+    "profile": "Profile",
+    "login": "Login",
+    "signOut": "Sign Out",
+    "language": "Language"
+  },
+  "Credits": {
+    "title": "Buy Credits",
+    "subtitle": "Choose a credit package that suits your needs!",
+    "freeConsumable": "Free Consumable",
+    "credits": "Credits",
+    "upgrade": "Upgrade Plan"
+  },
+  "Profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account settings",
+    "subscription": "Subscription & Credits",
+    "currentPlan": "Current Plan:",
+    "upgrade": "Upgrade Plan",
+    "signOut": "Sign Out"
+  },
+  "Plans": {
+    "names": {
+      "free": "Free",
+      "starter": "Starter Pack",
+      "playboy": "Playboy Pack",
+      "rizz_god": "Rizz God Pack"
+    },
+    "inclusions": {
+      "credits_20": "20 Free Credits",
+      "basic_rizz": "Basic Rizz Access",
+      "uncensored_ai": "Uncensored AI",
+      "art_generation": "Art Generation",
+      "credits_100": "100 Credits",
+      "uncensored_wingman": "Uncensored Wingman",
+      "art_access": "Art Generation Access",
+      "priority_support": "Priority Support",
+      "credits_250": "250 Credits",
+      "priority_updates": "Priority Updates",
+      "credits_1000": "1000 Credits",
+      "ultimate_uncensored": "Ultimate Uncensored Access",
+      "unlimited_art": "Unlimited Art Generation*",
+      "vip_status": "VIP Status"
+    }
   },
   "Wingman": {
     "chat": "Chat",

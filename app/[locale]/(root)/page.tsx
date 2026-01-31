@@ -36,7 +36,7 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                 {tIndex('title')}
                 </h1>
                 <p className="text-purple-100 mt-6 text-left text-xl md:text-2xl font-light leading-relaxed max-w-lg">
-                    {tIndex('subtitle') || "Master the art of attraction with your personal AI Wingman."}
+                    {tIndex('subtitle')}
                 </p>
                 <div className="mt-8 flex gap-4">
                      <Dialog>
@@ -48,7 +48,7 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                         <DialogContent className="sm:max-w-md">
                              <DialogHeader>
                                 <DialogTitle>{t('addGirl')}</DialogTitle>
-                                <DialogDescription>Create a profile for the girl you want to hook up with.</DialogDescription>
+                                <DialogDescription>{t('createProfileDesc')}</DialogDescription>
                             </DialogHeader>
                             <AddGirlForm userId={user._id} />
                         </DialogContent>
@@ -56,7 +56,7 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                 </div>
             </div>
             <div className="hidden lg:block bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-xl">
-                <h3 className="text-white font-semibold mb-2">My Balance</h3>
+                <h3 className="text-white font-semibold mb-2">{t('balance')}</h3>
                 <CreditBalance userId={userId} />
             </div>
         </div>
@@ -81,7 +81,7 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                     <DialogHeader>
                         <DialogTitle>{t('addGirl')}</DialogTitle>
                         <DialogDescription>
-                            Create a profile for the girl you want to hook up with.
+                            {t('createProfileDesc')}
                         </DialogDescription>
                     </DialogHeader>
                     <AddGirlForm userId={user._id} />
@@ -90,7 +90,7 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
         </div>
 
         <div className="mb-8">
-            <Search placeholder="Search girls by name or vibe..." />
+            <Search placeholder={t('searchPlaceholder')} />
         </div>
 
         {girls.length > 0 ? (
@@ -107,22 +107,22 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
         ) : (
           <div className="w-full bg-white rounded-xl border border-purple-100 shadow-sm p-8 text-center space-y-6">
             <div className="max-w-md mx-auto space-y-4">
-                <h3 className="h3-bold text-dark-600">Welcome to ArabianRizz! 🧞‍♂️</h3>
+                <h3 className="h3-bold text-dark-600">{t('welcomeTitle')}</h3>
                 <p className="p-16-regular text-dark-400">
-                    Your personal AI Wingman is ready. Follow these steps to get started:
+                    {t('welcomeDesc')}
                 </p>
                 <ul className="text-left bg-purple-50 p-6 rounded-lg space-y-3">
                     <li className="flex items-center gap-3">
                         <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex-center text-xs font-bold">1</span>
-                        <p className="p-14-medium">Create a profile for the girl you like.</p>
+                        <p className="p-14-medium">{t('step1')}</p>
                     </li>
                     <li className="flex items-center gap-3">
                         <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex-center text-xs font-bold">2</span>
-                        <p className="p-14-medium">Use <b>Magic Fill</b> to extract details from a screenshot.</p>
+                        <p className="p-14-medium">{t.rich('step2', {b: (chunks) => <b>{chunks}</b>})}</p>
                     </li>
                     <li className="flex items-center gap-3">
                         <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex-center text-xs font-bold">3</span>
-                        <p className="p-14-medium">Start chatting and ask for <b>Hookup Lines</b>!</p>
+                        <p className="p-14-medium">{t.rich('step3', {b: (chunks) => <b>{chunks}</b>})}</p>
                     </li>
                 </ul>
                 <div className="pt-4">
