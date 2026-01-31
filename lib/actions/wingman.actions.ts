@@ -4,12 +4,14 @@ import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
 import { getContext } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
+import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
 import { connectToDatabase } from "../database/mongoose";
 import { auth } from "@clerk/nextjs";
 import User from "../database/models/user.model";
+import GlobalKnowledge from "../database/models/global-knowledge.model";
 
 async function verifyOwnership(girlAuthorId: any) {
     const { userId: clerkId } = auth();
@@ -28,7 +30,35 @@ async function verifyOwnership(girlAuthorId: any) {
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
   try {
     await connectToDatabase();
-    await Message.findByIdAndUpdate(messageId, { feedback });
+    // 1. Update the message
+    const message = await Message.findByIdAndUpdate(messageId, { feedback }, { new: true });
+
+    // 2. Auto-Learning: If positive, save to GlobalKnowledge
+    if (feedback === 'positive' && message && message.role === 'wingman') {
+        // We need to infer the language. For now, we default to 'en' or check the message content?
+        // Or we could store the language on the message model.
+        // Simple heuristic: check if it contains Arabic chars.
+        const arabicPattern = /[\u0600-\u06FF]/;
+        const language = arabicPattern.test(message.content) ? 'ar' : 'en'; // Default to en if no arabic chars
+
+        // Generate embedding for the successful reply
+        const embeddingResponse = await openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: message.content,
+        });
+        const embedding = embeddingResponse.data[0].embedding;
+
+        // Save to GlobalKnowledge
+        await GlobalKnowledge.create({
+            content: message.content,
+            embedding: embedding,
+            language: language,
+            sourceUrl: "user-feedback", // Marker for learned content
+            status: 'approved',
+            tags: ['user-feedback', 'auto-learned']
+        });
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Feedback Error:", error);
@@ -51,19 +81,24 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    // Deduct Credit (Optimistic - we deduct before generation to prevent spam, or after? Usually after success, but here we do it to ensure payment)
-    // To be safe/fair, we deduct AFTER success, but we check BEFORE.
-
     // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
     const contextString = JSON.stringify(contextMessages);
 
     // 3. Fetch Context (RAG - User)
-    // girl.author is the MongoDB ObjectId of the user
     const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
-    // 4. Construct System Prompt
+    // 4. Fetch Global Knowledge (RAG - Global/Crawler)
+    // Determine language (heuristic: if userMessage has Arabic, use 'ar', else 'en')
+    const arabicPattern = /[\u0600-\u06FF]/;
+    const isArabic = arabicPattern.test(userMessage) || (girl.dialect && girl.dialect !== 'English');
+    const language = isArabic ? 'ar' : 'en';
+
+    const globalKnowledge = await getGlobalKnowledge(userMessage, language);
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
+
+    // 5. Construct System Prompt
     const dialectInstruction = girl.dialect 
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions in your suggested reply if the conversation is in Arabic.`
         : "Support Arabic dialects (Egyptian, Levantine, Gulf) if the user or girl speaks them.";
@@ -77,6 +112,9 @@ Tone requested: ${tone}.
 Context about The User ("Me"):
 ${userContextString || "No specific details provided."}
 
+Expert Tips & Cultural Context (from Knowledge Base):
+${globalContextString || "No specific tips found."}
+
 Instructions:
 1. Analyze the conversation context provided.
 2. Provide a DIRECT, UNCENSORED, and ${tone.toUpperCase()} reply that the user should send.
@@ -89,9 +127,8 @@ Context from previous messages:
 ${contextString}
 `;
 
-    // 4. Call LLM (OpenRouter Uncensored)
+    // 6. Call LLM (OpenRouter Uncensored)
     if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key" && !process.env.OPENAI_BASE_URL) {
-       // Fallback mock if key missing
        return {
          reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
          explanation: "It's mysterious and complimentary without being too eager."
@@ -104,7 +141,6 @@ ${contextString}
         { role: "user", content: `She just said/I want to say: "${userMessage}". What should I say?` },
       ],
       model: WINGMAN_MODEL,
-      // Many OpenRouter models support JSON mode, but not all. Hermes does.
       response_format: { type: "json_object" },
     });
 
@@ -123,7 +159,7 @@ ${contextString}
         } catch (e) {
             console.error("JSON Parse Error:", e);
             return {
-                reply: aiContent, // Fallback to raw content if not JSON
+                reply: aiContent,
                 explanation: "Could not parse AI response."
             };
         }
@@ -170,7 +206,6 @@ export async function analyzeProfile(imageUrl: string) {
         };
     }
 
-    // Use OpenRouter for analysis too to keep it consistent
     const completion = await openrouter.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
@@ -210,7 +245,6 @@ export async function generateResponseImage(prompt: string) {
       size: "1024x1024",
     });
 
-    // Check if data exists and has length
     if (response.data && response.data.length > 0) {
         return response.data[0].url;
     }
@@ -224,7 +258,7 @@ export async function generateResponseImage(prompt: string) {
 export async function generateSpeech(text: string) {
   try {
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
-        return null; // Mock fallback not implemented for audio
+        return null;
     }
 
     const mp3 = await openai.audio.speech.create({
@@ -247,7 +281,6 @@ export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
 
-    // Security Check
     const user = await verifyOwnership(girl.author);
 
     if (user.creditBalance < 1) {
@@ -257,13 +290,17 @@ export async function generateHookupLine(girlId: string) {
         };
     }
 
-    // Fetch User Context
     const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     const dialectInstruction = girl.dialect
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions.`
         : "Support Arabic dialects if appropriate.";
+
+    // Global RAG for hookup lines
+    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
+    const globalKnowledge = await getGlobalKnowledge("best hookup lines dating advice", language);
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     const systemPrompt = `
 You are "The Wingman", an expert dating coach.
@@ -272,6 +309,9 @@ Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}
 
 Context about The User:
 ${userContextString}
+
+Expert Tips & Cultural Context:
+${globalContextString}
 
 Instructions:
 1. Generate a bold, spicy, and effective hookup line.
@@ -299,7 +339,6 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        // Deduct Credit
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
 
         try {

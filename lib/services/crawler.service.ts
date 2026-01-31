@@ -1,0 +1,93 @@
+import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export const crawlUrl = async (url: string) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch URL: ${response.statusText}`);
+    }
+    const html = await response.text();
+
+    // Simple HTML to Text converter (since we can't install cheerio/jsdom)
+    // 1. Remove scripts and styles
+    let text = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "");
+    text = text.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, "");
+
+    // 2. Remove HTML tags
+    text = text.replace(/<[^>]+>/g, "\n");
+
+    // 3. Decode HTML entities (basic)
+    text = text.replace(/&nbsp;/g, " ")
+               .replace(/&amp;/g, "&")
+               .replace(/&quot;/g, '"')
+               .replace(/&lt;/g, "<")
+               .replace(/&gt;/g, ">");
+
+    // 4. Normalize whitespace
+    text = text.replace(/\s+/g, " ").trim();
+
+    // Chunking strategy: Split by roughly 1000 characters or sentences
+    const chunks = [];
+    const MAX_CHUNK_SIZE = 1000;
+
+    let currentChunk = "";
+    const sentences = text.split(/(?<=[.!?])\s+/);
+
+    for (const sentence of sentences) {
+      if ((currentChunk + sentence).length > MAX_CHUNK_SIZE) {
+        chunks.push(currentChunk.trim());
+        currentChunk = "";
+      }
+      currentChunk += sentence + " ";
+    }
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+
+    return chunks;
+  } catch (error) {
+    console.error("Crawler Error:", error);
+    throw error;
+  }
+};
+
+export const processAndSave = async (chunks: string[], language: string, url: string) => {
+  await connectToDatabase();
+
+  const results = [];
+
+  for (const chunk of chunks) {
+    if (!chunk || chunk.length < 50) continue; // Skip very short chunks
+
+    try {
+      const embeddingResponse = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: chunk,
+      });
+
+      const embedding = embeddingResponse.data[0].embedding;
+
+      const knowledge = await GlobalKnowledge.create({
+        content: chunk,
+        embedding: embedding,
+        language: language,
+        sourceUrl: url,
+        status: 'pending',
+        tags: ['crawler'],
+      });
+
+      results.push(knowledge);
+    } catch (error) {
+      console.error("Embedding/Save Error for chunk:", error);
+      // Continue to next chunk even if one fails
+    }
+  }
+
+  return results;
+};
