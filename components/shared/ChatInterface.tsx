@@ -297,7 +297,13 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           {messages.length > 0 && (
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm" title="Clear Chat">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm"
+                        title="Clear Chat"
+                        aria-label="Clear chat history"
+                    >
                         <Trash2 size={16} />
                     </Button>
                 </AlertDialogTrigger>
@@ -368,6 +374,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                     onClick={() => handlePlayAudio(msg.content, idx)}
                                     disabled={playingAudioId !== null}
                                     title="Play Audio"
+                                    aria-label="Play audio"
                                 >
                                     {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
                                 </Button>
@@ -378,6 +385,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                     onClick={() => handleRegenerate(idx)}
                                     disabled={isLoading}
                                     title="Regenerate Response"
+                                    aria-label="Regenerate response"
                                 >
                                     <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
                                 </Button>
@@ -387,6 +395,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                     className="h-6 w-6 text-gray-400 hover:text-gray-600"
                                     onClick={() => handleCopy(msg.content)}
                                     title="Copy to Clipboard"
+                                    aria-label="Copy to clipboard"
                                 >
                                     <Copy size={14} />
                                 </Button>
@@ -416,17 +425,16 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t p-3 md:p-4 flex flex-wrap md:flex-nowrap items-end gap-2 sticky bottom-0 z-20">
-        <div className="flex items-center gap-1 md:gap-2">
-            <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
-
-            <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art" className="h-9 w-9">
-                        <ImageIcon size={20} className="text-dark-400 hover:text-purple-500"/>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
+      <div className="bg-white border-t p-4 flex items-end gap-2">
+        <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
+        
+        <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art" aria-label="Open art generation">
+                    <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Generate Art</DialogTitle>
                     <DialogDescription>
@@ -451,28 +459,13 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                 </DialogContent>
             </Dialog>
 
-            <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} className="h-9 w-9">
-                <Zap size={20} className="text-dark-400 hover:text-yellow-500"/>
-            </Button>
+        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
+            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
+        </Button>
 
-            <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat" className="h-9 w-9">
-                <Trash2 size={20} className="text-dark-400 hover:text-red-500"/>
-            </Button>
-        </div>
-
-        <div className="hidden md:block">
-             <Select value={tone} onValueChange={setTone}>
-                <SelectTrigger className="w-[90px] h-10 border-0 focus:ring-0 px-2 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg">
-                    <SelectValue placeholder="Tone" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Flirty">Flirty</SelectItem>
-                    <SelectItem value="Funny">Funny</SelectItem>
-                    <SelectItem value="Serious">Serious</SelectItem>
-                    <SelectItem value="Mysterious">Mysterious</SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
+        <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat" aria-label="Clear chat">
+            <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
+        </Button>
 
             <SelectContent>
                 <SelectItem value="Flirty">Flirty</SelectItem>
