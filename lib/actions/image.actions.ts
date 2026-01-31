@@ -46,6 +46,11 @@ export async function generateArt(prompt: string, girlId: string) {
         const girl = await Girl.findById(girlId);
         if (!girl) throw new Error("Girl not found");
 
+        // Security Check: Verify Ownership
+        if (girl.author.toString() !== user._id.toString()) {
+            throw new Error("Unauthorized");
+        }
+
         // 3. Construct Prompt
         const fullPrompt = `
             Character: A girl named ${girl.name}.
