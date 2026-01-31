@@ -22,6 +22,7 @@ async function verifyOwnership(girlAuthorId: any) {
     if (girlAuthorId.toString() !== user._id.toString()) {
         throw new Error("Unauthorized Access");
     }
+    return user;
 }
 
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
@@ -40,8 +41,18 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
 
-    // Security Check
-    await verifyOwnership(girl.author);
+    // Security Check & Credit Check
+    const user = await verifyOwnership(girl.author);
+
+    if (user.creditBalance < 1) {
+        return {
+            reply: "You are out of credits! Please top up to continue.",
+            explanation: "Insufficient credits."
+        };
+    }
+
+    // Deduct Credit (Optimistic - we deduct before generation to prevent spam, or after? Usually after success, but here we do it to ensure payment)
+    // To be safe/fair, we deduct AFTER success, but we check BEFORE.
 
     // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
@@ -100,6 +111,9 @@ ${contextString}
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
+        // Deduct Credit on Success
+        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+
         try {
             const parsed = JSON.parse(aiContent);
             return {
@@ -234,7 +248,14 @@ export async function generateHookupLine(girlId: string) {
     const girl = await getGirlById(girlId);
 
     // Security Check
-    await verifyOwnership(girl.author);
+    const user = await verifyOwnership(girl.author);
+
+    if (user.creditBalance < 1) {
+         return {
+            line: "You are out of credits! Please top up.",
+            explanation: "Insufficient credits."
+        };
+    }
 
     // Fetch User Context
     const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
@@ -278,6 +299,9 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
+        // Deduct Credit
+        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+
         try {
             const parsed = JSON.parse(aiContent);
             return {
