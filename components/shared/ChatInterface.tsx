@@ -8,7 +8,8 @@ import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, Rota
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
-import { generateWingmanReply, generateResponseImage, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
+import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
+import { generateArt } from "@/lib/actions/image.actions";
 import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -16,6 +17,26 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
 import Feedback from "./Feedback";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Message = {
   _id?: string;
@@ -200,24 +221,30 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   };
 
-  const handleGenerateImage = async () => {
-    const lastMsg = messages[messages.length - 1];
-    if (!lastMsg || !lastMsg.content) {
-         toast({ title: t('errorTitle'), description: t('errorContext'), variant: "destructive" });
-         return;
-    }
+  const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
+  const [artPrompt, setArtPrompt] = useState("");
 
+  const handleGenerateArt = async () => {
+    if (!artPrompt.trim()) return;
+
+    setIsArtDialogOpen(false);
     setIsLoading(true);
+    toast({ title: "Generating Art", description: "This may take a few seconds..." });
+
     try {
-        const imageUrl = await generateResponseImage(lastMsg.content);
+        const { imageUrl, error } = await generateArt(artPrompt, girlId);
+
         if (imageUrl) {
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
             setMessages((prev) => [...prev, imgMsg]);
+            await addMessage({ girlId, role: "wingman", content: `[IMAGE]: ${imageUrl}` });
+            setArtPrompt("");
         } else {
-             toast({ title: t('errorTitle'), description: t('errorImage'), variant: "destructive" });
+             toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
         }
     } catch(e) {
         console.error(e);
+        toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -263,7 +290,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
 
       {/* Top Bar for Actions */}
       <div className="absolute top-2 right-2 z-10 flex gap-2">
@@ -301,9 +328,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           <div
             key={idx}
             className={cn(
-              "flex w-full group",
+              "flex w-full group animate-fade-in-up",
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
+            style={{ animationDelay: `${idx * 0.05}s` }}
           >
             <div
               className={cn(
@@ -376,42 +404,76 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           </div>
         ))}
         {isLoading && (
-            <div className="flex justify-start w-full" role="status" aria-live="polite">
+            <div className="flex justify-start w-full animate-pulse" role="status" aria-live="polite">
                 <div className="bg-white border border-purple-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
-                    <Loader2 className="animate-spin text-purple-500" size={16} />
-                    <span className="text-xs text-gray-400">{t('wingmanThinking')}</span>
+                    <Sparkles className="animate-spin text-purple-500" size={16} />
+                    <span className="text-xs text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 font-semibold">
+                        {t('wingmanThinking')}...
+                    </span>
                 </div>
             </div>
         )}
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t p-4 flex items-end gap-2">
-        <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
-        
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleGenerateImage}
-            disabled={isLoading}
-            title="Generate Image Response"
-            aria-label="Generate Image Response"
-        >
-            <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
-        </Button>
+      <div className="bg-white border-t p-3 md:p-4 flex flex-wrap md:flex-nowrap items-end gap-2 sticky bottom-0 z-20">
+        <div className="flex items-center gap-1 md:gap-2">
+            <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
 
-        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')}>
-            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
-        </Button>
+            <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art" className="h-9 w-9">
+                        <ImageIcon size={20} className="text-dark-400 hover:text-purple-500"/>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Generate Art</DialogTitle>
+                    <DialogDescription>
+                        Describe the scene or outfit you want to see her in. The AI will use her persona.
+                        <br/><span className="text-xs text-purple-500 font-semibold">Cost: 3 Credits</span>
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Input
+                        value={artPrompt}
+                        onChange={(e) => setArtPrompt(e.target.value)}
+                        placeholder="e.g., Wearing a red dress at a cafe..."
+                        onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600">
+                        Generate
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+                </DialogContent>
+            </Dialog>
 
-        <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat">
-            <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
-        </Button>
+            <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} className="h-9 w-9">
+                <Zap size={20} className="text-dark-400 hover:text-yellow-500"/>
+            </Button>
 
-        <Select value={tone} onValueChange={setTone}>
-            <SelectTrigger className="w-[100px] h-10 border-0 focus:ring-0 px-2 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg">
-                <SelectValue placeholder="Tone" />
-            </SelectTrigger>
+            <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat" className="h-9 w-9">
+                <Trash2 size={20} className="text-dark-400 hover:text-red-500"/>
+            </Button>
+        </div>
+
+        <div className="hidden md:block">
+             <Select value={tone} onValueChange={setTone}>
+                <SelectTrigger className="w-[90px] h-10 border-0 focus:ring-0 px-2 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg">
+                    <SelectValue placeholder="Tone" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Flirty">Flirty</SelectItem>
+                    <SelectItem value="Funny">Funny</SelectItem>
+                    <SelectItem value="Serious">Serious</SelectItem>
+                    <SelectItem value="Mysterious">Mysterious</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+
             <SelectContent>
                 <SelectItem value="Flirty">Flirty</SelectItem>
                 <SelectItem value="Funny">Funny</SelectItem>
@@ -420,26 +482,25 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             </SelectContent>
         </Select>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 flex gap-2 w-full md:w-auto">
              <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                 placeholder={t('inputPlaceholder')}
-                className="pr-10"
+                className="flex-1"
                 disabled={isLoading}
                 aria-label="Message input"
             />
+             <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
+                aria-label="Send message"
+            >
+                <Send size={18} className="text-white ml-0.5" />
+            </Button>
         </div>
-        
-        <Button 
-            onClick={handleSendMessage} 
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center"
-            aria-label="Send message"
-        >
-            <Send size={18} className="text-white ml-0.5" />
-        </Button>
       </div>
     </div>
   );

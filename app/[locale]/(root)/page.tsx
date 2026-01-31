@@ -27,15 +27,36 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
 
   return (
     <>
-      <section className="home">
-        <div className="flex justify-between items-start w-full max-w-5xl mx-auto px-5 md:px-10 py-5">
-            <div>
-                <h1 className="home-heading">
-                {tIndex('title')}
+      <section className="home relative overflow-hidden bg-purple-900">
+        <div className="absolute inset-0 bg-[url('/assets/images/hero-pattern.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
+        <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] bg-purple-600 rounded-full blur-[120px] opacity-30 animate-pulse"></div>
+        <div className="flex justify-between items-start w-full max-w-6xl mx-auto px-5 md:px-10 py-10 relative z-10">
+            <div className="max-w-2xl">
+                <h1 className="home-heading text-5xl md:text-6xl font-extrabold tracking-tight text-white drop-shadow-md">
+                Get Loved. Get Laid. <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-200">Get ArabianRizz.</span>
                 </h1>
-                <p className="text-white mt-4 text-left text-lg opacity-90">{tIndex('subtitle')}</p>
+                <p className="text-purple-100 mt-6 text-left text-xl md:text-2xl font-light leading-relaxed max-w-lg">
+                    The only <b>Uncensored AI Wingman</b> that actually works. Upload screenshots, get spicy replies, and close the deal tonight.
+                </p>
+                <div className="mt-8 flex gap-4">
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button className="bg-white text-purple-900 hover:bg-gray-100 text-lg px-8 py-6 rounded-full font-bold shadow-lg transition-transform hover:scale-105 animate-pulse">
+                                Start Winning Now
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                             <DialogHeader>
+                                <DialogTitle>{t('addGirl')}</DialogTitle>
+                                <DialogDescription>Create a profile for the girl you want to hook up with.</DialogDescription>
+                            </DialogHeader>
+                            <AddGirlForm userId={user._id} />
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden lg:block bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-xl">
+                <h3 className="text-white font-semibold mb-2">My Balance</h3>
                 <CreditBalance userId={userId} />
             </div>
         </div>

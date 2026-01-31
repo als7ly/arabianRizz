@@ -3,6 +3,7 @@ import { IBM_Plex_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider, useMessages } from 'next-intl';
+import { Toaster } from "@/components/ui/toaster";
 
 import "../globals.css";
 
@@ -13,8 +14,14 @@ const IBMPlex = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ArabianRizz",
-  description: "Your AI Wingman awaits.",
+  title: "ArabianRizz - The #1 AI Wingman for Dates & Hookups",
+  description: "Stop getting rejected. Use our Uncensored AI to generate rizz, get dates, and hookup fast. Your personal dating coach.",
+  keywords: "AI Wingman, Rizz App, Dating Coach, Hookup Lines, Uncensored AI, Tinder Helper, RizzGPT, Flirting AI",
+  openGraph: {
+    title: "Get Loved. Get Laid. Get ArabianRizz.",
+    description: "The only Uncensored AI Wingman that actually works. Upload screenshots, get replies, and close the deal.",
+    type: "website",
+  }
 };
 
 export default function RootLayout({
@@ -35,6 +42,7 @@ export default function RootLayout({
         <body className={cn("font-IBMPlex antialiased", IBMPlex.variable)}>
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
+            <Toaster />
           </NextIntlClientProvider>
         </body>
       </html>
