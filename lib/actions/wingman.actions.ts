@@ -1,7 +1,9 @@
 "use server";
 
 import { openai } from "../openai";
+import { openrouter, WINGMAN_MODEL } from "../openrouter";
 import { getContext } from "./rag.actions";
+import { getUserContext } from "./user-knowledge.actions";
 import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
@@ -23,11 +25,16 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
 
-    // 2. Fetch Context (RAG)
+    // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
     const contextString = JSON.stringify(contextMessages);
 
-    // 3. Construct System Prompt
+    // 3. Fetch Context (RAG - User)
+    // girl.author is the MongoDB ObjectId of the user
+    const userContext = await getUserContext(girl.author.toString(), userMessage);
+    const userContextString = userContext.map((k: any) => k.content).join("\n");
+
+    // 4. Construct System Prompt
     const dialectInstruction = girl.dialect 
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions in your suggested reply if the conversation is in Arabic.`
         : "Support Arabic dialects (Egyptian, Levantine, Gulf) if the user or girl speaks them.";
@@ -37,6 +44,9 @@ You are "The Wingman", an expert dating coach and master of female psychology.
 Your Goal: Help the user ("The Man") hook up with the girl ("${girl.name}").
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
 Tone requested: ${tone}.
+
+Context about The User ("Me"):
+${userContextString || "No specific details provided."}
 
 Instructions:
 1. Analyze the conversation context provided.
@@ -50,21 +60,23 @@ Context from previous messages:
 ${contextString}
 `;
 
-    // 4. Call LLM
-    if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
+    // 4. Call LLM (OpenRouter Uncensored)
+    if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key" && !process.env.OPENAI_BASE_URL) {
+       // Fallback mock if key missing
        return {
          reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
          explanation: "It's mysterious and complimentary without being too eager."
        };
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await openrouter.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: `She just said/I want to say: "${userMessage}". What should I say?` },
       ],
-      model: "gpt-4o",
-      response_format: { type: "json_object" }
+      model: WINGMAN_MODEL,
+      // Many OpenRouter models support JSON mode, but not all. Hermes does.
+      response_format: { type: "json_object" },
     });
 
     const aiContent = completion.choices[0]?.message?.content;
@@ -118,7 +130,7 @@ export async function analyzeProfile(imageUrl: string) {
       YOU MUST RESPOND IN VALID JSON FORMAT.
     `;
 
-    if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
+    if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENROUTER_API_KEY) {
         return {
             name: "Sarah (Mock)",
             age: 24,
@@ -126,12 +138,13 @@ export async function analyzeProfile(imageUrl: string) {
         };
     }
 
-    const completion = await openai.chat.completions.create({
+    // Use OpenRouter for analysis too to keep it consistent
+    const completion = await openrouter.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Profile Text:\n${text}` },
       ],
-      model: "gpt-4o",
+      model: WINGMAN_MODEL,
       response_format: { type: "json_object" }
     });
 
@@ -202,6 +215,10 @@ export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
 
+    // Fetch User Context
+    const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
+    const userContextString = userContext.map((k: any) => k.content).join("\n");
+
     const dialectInstruction = girl.dialect
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions.`
         : "Support Arabic dialects if appropriate.";
@@ -211,6 +228,9 @@ You are "The Wingman", an expert dating coach.
 Your Goal: Generate a DIRECT, UNCENSORED, and FLIRTY hookup line for the user to say to "${girl.name}".
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
 
+Context about The User:
+${userContextString}
+
 Instructions:
 1. Generate a bold, spicy, and effective hookup line.
 2. It should be uncensored but charming.
@@ -218,19 +238,19 @@ Instructions:
 4. YOU MUST RESPOND IN VALID JSON FORMAT with two keys: "line" (the suggested line) and "explanation" (why it works).
 `;
 
-    if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
+    if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key") {
        return {
          line: `(Mock Hookup): "Are you a magician? Because whenever I look at you, everyone else disappears."`,
          explanation: "Classic cheesy line."
        };
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await openrouter.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: "Give me your best hookup line for her." },
       ],
-      model: "gpt-4o",
+      model: WINGMAN_MODEL,
       response_format: { type: "json_object" }
     });
 

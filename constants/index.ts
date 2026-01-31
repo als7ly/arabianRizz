@@ -24,22 +24,22 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Basic Access to Services",
+        label: "Basic Rizz Access",
         isIncluded: true,
       },
       {
-        label: "Priority Customer Support",
+        label: "Uncensored AI",
         isIncluded: false,
       },
       {
-        label: "Priority Updates",
+        label: "Art Generation",
         isIncluded: false,
       },
     ],
   },
   {
     _id: 2,
-    name: "Pro Package",
+    name: "Starter Pack",
     icon: "/assets/icons/free-plan.svg",
     price: 9.99,
     credits: 100,
@@ -49,22 +49,22 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Full Access to Services",
+        label: "Uncensored Wingman",
         isIncluded: true,
       },
       {
-        label: "Priority Customer Support",
+        label: "Art Generation Access",
         isIncluded: true,
       },
       {
-        label: "Priority Updates",
-        isIncluded: false,
+        label: "Priority Support",
+        isIncluded: true,
       },
     ],
   },
   {
     _id: 3,
-    name: "Premium Package",
+    name: "Playboy Pack",
     icon: "/assets/icons/free-plan.svg",
     price: 19.99,
     credits: 250,
@@ -74,15 +74,40 @@ export const plans = [
         isIncluded: true,
       },
       {
-        label: "Full Access to Services",
+        label: "Uncensored Wingman",
         isIncluded: true,
       },
       {
-        label: "Priority Customer Support",
+        label: "Art Generation Access",
         isIncluded: true,
       },
       {
         label: "Priority Updates",
+        isIncluded: true,
+      },
+    ],
+  },
+  {
+    _id: 4,
+    name: "Rizz God Pack",
+    icon: "/assets/icons/free-plan.svg",
+    price: 49.99,
+    credits: 1000,
+    inclusions: [
+      {
+        label: "1000 Credits",
+        isIncluded: true,
+      },
+      {
+        label: "Ultimate Uncensored Access",
+        isIncluded: true,
+      },
+      {
+        label: "Unlimited Art Generation*",
+        isIncluded: true,
+      },
+      {
+        label: "VIP Status",
         isIncluded: true,
       },
     ],
