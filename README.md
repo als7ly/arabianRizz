@@ -1,7 +1,5 @@
 # ArabianRizz 🧞‍♂️ - The Uncensored AI Wingman
 
-![ArabianRizz](public/assets/images/logo-text.svg)
-
 **Stop getting rejected. Get Loved. Get Laid.**
 
 ArabianRizz is a cutting-edge **AI Dating Wingman** that helps men navigate modern dating with confidence. Unlike censored tools like ChatGPT, our AI is **unfiltered**, **spicy**, and **persuasive**.
