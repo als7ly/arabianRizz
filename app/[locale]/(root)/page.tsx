@@ -10,6 +10,7 @@ import { getTranslations } from 'next-intl/server';
 import CreditBalance from "@/components/shared/CreditBalance";
 import Pagination from "@/components/shared/Pagination";
 import Search from "@/components/shared/Search";
+import RizzTips from "@/components/shared/RizzTips";
 
 const Dashboard = async ({ params: { locale }, searchParams }: { params: { locale: string }, searchParams: SearchParamProps['searchParams'] }) => {
   const { userId } = auth();
@@ -66,6 +67,8 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
         <div className="sm:hidden mb-6 flex justify-center">
              <CreditBalance userId={userId} />
         </div>
+
+        <RizzTips />
 
         <div className="flex-between mb-8">
             <h2 className="h2-bold text-dark-600">{t('myGirls')}</h2>

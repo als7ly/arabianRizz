@@ -7,8 +7,8 @@ import { revalidatePath } from "next/cache";
 
 export const crawlAndStage = async (url: string, language: string) => {
   try {
-    const chunks = await crawlUrl(url);
-    const results = await processAndSave(chunks, language, url);
+    const { chunks, tags } = await crawlUrl(url);
+    const results = await processAndSave(chunks, language, url, tags);
     revalidatePath("/admin/knowledge");
     return { success: true, count: results.length };
   } catch (error) {
@@ -17,18 +17,32 @@ export const crawlAndStage = async (url: string, language: string) => {
   }
 };
 
-export const getPendingKnowledge = async (language?: string) => {
+export const getPendingKnowledge = async (page: number = 1, limit: number = 20, language?: string) => {
   try {
     await connectToDatabase();
+    const skip = (page - 1) * limit;
+
     const query = { status: 'pending' };
-    if (language) {
+    if (language && language !== 'all') {
       Object.assign(query, { language });
     }
-    const knowledge = await GlobalKnowledge.find(query).sort({ createdAt: -1 });
-    return JSON.parse(JSON.stringify(knowledge));
+
+    const knowledge = await GlobalKnowledge.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    const total = await GlobalKnowledge.countDocuments(query);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+        data: JSON.parse(JSON.stringify(knowledge)),
+        totalPages,
+        currentPage: page
+    };
   } catch (error) {
     console.error("Get Pending Knowledge Error:", error);
-    return [];
+    return { data: [], totalPages: 0, currentPage: 1 };
   }
 };
 
