@@ -1,0 +1,224 @@
+import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback } from '@/lib/actions/wingman.actions';
+import { openrouter } from '@/lib/openrouter';
+import { getGirlById } from '@/lib/actions/girl.actions';
+import { getContext } from '@/lib/actions/rag.actions';
+import { getUserContext } from '@/lib/actions/user-knowledge.actions';
+import { extractTextFromImage } from '@/lib/actions/ocr.actions';
+import Message from '@/lib/database/models/message.model';
+import { connectToDatabase } from '@/lib/database/mongoose';
+
+// Mocks
+jest.mock('@/lib/openrouter', () => ({
+  openrouter: {
+    chat: {
+      completions: {
+        create: jest.fn(),
+      },
+    },
+  },
+  WINGMAN_MODEL: 'mock-model',
+}));
+
+jest.mock('@/lib/openai', () => ({
+  openai: {
+    images: { generate: jest.fn() },
+    audio: { speech: { create: jest.fn() } },
+  },
+}));
+
+jest.mock('@/lib/actions/girl.actions', () => ({
+  getGirlById: jest.fn(),
+}));
+
+jest.mock('@/lib/actions/rag.actions', () => ({
+  getContext: jest.fn(),
+}));
+
+jest.mock('@/lib/actions/user-knowledge.actions', () => ({
+  getUserContext: jest.fn(),
+}));
+
+jest.mock('@/lib/actions/ocr.actions', () => ({
+  extractTextFromImage: jest.fn(),
+}));
+
+jest.mock('@/lib/database/mongoose', () => ({
+  connectToDatabase: jest.fn(),
+}));
+
+jest.mock('@/lib/database/models/message.model', () => ({
+  findByIdAndUpdate: jest.fn(),
+}));
+
+describe('Wingman Actions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (connectToDatabase as jest.Mock).mockResolvedValue(true);
+  });
+
+  describe('generateWingmanReply', () => {
+    const mockGirl = {
+      _id: 'girl123',
+      name: 'Jessica',
+      vibe: 'Fun and adventurous',
+      relationshipStatus: 'Dating',
+      author: 'user123',
+      dialect: 'Egyptian',
+    };
+
+    const mockContext = [{ role: 'user', content: 'Hi' }, { role: 'wingman', content: 'Hello' }];
+    const mockUserContext = [{ content: 'User loves hiking' }];
+
+    it('should generate a reply successfully with valid JSON response', async () => {
+      (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+      (getContext as jest.Mock).mockResolvedValue(mockContext);
+      (getUserContext as jest.Mock).mockResolvedValue(mockUserContext);
+
+      const mockAiResponse = {
+        reply: 'Go for a hike together!',
+        explanation: 'Because you both like it.',
+      };
+
+      (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
+      });
+
+      const result = await generateWingmanReply('girl123', 'I want to go hiking', 'Flirty');
+
+      expect(getGirlById).toHaveBeenCalledWith('girl123');
+      expect(getContext).toHaveBeenCalledWith('girl123', 'I want to go hiking');
+      expect(getUserContext).toHaveBeenCalledWith('user123', 'I want to go hiking');
+      expect(openrouter.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
+        model: 'mock-model',
+        messages: expect.arrayContaining([
+          expect.objectContaining({ role: 'system', content: expect.stringContaining('She speaks the Egyptian Arabic dialect') }),
+          expect.objectContaining({ role: 'user' }),
+        ]),
+      }));
+      expect(result).toEqual(mockAiResponse);
+    });
+
+    it('should handle invalid JSON from AI gracefully', async () => {
+      (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+      (getContext as jest.Mock).mockResolvedValue([]);
+      (getUserContext as jest.Mock).mockResolvedValue([]);
+
+      (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+        choices: [{ message: { content: 'Not valid JSON' } }],
+      });
+
+      const result = await generateWingmanReply('girl123', 'Hi');
+
+      expect(result).toEqual({
+        reply: 'Not valid JSON',
+        explanation: 'Could not parse AI response.',
+      });
+    });
+
+    it('should handle errors gracefully', async () => {
+      (getGirlById as jest.Mock).mockRejectedValue(new Error('DB Error'));
+
+      const result = await generateWingmanReply('girl123', 'Hi');
+
+      expect(result).toEqual({
+        reply: 'Error generating reply.',
+        explanation: 'Something went wrong with the AI.',
+      });
+    });
+  });
+
+  describe('analyzeProfile', () => {
+    it('should analyze profile successfully', async () => {
+      (extractTextFromImage as jest.Mock).mockResolvedValue('Name: Sarah, Age: 25');
+
+      const mockAnalysis = {
+        name: 'Sarah',
+        age: 25,
+        vibe: 'Unknown',
+        socialMediaHandle: null,
+      };
+
+      (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(mockAnalysis) } }],
+      });
+
+      const result = await analyzeProfile('http://example.com/image.jpg');
+
+      expect(extractTextFromImage).toHaveBeenCalledWith('http://example.com/image.jpg');
+      expect(result).toEqual(mockAnalysis);
+    });
+
+    it('should return null if OCR fails (returns empty)', async () => {
+      (extractTextFromImage as jest.Mock).mockResolvedValue('');
+
+      const result = await analyzeProfile('http://example.com/image.jpg');
+
+      expect(result).toBeNull();
+      expect(openrouter.chat.completions.create).not.toHaveBeenCalled();
+    });
+
+    it('should return null on JSON parse error', async () => {
+        (extractTextFromImage as jest.Mock).mockResolvedValue('text');
+        (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+            choices: [{ message: { content: 'Bad JSON' } }],
+        });
+
+        const result = await analyzeProfile('url');
+        expect(result).toBeNull();
+    });
+  });
+
+  describe('generateHookupLine', () => {
+    const mockGirl = {
+        _id: 'girl123',
+        name: 'Jessica',
+        vibe: 'Fun',
+        relationshipStatus: 'Dating',
+        author: 'user123',
+        dialect: 'Levantine',
+      };
+
+      it('should generate hookup line successfully', async () => {
+        (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+        (getUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
+
+        const mockResponse = {
+          line: 'Nice shoes.',
+          explanation: 'It works.',
+        };
+
+        (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+          choices: [{ message: { content: JSON.stringify(mockResponse) } }],
+        });
+
+        const result = await generateHookupLine('girl123');
+
+        expect(getGirlById).toHaveBeenCalledWith('girl123');
+        expect(openrouter.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
+            messages: expect.arrayContaining([
+                expect.objectContaining({ role: 'system', content: expect.stringContaining('Levantine') })
+            ])
+        }));
+        expect(result).toEqual(mockResponse);
+      });
+  });
+
+  describe('submitFeedback', () => {
+      it('should update message feedback', async () => {
+          (Message.findByIdAndUpdate as jest.Mock).mockResolvedValue({});
+
+          const result = await submitFeedback('msg123', 'positive');
+
+          expect(Message.findByIdAndUpdate).toHaveBeenCalledWith('msg123', { feedback: 'positive' });
+          expect(result).toEqual({ success: true });
+      });
+
+      it('should handle errors', async () => {
+          (Message.findByIdAndUpdate as jest.Mock).mockRejectedValue(new Error('DB Error'));
+
+          const result = await submitFeedback('msg123', 'positive');
+
+          expect(result).toEqual({ success: false });
+      });
+  });
+});
