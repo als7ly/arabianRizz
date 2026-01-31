@@ -39,7 +39,7 @@ const MobileNav = () => {
       >
         <div className="flex justify-between items-center mb-8">
             <Image src="/assets/images/logo-text.svg" alt="logo" width={128} height={38} />
-            <Button variant="ghost" size="icon" onClick={toggleMenu}>
+            <Button variant="ghost" size="icon" onClick={toggleMenu} aria-label="Close menu">
                 <X className="h-6 w-6" />
             </Button>
         </div>
