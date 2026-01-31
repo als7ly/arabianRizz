@@ -8,6 +8,22 @@ import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
 import { connectToDatabase } from "../database/mongoose";
+import { auth } from "@clerk/nextjs";
+import User from "../database/models/user.model";
+
+async function verifyOwnership(girlAuthorId: any) {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    if (girlAuthorId.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized Access");
+    }
+    return user;
+}
 
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
   try {
@@ -24,6 +40,19 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
   try {
     // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
+
+    // Security Check & Credit Check
+    const user = await verifyOwnership(girl.author);
+
+    if (user.creditBalance < 1) {
+        return {
+            reply: "You are out of credits! Please top up to continue.",
+            explanation: "Insufficient credits."
+        };
+    }
+
+    // Deduct Credit (Optimistic - we deduct before generation to prevent spam, or after? Usually after success, but here we do it to ensure payment)
+    // To be safe/fair, we deduct AFTER success, but we check BEFORE.
 
     // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
@@ -82,6 +111,9 @@ ${contextString}
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
+        // Deduct Credit on Success
+        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+
         try {
             const parsed = JSON.parse(aiContent);
             return {
@@ -215,6 +247,16 @@ export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
 
+    // Security Check
+    const user = await verifyOwnership(girl.author);
+
+    if (user.creditBalance < 1) {
+         return {
+            line: "You are out of credits! Please top up.",
+            explanation: "Insufficient credits."
+        };
+    }
+
     // Fetch User Context
     const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
     const userContextString = userContext.map((k: any) => k.content).join("\n");
@@ -257,6 +299,9 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
+        // Deduct Credit
+        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+
         try {
             const parsed = JSON.parse(aiContent);
             return {
