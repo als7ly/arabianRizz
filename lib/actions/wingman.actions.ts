@@ -8,6 +8,21 @@ import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
 import { connectToDatabase } from "../database/mongoose";
+import { auth } from "@clerk/nextjs";
+import User from "../database/models/user.model";
+
+async function verifyOwnership(girlAuthorId: any) {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    if (girlAuthorId.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized Access");
+    }
+}
 
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
   try {
@@ -24,6 +39,9 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
   try {
     // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
+
+    // Security Check
+    await verifyOwnership(girl.author);
 
     // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
@@ -214,6 +232,9 @@ export async function generateSpeech(text: string) {
 export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
+
+    // Security Check
+    await verifyOwnership(girl.author);
 
     // Fetch User Context
     const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");

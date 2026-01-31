@@ -290,7 +290,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
 
       {/* Top Bar for Actions */}
       <div className="absolute top-2 right-2 z-10 flex gap-2">
@@ -328,9 +328,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           <div
             key={idx}
             className={cn(
-              "flex w-full group",
+              "flex w-full group animate-fade-in-up",
               msg.role === "user" ? "justify-end" : "justify-start"
             )}
+            style={{ animationDelay: `${idx * 0.05}s` }}
           >
             <div
               className={cn(
@@ -403,26 +404,29 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           </div>
         ))}
         {isLoading && (
-            <div className="flex justify-start w-full" role="status" aria-live="polite">
+            <div className="flex justify-start w-full animate-pulse" role="status" aria-live="polite">
                 <div className="bg-white border border-purple-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
-                    <Loader2 className="animate-spin text-purple-500" size={16} />
-                    <span className="text-xs text-gray-400">{t('wingmanThinking')}</span>
+                    <Sparkles className="animate-spin text-purple-500" size={16} />
+                    <span className="text-xs text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 font-semibold">
+                        {t('wingmanThinking')}...
+                    </span>
                 </div>
             </div>
         )}
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t p-4 flex items-end gap-2">
-        <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
-        
-        <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art">
-                    <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
+      <div className="bg-white border-t p-3 md:p-4 flex flex-wrap md:flex-nowrap items-end gap-2 sticky bottom-0 z-20">
+        <div className="flex items-center gap-1 md:gap-2">
+            <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
+
+            <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art" className="h-9 w-9">
+                        <ImageIcon size={20} className="text-dark-400 hover:text-purple-500"/>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Generate Art</DialogTitle>
                     <DialogDescription>
@@ -444,20 +448,32 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     </Button>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+                </DialogContent>
+            </Dialog>
 
-        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')}>
-            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
-        </Button>
+            <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} className="h-9 w-9">
+                <Zap size={20} className="text-dark-400 hover:text-yellow-500"/>
+            </Button>
 
-        <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat">
-            <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
-        </Button>
+            <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat" className="h-9 w-9">
+                <Trash2 size={20} className="text-dark-400 hover:text-red-500"/>
+            </Button>
+        </div>
 
-        <Select value={tone} onValueChange={setTone}>
-            <SelectTrigger className="w-[100px] h-10 border-0 focus:ring-0 px-2 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg">
-                <SelectValue placeholder="Tone" />
-            </SelectTrigger>
+        <div className="hidden md:block">
+             <Select value={tone} onValueChange={setTone}>
+                <SelectTrigger className="w-[90px] h-10 border-0 focus:ring-0 px-2 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg">
+                    <SelectValue placeholder="Tone" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Flirty">Flirty</SelectItem>
+                    <SelectItem value="Funny">Funny</SelectItem>
+                    <SelectItem value="Serious">Serious</SelectItem>
+                    <SelectItem value="Mysterious">Mysterious</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+
             <SelectContent>
                 <SelectItem value="Flirty">Flirty</SelectItem>
                 <SelectItem value="Funny">Funny</SelectItem>
@@ -466,26 +482,25 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             </SelectContent>
         </Select>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 flex gap-2 w-full md:w-auto">
              <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                 placeholder={t('inputPlaceholder')}
-                className="pr-10"
+                className="flex-1"
                 disabled={isLoading}
                 aria-label="Message input"
             />
+             <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
+                aria-label="Send message"
+            >
+                <Send size={18} className="text-white ml-0.5" />
+            </Button>
         </div>
-        
-        <Button 
-            onClick={handleSendMessage} 
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center"
-            aria-label="Send message"
-        >
-            <Send size={18} className="text-white ml-0.5" />
-        </Button>
       </div>
     </div>
   );
