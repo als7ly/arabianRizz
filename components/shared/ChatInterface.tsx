@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera, Share2 } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -170,6 +170,26 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         description: "Message copied to clipboard.",
         duration: 3000,
     });
+  };
+
+  const handleShare = async (text: string, isImage: boolean = false) => {
+      const shareData = {
+          title: 'ArabianRizz',
+          text: isImage ? 'Check out this generated image!' : text,
+          url: isImage ? text : undefined
+      };
+
+      if (navigator.share) {
+          try {
+              await navigator.share(shareData);
+          } catch (err) {
+              console.error(err);
+          }
+      } else {
+          // Fallback: Copy to clipboard
+          handleCopy(text);
+          toast({ title: "Copied Link", description: "Sharing not supported, link copied." });
+      }
   };
 
   const handlePlayAudio = async (message: Message, idx: number) => {
@@ -379,13 +399,24 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
               {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">{t('sheSaid')}</div>}
               
               {msg.content.startsWith("[IMAGE]:") ? (
-                  <Image 
-                    src={msg.content.replace("[IMAGE]: ", "")} 
-                    alt="Generated" 
-                    width={500}
-                    height={500}
-                    className="rounded-lg max-w-full h-auto" 
-                  />
+                  <div className="relative">
+                    <Image
+                        src={msg.content.replace("[IMAGE]: ", "")}
+                        alt="Generated"
+                        width={500}
+                        height={500}
+                        className="rounded-lg max-w-full h-auto"
+                    />
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute bottom-2 right-2 bg-white/80 hover:bg-white text-gray-700"
+                        onClick={() => handleShare(msg.content.replace("[IMAGE]: ", ""), true)}
+                        title="Share Image"
+                    >
+                        <Share2 size={16} />
+                    </Button>
+                  </div>
               ) : (
                   <div className="flex flex-col gap-1">
                       <div className="flex items-start gap-2">
@@ -424,6 +455,16 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                     aria-label="Copy to clipboard"
                                 >
                                     <Copy size={14} />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-gray-400 hover:text-green-600"
+                                    onClick={() => handleShare(msg.content)}
+                                    title="Share"
+                                    aria-label="Share message"
+                                >
+                                    <Share2 size={14} />
                                 </Button>
                             </div>
                             {msg._id && <Feedback messageId={msg._id} />}

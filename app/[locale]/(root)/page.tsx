@@ -11,6 +11,8 @@ import CreditBalance from "@/components/shared/CreditBalance";
 import Pagination from "@/components/shared/Pagination";
 import Search from "@/components/shared/Search";
 import RizzTips from "@/components/shared/RizzTips";
+import OnboardingWizard from "@/components/shared/OnboardingWizard";
+import { getUserContext } from "@/lib/actions/user-knowledge.actions";
 
 const Dashboard = async ({ params: { locale }, searchParams }: { params: { locale: string }, searchParams: SearchParamProps['searchParams'] }) => {
   const { userId } = auth();
@@ -26,8 +28,15 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
   const girls = girlsData?.data || [];
   const totalPages = girlsData?.totalPages || 0;
 
+  // Check if user has completed onboarding (by checking if they have any knowledge/persona)
+  // Or check a specific flag on user model. For now, checking UserKnowledge count is simple.
+  const userContext = await getUserContext(user._id, "persona");
+  const showOnboarding = userContext.length === 0;
+
   return (
     <>
+      {showOnboarding && <OnboardingWizard userId={user._id} open={true} />}
+
       <section className="home relative overflow-hidden bg-purple-900">
         <div className="absolute inset-0 bg-[url('/assets/images/hero-pattern.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
         <div className="absolute top-[-50%] left-[-20%] w-[800px] h-[800px] bg-purple-600 rounded-full blur-[120px] opacity-30 animate-pulse"></div>
