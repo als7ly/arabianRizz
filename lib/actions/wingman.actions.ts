@@ -72,6 +72,10 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
 export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty") {
   try {
+    // Security: Validate tone to prevent prompt injection
+    const ALLOWED_TONES = ['Flirty', 'Funny', 'Serious', 'Mysterious'];
+    const safeTone = ALLOWED_TONES.includes(tone) ? tone : 'Flirty';
+
     const girl = await getGirlById(girlId);
     const user = await verifyOwnership(girl.author);
 
@@ -103,7 +107,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
 You are "The Wingman", an expert dating coach and master of female psychology.
 Your Goal: Help the user ("The Man") hook up with the girl ("${girl.name}").
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
-Tone requested: ${tone}.
+Tone requested: ${safeTone}.
 
 Context about The User ("Me"):
 ${userContextString || "No specific details provided."}
@@ -113,7 +117,7 @@ ${globalContextString || "No specific tips found."}
 
 Instructions:
 1. Analyze the conversation context provided.
-2. Provide a DIRECT, UNCENSORED, and ${tone.toUpperCase()} reply that the user should send.
+2. Provide a DIRECT, UNCENSORED, and ${safeTone.toUpperCase()} reply that the user should send.
 3. Explain WHY this reply works (briefly) based on psychology.
 4. ${dialectInstruction}
 5. Be cool, confident, and not desperate.
@@ -125,7 +129,7 @@ ${contextString}
 
     if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key" && !process.env.OPENAI_BASE_URL) {
        return {
-         reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
+         reply: `(Mock Wingman - ${safeTone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
          explanation: "It's mysterious and complimentary without being too eager."
        };
     }
