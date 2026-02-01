@@ -14,6 +14,7 @@ import User from "../database/models/user.model";
 import GlobalKnowledge from "../database/models/global-knowledge.model";
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
+import { updateGamification } from "./gamification.actions";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -141,7 +142,11 @@ ${contextString}
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
+        // Deduct Credit on Success
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+
+        // Update Gamification Stats
+        await updateGamification(user._id);
 
         try {
             const parsed = JSON.parse(aiContent);
@@ -371,6 +376,7 @@ Instructions:
 
     if (aiContent) {
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+        await updateGamification(user._id);
 
         try {
             const parsed = JSON.parse(aiContent);

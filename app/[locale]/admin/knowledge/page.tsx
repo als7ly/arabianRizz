@@ -1,4 +1,5 @@
 import { getPendingKnowledge } from "@/lib/actions/admin.actions";
+import { getUserById } from "@/lib/actions/user.actions";
 import CrawlerForm from "@/components/shared/CrawlerForm";
 import PendingItem from "@/components/shared/PendingItem";
 import Header from "@/components/shared/Header";
@@ -9,9 +10,18 @@ import { redirect } from "next/navigation";
 export default async function KnowledgeAdminPage({ searchParams }: { searchParams: SearchParamProps['searchParams'] }) {
   const { userId } = auth();
 
-  // Basic Auth Check - In a real app, check against an ADMIN_ID env var or user role
   if (!userId) {
       redirect("/sign-in");
+  }
+
+  // RBAC Check
+  try {
+      const user = await getUserById(userId);
+      if (user.role !== 'admin') {
+          redirect("/"); // Redirect unauthorized users to home
+      }
+  } catch (e) {
+      redirect("/");
   }
 
   const page = Number(searchParams?.page) || 1;
