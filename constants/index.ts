@@ -13,6 +13,15 @@ export const navLinks = [
   },
 ];
 
+export const VOICE_OPTIONS = [
+  { key: "nova", value: "nova" },
+  { key: "shimmer", value: "shimmer" },
+  { key: "alloy", value: "alloy" },
+  { key: "echo", value: "echo" },
+  { key: "fable", value: "fable" },
+  { key: "onyx", value: "onyx" },
+];
+
 export const plans = [
   {
     _id: 1,
@@ -39,7 +48,6 @@ export const plans = [
       },
       {
         label: "Art Generation",
-        key: "art_generation",
         isIncluded: false,
       },
     ],

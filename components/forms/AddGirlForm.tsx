@@ -29,12 +29,14 @@ import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
+import { VOICE_OPTIONS } from "@/constants";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
   age: z.coerce.number().optional(),
   vibe: z.string().optional(),
   dialect: z.string().optional(),
+  voiceId: z.string().optional(),
   relationshipStatus: z.string(),
   rating: z.coerce.number().min(1).max(10).default(5),
   socialMediaHandle: z.string().optional(),
@@ -55,6 +57,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       age: undefined,
       vibe: "",
       dialect: "Modern Standard Arabic",
+      voiceId: "nova",
       relationshipStatus: "Just met",
       rating: 5,
       socialMediaHandle: "",
@@ -113,6 +116,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         socialMediaHandle: values.socialMediaHandle,
         vibe: values.vibe,
         dialect: values.dialect,
+        voiceId: values.voiceId,
         relationshipStatus: values.relationshipStatus,
         userId,
         path: pathname,
@@ -258,31 +262,56 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="dialect"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Dialect</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="select-field">
-                    <SelectValue placeholder="Select dialect" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Modern Standard Arabic">Modern Standard Arabic (MSA)</SelectItem>
-                  <SelectItem value="Egyptian">Egyptian (Masri)</SelectItem>
-                  <SelectItem value="Levantine">Levantine (Shami)</SelectItem>
-                  <SelectItem value="Gulf">Gulf (Khaleeji)</SelectItem>
-                  <SelectItem value="Maghrebi">Maghrebi (Darija)</SelectItem>
-                  <SelectItem value="Iraqi">Iraqi</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex gap-4">
+            <FormField
+            control={form.control}
+            name="dialect"
+            render={({ field }) => (
+                <FormItem className="flex-1">
+                <FormLabel>Dialect</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger className="select-field">
+                        <SelectValue placeholder="Select dialect" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Modern Standard Arabic">{t('DialectOptions.msa')}</SelectItem>
+                      <SelectItem value="Egyptian">{t('DialectOptions.egyptian')}</SelectItem>
+                      <SelectItem value="Levantine">{t('DialectOptions.levantine')}</SelectItem>
+                      <SelectItem value="Gulf">{t('DialectOptions.gulf')}</SelectItem>
+                      <SelectItem value="Maghrebi">{t('DialectOptions.maghrebi')}</SelectItem>
+                      <SelectItem value="Iraqi">{t('DialectOptions.iraqi')}</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+
+            <FormField
+            control={form.control}
+            name="voiceId"
+            render={({ field }) => (
+                <FormItem className="flex-1">
+                <FormLabel>Voice</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger className="select-field">
+                        <SelectValue placeholder="Select Voice" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {VOICE_OPTIONS.map((voice) => (
+                            <SelectItem key={voice.value} value={voice.value}>{t(`VoiceOptions.${voice.key}`)}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
 
         <FormField
           control={form.control}

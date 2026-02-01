@@ -79,6 +79,22 @@
       "failDesc": "Could not extract details.",
       "errorTitle": "Error",
       "errorDesc": "Something went wrong during analysis."
+    },
+    "VoiceOptions": {
+      "nova": "Nova (Female, Energetic)",
+      "shimmer": "Shimmer (Female, Clear)",
+      "alloy": "Alloy (Neutral, Balanced)",
+      "echo": "Echo (Male, Deep)",
+      "fable": "Fable (Male, British)",
+      "onyx": "Onyx (Male, Authoritative)"
+    },
+    "DialectOptions": {
+        "msa": "Modern Standard Arabic (MSA)",
+        "egyptian": "Egyptian (Masri)",
+        "levantine": "Levantine (Shami)",
+        "gulf": "Gulf (Khaleeji)",
+        "maghrebi": "Maghrebi (Darija)",
+        "iraqi": "Iraqi"
     }
   },
   "Chat": {

@@ -10,7 +10,7 @@ import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
 import { generateArt } from "@/lib/actions/image.actions";
-import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
+import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
@@ -53,8 +53,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [tone, setTone] = useState("Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [voiceId, setVoiceId] = useState<string>("nova"); // Default to nova
   const scrollRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
 
@@ -64,6 +64,21 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   }, [messages]);
 
+  // Fetch Voice ID on mount
+  useEffect(() => {
+    const fetchGirlVoice = async () => {
+        try {
+            const girl = await getGirlById(girlId);
+            if (girl && girl.voiceId) {
+                setVoiceId(girl.voiceId);
+            }
+        } catch (error) {
+            console.error("Failed to fetch girl details:", error);
+        }
+    };
+    fetchGirlVoice();
+  }, [girlId]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -71,25 +86,19 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     setInputValue("");
     setIsLoading(true);
 
-    // 1. Add User Message
     const newMsg: Message = { role: "user", content: userMsg };
     setMessages((prev) => [...prev, newMsg]);
 
     try {
       await addMessage({ girlId, role: "user", content: userMsg });
 
-      // 2. Generate Wingman Reply
       const { reply, explanation } = await generateWingmanReply(girlId, userMsg, tone);
       
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
-      // We need to fetch the newly created message to get its ID for feedback
-      // For now, we will optimistically update and rely on revalidation or refetch if needed
-      // Ideally, `addMessage` should return the full message object
       const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
 
-      // Update the last message with the real ID from DB
       setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = savedMsg;
@@ -111,14 +120,12 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   };
 
   const handleRegenerate = async (index: number) => {
-    // Ensure there is a preceding user message
     if (index <= 0) return;
     const userMsg = messages[index - 1];
-    if (userMsg.role !== "user" && userMsg.role !== "girl") return; // Only regenerate if responding to user/girl
+    if (userMsg.role !== "user" && userMsg.role !== "girl") return;
 
     setIsLoading(true);
     try {
-        // Optimistically show loading
         const newMsgs = [...messages];
         newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
         setMessages(newMsgs);
@@ -128,10 +135,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         const updatedMsgs = [...messages];
         updatedMsgs[index] = { ...updatedMsgs[index], content: reply || "Error" };
         setMessages(updatedMsgs);
-
-        // Don't add to DB again, or update existing?
-        // For simplicity, we just show the new one.
-        // Ideally we might update the DB record if we had the ID.
 
         toast({
             title: "Regenerated Tip",
@@ -159,7 +162,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const handlePlayAudio = async (text: string, msgIndex: number) => {
     try {
         setPlayingAudioId(msgIndex.toString());
-        const audioUrl = await generateSpeech(text);
+        // Pass voiceId to generateSpeech
+        const audioUrl = await generateSpeech(text, voiceId);
 
         if (audioUrl) {
             const audio = new Audio(audioUrl);
@@ -181,7 +185,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     toast({ title: t('readingScreenshot'), description: t('readingScreenshotDesc') });
 
     try {
-        // 1. OCR
         const text = await extractTextFromImage(url);
         if (!text) {
             toast({ title: t('errorTitle'), description: t('noTextInImage'), variant: "destructive" });
@@ -189,12 +192,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             return;
         }
 
-        // 2. Add Girl Message (Context)
         const newMsg: Message = { role: "girl", content: `(Screenshot): ${text}` };
         setMessages((prev) => [...prev, newMsg]);
         await addMessage({ girlId, role: "girl", content: text });
 
-        // 3. Generate Reply
         const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
@@ -292,7 +293,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
 
-      {/* Top Bar for Actions */}
       <div className="absolute top-2 right-2 z-10 flex gap-2">
           {messages.length > 0 && (
             <AlertDialog>
@@ -323,7 +323,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           )}
       </div>
 
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
         {messages.length === 0 && (
             <div className="flex-center h-full text-gray-400">
@@ -424,7 +423,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         )}
       </div>
 
-      {/* Input Area */}
       <div className="bg-white border-t p-4 flex items-end gap-2">
         <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
         
@@ -456,17 +454,16 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     </Button>
                 </DialogFooter>
             </DialogContent>
-                </DialogContent>
-            </Dialog>
+        </Dialog>
 
         <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
         </Button>
 
-        <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat" aria-label="Clear chat">
-            <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
-        </Button>
-
+        <Select onValueChange={setTone} defaultValue="Flirty">
+            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0">
+                <SelectValue placeholder="Tone" />
+            </SelectTrigger>
             <SelectContent>
                 <SelectItem value="Flirty">Flirty</SelectItem>
                 <SelectItem value="Funny">Funny</SelectItem>

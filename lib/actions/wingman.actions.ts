@@ -35,25 +35,20 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
     // 2. Auto-Learning: If positive, save to GlobalKnowledge
     if (feedback === 'positive' && message && message.role === 'wingman') {
-        // We need to infer the language. For now, we default to 'en' or check the message content?
-        // Or we could store the language on the message model.
-        // Simple heuristic: check if it contains Arabic chars.
         const arabicPattern = /[\u0600-\u06FF]/;
-        const language = arabicPattern.test(message.content) ? 'ar' : 'en'; // Default to en if no arabic chars
+        const language = arabicPattern.test(message.content) ? 'ar' : 'en';
 
-        // Generate embedding for the successful reply
         const embeddingResponse = await openai.embeddings.create({
             model: "text-embedding-3-small",
             input: message.content,
         });
         const embedding = embeddingResponse.data[0].embedding;
 
-        // Save to GlobalKnowledge
         await GlobalKnowledge.create({
             content: message.content,
             embedding: embedding,
             language: language,
-            sourceUrl: "user-feedback", // Marker for learned content
+            sourceUrl: "user-feedback",
             status: 'approved',
             tags: ['user-feedback', 'auto-learned']
         });
@@ -68,10 +63,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
 export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty") {
   try {
-    // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
-
-    // Security Check & Credit Check
     const user = await verifyOwnership(girl.author);
 
     if (user.creditBalance < 1) {
@@ -81,16 +73,12 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
     const contextString = JSON.stringify(contextMessages);
 
-    // 3. Fetch Context (RAG - User)
     const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
-    // 4. Fetch Global Knowledge (RAG - Global/Crawler)
-    // Determine language (heuristic: if userMessage has Arabic, use 'ar', else 'en')
     const arabicPattern = /[\u0600-\u06FF]/;
     const isArabic = arabicPattern.test(userMessage) || (girl.dialect && girl.dialect !== 'English');
     const language = isArabic ? 'ar' : 'en';
@@ -98,7 +86,6 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const globalKnowledge = await getGlobalKnowledge(userMessage, language);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
-    // 5. Construct System Prompt
     const dialectInstruction = girl.dialect 
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions in your suggested reply if the conversation is in Arabic.`
         : "Support Arabic dialects (Egyptian, Levantine, Gulf) if the user or girl speaks them.";
@@ -127,7 +114,6 @@ Context from previous messages:
 ${contextString}
 `;
 
-    // 6. Call LLM (OpenRouter Uncensored)
     if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key" && !process.env.OPENAI_BASE_URL) {
        return {
          reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
@@ -147,7 +133,6 @@ ${contextString}
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        // Deduct Credit on Success
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
 
         try {
@@ -181,11 +166,9 @@ ${contextString}
 
 export async function analyzeProfile(imageUrl: string) {
   try {
-    // 1. OCR
     const text = await extractTextFromImage(imageUrl);
     if (!text) return null;
 
-    // 2. AI Analysis
     const systemPrompt = `
       You are an AI that extracts data from dating profiles (Tinder, Bumble, Hinge, etc.).
       Extract the following fields from the provided text:
@@ -255,15 +238,18 @@ export async function generateResponseImage(prompt: string) {
   }
 }
 
-export async function generateSpeech(text: string) {
+export async function generateSpeech(text: string, voiceId: string = "nova") {
   try {
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return null;
     }
 
+    // Cast voiceId to the specific string literal type required by OpenAI SDK
+    const voice = voiceId as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
-      voice: "onyx",
+      voice: voice,
       input: text,
     });
 
@@ -280,7 +266,6 @@ export async function generateSpeech(text: string) {
 export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
-
     const user = await verifyOwnership(girl.author);
 
     if (user.creditBalance < 1) {
@@ -297,7 +282,6 @@ export async function generateHookupLine(girlId: string) {
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions.`
         : "Support Arabic dialects if appropriate.";
 
-    // Global RAG for hookup lines
     const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
     const globalKnowledge = await getGlobalKnowledge("best hookup lines dating advice", language);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");

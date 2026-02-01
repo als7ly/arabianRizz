@@ -25,12 +25,8 @@ export async function createGirl(girl: CreateGirlParams) {
     await connectToDatabase();
     
     // Security Check: Ensure the author exists and matches the authenticated user
-    // Note: getCurrentUser retrieves the MongoDB user document
     const user = await getCurrentUser();
     
-    // Authorization is implicitly handled by getCurrentUser() and overriding the author field below.
-    // We do not trust the client-provided userId for authorization.
-
     // Atomic update to ensure credits are sufficient and deducted
     const updatedUser = await User.findOneAndUpdate(
         { _id: user._id, creditBalance: { $gte: 1 } },
@@ -55,8 +51,6 @@ export async function createGirl(girl: CreateGirlParams) {
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: 1 } });
         throw error;
     }
-
-    return JSON.parse(JSON.stringify(newGirl));
   } catch (error) {
     handleError(error);
   }
@@ -144,6 +138,7 @@ export async function updateGirl(girl: UpdateGirlParams) {
         age: girl.age,
         vibe: girl.vibe,
         dialect: girl.dialect,
+        voiceId: girl.voiceId, // Added Voice ID support
         relationshipStatus: girl.relationshipStatus,
         rating: girl.rating,
         socialMediaHandle: girl.socialMediaHandle,

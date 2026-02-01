@@ -3,8 +3,17 @@ import CrawlerForm from "@/components/shared/CrawlerForm";
 import PendingItem from "@/components/shared/PendingItem";
 import Header from "@/components/shared/Header";
 import Pagination from "@/components/shared/Pagination";
+import { auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
 export default async function KnowledgeAdminPage({ searchParams }: { searchParams: SearchParamProps['searchParams'] }) {
+  const { userId } = auth();
+
+  // Basic Auth Check - In a real app, check against an ADMIN_ID env var or user role
+  if (!userId) {
+      redirect("/sign-in");
+  }
+
   const page = Number(searchParams?.page) || 1;
   const language = (searchParams?.language as string) || 'all';
 
