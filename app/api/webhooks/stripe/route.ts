@@ -1,13 +1,18 @@
 /* eslint-disable camelcase */
 import { createTransaction } from "@/lib/actions/transaction.actions";
 import { NextResponse } from "next/server";
-import stripe from "stripe";
+import Stripe from "stripe";
 
 export async function POST(request: Request) {
   const body = await request.text();
 
   const sig = request.headers.get("stripe-signature") as string;
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
+  // Properly initialize Stripe
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2023-10-16', // Use a specific API version or 'latest' if appropriate
+  });
 
   let event;
 
@@ -41,16 +46,7 @@ export async function POST(request: Request) {
   // Handle Recurring Subscriptions (Invoice Paid)
   if (eventType === "invoice.payment_succeeded") {
       const invoice = event.data.object;
-
-      // Logic to find user by customer email or ID and grant credits
-      // This assumes we stored customer_id on the user model, or can look up by email.
-      // For this MVP, we might log it.
-      // If metadata is present on subscription, use it.
-
-      // Note: Recurring credits logic typically requires robust subscription management
-      // linking Stripe Customer ID to our User ID.
       console.log("Invoice paid:", invoice.id);
-
       return NextResponse.json({ message: "Invoice Processed" });
   }
 

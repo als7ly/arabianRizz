@@ -146,19 +146,22 @@ ${contextString}
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
 
         // Update Gamification Stats
-        await updateGamification(user._id);
+        const gamificationResult = await updateGamification(user._id);
+        const newBadges = gamificationResult?.newBadges || [];
 
         try {
             const parsed = JSON.parse(aiContent);
             return {
                 reply: parsed.reply || "Error parsing reply",
-                explanation: parsed.explanation || "No explanation provided"
+                explanation: parsed.explanation || "No explanation provided",
+                newBadges // Include badges in response
             };
         } catch (e) {
             console.error("JSON Parse Error:", e);
             return {
                 reply: aiContent,
-                explanation: "Could not parse AI response."
+                explanation: "Could not parse AI response.",
+                newBadges
             };
         }
     }

@@ -16,17 +16,26 @@ export async function updateGamification(userId: string) {
     // 2. Update Streak
     const now = new Date();
     const lastActive = new Date(user.streak?.lastActive || 0);
-    const diffTime = Math.abs(now.getTime() - lastActive.getTime());
+
+    // Normalize to midnight to compare calendar days
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastDay = new Date(lastActive.getFullYear(), lastActive.getMonth(), lastActive.getDate());
+
+    const diffTime = Math.abs(today.getTime() - lastDay.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 1) {
-        // Consecutive day
+        // Consecutive day (Yesterday vs Today)
         user.streak.current += 1;
     } else if (diffDays > 1) {
-        // Streak broken
+        // Streak broken (Missed at least one day)
         user.streak.current = 1;
+    } else {
+        // Same day (diffDays === 0)
+        // Ensure streak is at least 1 if it's the first interaction ever
+        if (user.streak.current === 0) user.streak.current = 1;
     }
-    // If diffDays is 0 (same day), do nothing to streak count
+
     user.streak.lastActive = now;
 
     // 3. Check Badges
@@ -51,10 +60,16 @@ export async function updateGamification(userId: string) {
     }
 
     await user.save();
-    return JSON.parse(JSON.stringify(user));
+
+    // Return both the updated user AND the new badges for frontend notification
+    return {
+        user: JSON.parse(JSON.stringify(user)),
+        newBadges: newBadges
+    };
 
   } catch (error) {
     console.error("Gamification Error:", error);
+    return null;
   }
 }
 

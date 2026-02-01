@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -37,6 +37,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 type Message = {
   _id?: string;
@@ -92,7 +94,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     try {
       await addMessage({ girlId, role: "user", content: userMsg });
 
-      const { reply, explanation } = await generateWingmanReply(girlId, userMsg, tone);
+      const { reply, explanation, newBadges } = await generateWingmanReply(girlId, userMsg, tone);
       
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
@@ -110,6 +112,17 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         description: explanation,
         duration: 6000,
       });
+
+      if (newBadges && newBadges.length > 0) {
+          newBadges.forEach((badge: string) => {
+              toast({
+                  title: "🏆 Achievement Unlocked!",
+                  description: `You earned the '${badge}' badge!`,
+                  className: "bg-yellow-50 border-yellow-200 text-yellow-800",
+                  duration: 5000
+              });
+          });
+      }
 
     } catch (error) {
       console.error(error);
@@ -237,6 +250,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
   const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
   const [artPrompt, setArtPrompt] = useState("");
+  const [artMode, setArtMode] = useState<'standard' | 'selfie'>('standard');
 
   const handleGenerateArt = async () => {
     if (!artPrompt.trim()) return;
@@ -246,7 +260,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     toast({ title: "Generating Art", description: "This may take a few seconds..." });
 
     try {
-        const { imageUrl, error } = await generateArt(artPrompt, girlId);
+        const { imageUrl, error } = await generateArt(artPrompt, girlId, artMode);
 
         if (imageUrl) {
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
@@ -445,25 +459,42 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Generate Art</DialogTitle>
                     <DialogDescription>
-                        Describe the scene or outfit you want to see her in. The AI will use her persona.
-                        <br/><span className="text-xs text-purple-500 font-semibold">Cost: 3 Credits</span>
+                        Create an image of her. <span className="text-purple-600 font-semibold">Cost: 3 Credits</span>
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Input
-                        value={artPrompt}
-                        onChange={(e) => setArtPrompt(e.target.value)}
-                        placeholder="e.g., Wearing a red dress at a cafe..."
-                        onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
-                    />
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Style</Label>
+                        <RadioGroup defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
+                                <RadioGroupItem value="standard" id="mode-standard" />
+                                <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
+                                <RadioGroupItem value="selfie" id="mode-selfie" />
+                                <Label htmlFor="mode-selfie" className="cursor-pointer flex items-center gap-1">
+                                    <Camera size={14} /> Selfie Mode
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Prompt</Label>
+                        <Input
+                            value={artPrompt}
+                            onChange={(e) => setArtPrompt(e.target.value)}
+                            placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
+                            onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
+                        />
+                    </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600">
-                        Generate
+                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600 w-full">
+                        Generate Image
                     </Button>
                 </DialogFooter>
             </DialogContent>
