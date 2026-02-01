@@ -3,12 +3,14 @@
 import { navLinks } from "@/constants";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/navigation";
 import { Button } from "../ui/button";
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const t = useTranslations("Sidebar");
 
   return (
     <aside className="sidebar">
@@ -38,7 +40,7 @@ const Sidebar = () => {
                         height={24}
                         className={`${isActive && "brightness-200"}`}
                       />
-                      {link.label}
+                      {t(link.key)}
                     </Link>
                   </li>
                 );
@@ -54,9 +56,13 @@ const Sidebar = () => {
 
           <SignedOut>
             <Button asChild className="button bg-purple-gradient bg-cover">
-              <Link href="/sign-in">Login</Link>
+              <Link href="/sign-in">{t('login')}</Link>
             </Button>
           </SignedOut>
+
+          <div className="mt-4">
+            <LanguageSwitcher />
+          </div>
         </nav>
       </div>
     </aside>

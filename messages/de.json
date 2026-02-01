@@ -1,0 +1,104 @@
+{
+  "Index": {
+    "title": "ArabianRizz",
+    "subtitle": "Dein KI-Wingman erwartet dich."
+  },
+  "Dashboard": {
+    "myGirls": "Meine Mädchen",
+    "addGirl": "Neues Mädchen",
+    "noGirls": "Noch keine Mädchen hinzugefügt. Fang an!",
+    "welcomeTitle": "Willkommen bei ArabianRizz! 🧞‍♂️",
+    "welcomeDesc": "Dein persönlicher KI-Wingman ist bereit. Folge diesen Schritten:",
+    "step1": "Erstelle ein Profil für das Mädchen, das du magst.",
+    "step2": "Nutze <b>Magic Fill</b> um Details aus einem Screenshot zu extrahieren.",
+    "step3": "Starte den Chat und frage nach <b>Anmachsprüchen</b>!",
+    "balance": "Mein Guthaben",
+    "createProfileDesc": "Erstelle ein Profil für das Mädchen.",
+    "searchPlaceholder": "Suche nach Name oder Vibe..."
+  },
+  "Sidebar": {
+    "home": "Startseite",
+    "profile": "Profil",
+    "login": "Anmelden",
+    "signOut": "Abmelden",
+    "language": "Sprache"
+  },
+  "Credits": {
+    "title": "Guthaben Kaufen",
+    "subtitle": "Wähle das passende Paket!",
+    "freeConsumable": "Kostenloses Verbrauchsmaterial",
+    "credits": "Credits",
+    "upgrade": "Upgrade"
+  },
+  "Profile": {
+    "title": "Profil",
+    "subtitle": "Konto verwalten",
+    "subscription": "Abo & Credits",
+    "currentPlan": "Aktueller Plan:",
+    "upgrade": "Upgrade Plan",
+    "signOut": "Abmelden"
+  },
+  "Plans": {
+    "names": {
+      "free": "Kostenlos",
+      "starter": "Starter Pack",
+      "playboy": "Playboy Pack",
+      "rizz_god": "Rizz Gott Pack"
+    },
+    "inclusions": {
+      "credits_20": "20 Gratis Credits",
+      "basic_rizz": "Basis Rizz Zugang",
+      "uncensored_ai": "Unzensierte KI",
+      "art_generation": "Kunstgenerierung",
+      "credits_100": "100 Credits",
+      "uncensored_wingman": "Unzensierter Wingman",
+      "art_access": "Zugang zur Kunstgenerierung",
+      "priority_support": "Prioritäts-Support",
+      "credits_250": "250 Credits",
+      "priority_updates": "Prioritäts-Updates",
+      "credits_1000": "1000 Credits",
+      "ultimate_uncensored": "Ultimativer Unzensierter Zugang",
+      "unlimited_art": "Unbegrenzte Kunstgenerierung*",
+      "vip_status": "VIP Status"
+    }
+  },
+  "Wingman": {
+    "chat": "Chat",
+    "upload": "Screenshot hochladen",
+    "generate": "Rizz generieren"
+  },
+  "Forms": {
+    "MagicFill": {
+      "button": "Magic Fill aus Screenshot",
+      "analyzing": "Analysieren...",
+      "analyzingToastTitle": "Analysiere Screenshot...",
+      "analyzingToastDesc": "Extrahiere Details.",
+      "successTitle": "Fertig!",
+      "successDesc": "Überprüfen und speichern.",
+      "failTitle": "Fehlgeschlagen",
+      "failDesc": "Konnte keine Details extrahieren.",
+      "errorTitle": "Fehler",
+      "errorDesc": "Etwas ist schief gelaufen."
+    }
+  },
+  "Chat": {
+    "wingmanThinking": "Wingman denkt nach...",
+    "hookupButtonTitle": "Anmachspruch generieren",
+    "imageButtonTitle": "Bildantwort generieren",
+    "hookupToastTitle": "Anmachspruch generiert",
+    "errorTitle": "Fehler",
+    "errorHookup": "Fehler beim Generieren.",
+    "errorImage": "Fehler bei Bildgenerierung.",
+    "errorContext": "Kein Kontext.",
+    "errorReply": "Fehler bei Antwort.",
+    "errorProcessImage": "Fehler bei Bildverarbeitung.",
+    "readingScreenshot": "Lese Screenshot...",
+    "readingScreenshotDesc": "Analysiere Konversation.",
+    "noTextInImage": "Kein Text gefunden.",
+    "startPrompt": "Sende eine Nachricht oder lade einen Screenshot hoch!",
+    "sheSaid": "Sie sagte",
+    "wingman": "Wingman",
+    "inputPlaceholder": "Schreibe etwas...",
+    "wingmanTip": "Wingman Tipp"
+  }
+}

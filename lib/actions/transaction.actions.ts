@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 import Stripe from "stripe";
 import { handleError } from "../utils";
+import { connectToDatabase } from "../database/mongoose";
+import Transaction from "../database/models/transaction.model";
+import User from "../database/models/user.model";
 import { plans } from '@/constants';
 
 export async function checkoutCredits(transaction: CheckoutTransactionParams) {
@@ -43,5 +46,26 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams) {
     redirect(session.url!);
   } catch (error) {
     throw error;
+  }
+}
+
+export async function createTransaction(transaction: CreateTransactionParams) {
+  try {
+    await connectToDatabase();
+
+    // Create a new transaction with a buyerId
+    const newTransaction = await Transaction.create({
+      ...transaction,
+      buyer: transaction.buyerId,
+    });
+
+    // Update user credits
+    await User.findByIdAndUpdate(transaction.buyerId, {
+      $inc: { creditBalance: transaction.credits },
+    });
+
+    return JSON.parse(JSON.stringify(newTransaction));
+  } catch (error) {
+    handleError(error);
   }
 }

@@ -7,16 +7,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check } from "lucide-react";
-import { auth, SignOutButton } from "@clerk/nextjs";
+import { SignOutButton } from "@clerk/nextjs";
 import { getUserById } from "@/lib/actions/user.actions";
 import CreditBalance from "@/components/shared/CreditBalance";
 import PersonaManager from "@/components/shared/PersonaManager";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 const Profile = async () => {
   const { userId } = auth();
+  const t = await getTranslations('Profile');
+  const tPlans = await getTranslations('Plans');
 
   if (!userId) redirect("/sign-in");
 
@@ -24,7 +27,7 @@ const Profile = async () => {
 
   return (
     <>
-      <Header title="Profile" subtitle="Manage your account settings" />
+      <Header title={t('title')} subtitle={t('subtitle')} />
 
       <section className="profile mt-10">
         <div className="profile-card p-5 bg-white rounded-xl border border-purple-200/20 shadow-lg space-y-6">
@@ -42,17 +45,17 @@ const Profile = async () => {
 
             {/* Credits Section */}
             <div className="border-t border-gray-100 pt-6">
-                <h3 className="h4-medium text-dark-600 mb-4">Subscription & Credits</h3>
+                <h3 className="h4-medium text-dark-600 mb-4">{t('subscription')}</h3>
                 <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
                     <div>
-                        <p className="p-16-semibold text-dark-600">Current Plan: <span className="text-purple-600">Free</span></p>
+                        <p className="p-16-semibold text-dark-600">{t('currentPlan')} <span className="text-purple-600">{tPlans('names.free')}</span></p>
                         <div className="mt-2">
                             <CreditBalance userId={user.clerkId} />
                         </div>
                     </div>
                     <Link href="/credits">
                         <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
-                            Upgrade Plan
+                            {t('upgrade')}
                         </Button>
                     </Link>
                 </div>
@@ -66,7 +69,7 @@ const Profile = async () => {
             {/* Actions */}
             <div className="border-t border-gray-100 pt-6 flex justify-end">
                 <SignOutButton>
-                    <Button variant="destructive">Sign Out</Button>
+                    <Button variant="destructive">{t('signOut')}</Button>
                 </SignOutButton>
             </div>
         </div>

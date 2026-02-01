@@ -19,6 +19,9 @@ const MessageSchema = new Schema({
     type: [Number], // Vector embedding for RAG
     default: [],
   },
+  audioUrl: {
+    type: String, // URL to persistent audio file (Cloudinary)
+  },
   feedback: {
     type: String,
     enum: ["positive", "negative"],

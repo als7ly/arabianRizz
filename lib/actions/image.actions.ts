@@ -16,7 +16,7 @@ cloudinary.config({
 
 const IMAGE_COST = 3;
 
-export async function generateArt(prompt: string, girlId: string) {
+export async function generateArt(prompt: string, girlId: string, mode: 'standard' | 'selfie' = 'standard') {
   try {
     const { userId: clerkId } = auth();
     if (!clerkId) throw new Error("Unauthorized");
@@ -52,12 +52,25 @@ export async function generateArt(prompt: string, girlId: string) {
         }
 
         // 3. Construct Prompt
-        const fullPrompt = `
-            Character: A girl named ${girl.name}.
-            Appearance/Vibe: ${girl.vibe}.
-            Scene/Action: ${prompt}.
-            Style: High quality, photorealistic or artistic as requested.
-        `;
+        let fullPrompt = "";
+
+        if (mode === 'selfie') {
+            fullPrompt = `
+                Subject: A smartphone selfie of a girl named ${girl.name}.
+                Appearance: ${girl.vibe}.
+                Activity/Location: ${prompt}.
+                Style: Photorealistic, amateur phone camera aesthetic, slight motion blur, natural lighting, looking at camera.
+                Constraint: Do not include nudity.
+            `;
+        } else {
+            fullPrompt = `
+                Character: A girl named ${girl.name}.
+                Appearance/Vibe: ${girl.vibe}.
+                Scene/Action: ${prompt}.
+                Style: High quality, photorealistic or artistic as requested.
+                Constraint: Do not include nudity.
+            `;
+        }
 
         // 4. Call DALL-E 3
         if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
