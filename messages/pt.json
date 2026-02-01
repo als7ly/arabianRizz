@@ -1,0 +1,104 @@
+{
+  "Index": {
+    "title": "ArabianRizz",
+    "subtitle": "Seu Wingman IA aguarda."
+  },
+  "Dashboard": {
+    "myGirls": "Minhas Garotas",
+    "addGirl": "Adicionar Garota",
+    "noGirls": "Nenhuma garota adicionada ainda.",
+    "welcomeTitle": "Bem-vindo ao ArabianRizz! 🧞‍♂️",
+    "welcomeDesc": "Seu Wingman IA pessoal está pronto. Siga estes passos:",
+    "step1": "Crie um perfil para a garota que você gosta.",
+    "step2": "Use <b>Magic Fill</b> para extrair detalhes de um print.",
+    "step3": "Comece a conversar e peça <b>Frases de Engate</b>!",
+    "balance": "Meu Saldo",
+    "createProfileDesc": "Crie um perfil para a garota.",
+    "searchPlaceholder": "Buscar por nome ou vibe..."
+  },
+  "Sidebar": {
+    "home": "Início",
+    "profile": "Perfil",
+    "login": "Entrar",
+    "signOut": "Sair",
+    "language": "Idioma"
+  },
+  "Credits": {
+    "title": "Comprar Créditos",
+    "subtitle": "Escolha um pacote!",
+    "freeConsumable": "Consumível Grátis",
+    "credits": "Créditos",
+    "upgrade": "Melhorar Plano"
+  },
+  "Profile": {
+    "title": "Perfil",
+    "subtitle": "Gerenciar conta",
+    "subscription": "Assinatura e Créditos",
+    "currentPlan": "Plano Atual:",
+    "upgrade": "Melhorar Plano",
+    "signOut": "Sair"
+  },
+  "Plans": {
+    "names": {
+      "free": "Grátis",
+      "starter": "Pack Inicial",
+      "playboy": "Pack Playboy",
+      "rizz_god": "Pack Deus do Rizz"
+    },
+    "inclusions": {
+      "credits_20": "20 Créditos Grátis",
+      "basic_rizz": "Acesso Rizz Básico",
+      "uncensored_ai": "IA Sem Censura",
+      "art_generation": "Geração de Arte",
+      "credits_100": "100 Créditos",
+      "uncensored_wingman": "Wingman Sem Censura",
+      "art_access": "Acesso Geração de Arte",
+      "priority_support": "Suporte Prioritário",
+      "credits_250": "250 Créditos",
+      "priority_updates": "Atualizações Prioritárias",
+      "credits_1000": "1000 Créditos",
+      "ultimate_uncensored": "Acesso Total Sem Censura",
+      "unlimited_art": "Arte Ilimitada*",
+      "vip_status": "Status VIP"
+    }
+  },
+  "Wingman": {
+    "chat": "Chat",
+    "upload": "Enviar Print",
+    "generate": "Gerar Rizz"
+  },
+  "Forms": {
+    "MagicFill": {
+      "button": "Magic Fill do Print",
+      "analyzing": "Analisando...",
+      "analyzingToastTitle": "Analisando Print...",
+      "analyzingToastDesc": "Extraindo detalhes.",
+      "successTitle": "Magic Fill Completo!",
+      "successDesc": "Revise e salve.",
+      "failTitle": "Falha",
+      "failDesc": "Não foi possível extrair detalhes.",
+      "errorTitle": "Erro",
+      "errorDesc": "Algo deu errado."
+    }
+  },
+  "Chat": {
+    "wingmanThinking": "Wingman pensando...",
+    "hookupButtonTitle": "Gerar Cantada",
+    "imageButtonTitle": "Gerar Imagem",
+    "hookupToastTitle": "Cantada Gerada",
+    "errorTitle": "Erro",
+    "errorHookup": "Falha ao gerar.",
+    "errorImage": "Falha ao gerar imagem.",
+    "errorContext": "Sem contexto.",
+    "errorReply": "Falha na resposta",
+    "errorProcessImage": "Falha ao processar imagem",
+    "readingScreenshot": "Lendo Print...",
+    "readingScreenshotDesc": "Analisando conversa.",
+    "noTextInImage": "Texto não encontrado.",
+    "startPrompt": "Envie uma mensagem ou um print!",
+    "sheSaid": "Ela disse",
+    "wingman": "Wingman",
+    "inputPlaceholder": "Digite algo...",
+    "wingmanTip": "Dica Wingman"
+  }
+}

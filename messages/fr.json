@@ -6,11 +6,99 @@
   "Dashboard": {
     "myGirls": "Mes Filles",
     "addGirl": "Ajouter une nouvelle fille",
-    "noGirls": "Aucune fille ajoutée pour le moment. Commencez par ajouter un profil !"
+    "noGirls": "Aucune fille ajoutée pour le moment. Commencez par ajouter un profil !",
+    "welcomeTitle": "Bienvenue sur ArabianRizz ! 🧞‍♂️",
+    "welcomeDesc": "Votre Wingman IA est prêt. Suivez ces étapes :",
+    "step1": "Créez un profil pour la fille.",
+    "step2": "Utilisez <b>Magic Fill</b> pour extraire les détails.",
+    "step3": "Commencez à discuter et demandez des <b>Phrases d'Accroche</b> !",
+    "balance": "Mon Solde",
+    "createProfileDesc": "Créez un profil pour la fille.",
+    "searchPlaceholder": "Rechercher par nom..."
+  },
+  "Sidebar": {
+    "home": "Accueil",
+    "profile": "Profil",
+    "login": "Connexion",
+    "signOut": "Déconnexion",
+    "language": "Langue"
+  },
+  "Credits": {
+    "title": "Acheter des Crédits",
+    "subtitle": "Choisissez un pack !",
+    "freeConsumable": "Gratuit",
+    "credits": "Crédits",
+    "upgrade": "Mettre à niveau"
+  },
+  "Profile": {
+    "title": "Profil",
+    "subtitle": "Gérer votre compte",
+    "subscription": "Abonnement et Crédits",
+    "currentPlan": "Plan Actuel :",
+    "upgrade": "Mettre à niveau",
+    "signOut": "Déconnexion"
+  },
+  "Plans": {
+    "names": {
+      "free": "Gratuit",
+      "starter": "Pack Débutant",
+      "playboy": "Pack Playboy",
+      "rizz_god": "Pack Dieu du Rizz"
+    },
+    "inclusions": {
+      "credits_20": "20 Crédits Gratuits",
+      "basic_rizz": "Accès Rizz Basique",
+      "uncensored_ai": "IA Non Censurée",
+      "art_generation": "Génération d'Art",
+      "credits_100": "100 Créditos",
+      "uncensored_wingman": "Wingman Non Censuré",
+      "art_access": "Accès Art",
+      "priority_support": "Support Prioritaire",
+      "credits_250": "250 Crédits",
+      "priority_updates": "Mises à jour Prioritaires",
+      "credits_1000": "1000 Crédits",
+      "ultimate_uncensored": "Accès Total Non Censuré",
+      "unlimited_art": "Art Illimité*",
+      "vip_status": "Statut VIP"
+    }
   },
   "Wingman": {
     "chat": "Discuter",
     "upload": "Télécharger une capture d'écran",
     "generate": "Générer Rizz"
+  },
+  "Forms": {
+    "MagicFill": {
+      "button": "Magic Fill",
+      "analyzing": "Analyse...",
+      "analyzingToastTitle": "Analyse...",
+      "analyzingToastDesc": "Extraction...",
+      "successTitle": "Terminé !",
+      "successDesc": "Sauvegarder.",
+      "failTitle": "Échec",
+      "failDesc": "Impossible d'extraire.",
+      "errorTitle": "Erreur",
+      "errorDesc": "Une erreur est survenue."
+    }
+  },
+  "Chat": {
+    "wingmanThinking": "Wingman réfléchit...",
+    "hookupButtonTitle": "Générer Phrase",
+    "imageButtonTitle": "Générer Image",
+    "hookupToastTitle": "Phrase Générée",
+    "errorTitle": "Erreur",
+    "errorHookup": "Échec.",
+    "errorImage": "Échec image.",
+    "errorContext": "Pas de contexte.",
+    "errorReply": "Échec réponse",
+    "errorProcessImage": "Échec traitement image",
+    "readingScreenshot": "Lecture...",
+    "readingScreenshotDesc": "Analyse...",
+    "noTextInImage": "Pas de texte.",
+    "startPrompt": "Envoyez un message !",
+    "sheSaid": "Elle a dit",
+    "wingman": "Wingman",
+    "inputPlaceholder": "Écrivez quelque chose...",
+    "wingmanTip": "Conseil Wingman"
   }
 }

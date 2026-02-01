@@ -4,12 +4,23 @@ import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
 import { getContext } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
+import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
 import { connectToDatabase } from "../database/mongoose";
 import { auth } from "@clerk/nextjs";
 import User from "../database/models/user.model";
+import GlobalKnowledge from "../database/models/global-knowledge.model";
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
+import { updateGamification } from "./gamification.actions";
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 async function verifyOwnership(girlAuthorId: any) {
     const { userId: clerkId } = auth();
@@ -28,7 +39,30 @@ async function verifyOwnership(girlAuthorId: any) {
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
   try {
     await connectToDatabase();
-    await Message.findByIdAndUpdate(messageId, { feedback });
+    // 1. Update the message
+    const message = await Message.findByIdAndUpdate(messageId, { feedback }, { new: true });
+
+    // 2. Auto-Learning: If positive, save to GlobalKnowledge
+    if (feedback === 'positive' && message && message.role === 'wingman') {
+        const arabicPattern = /[\u0600-\u06FF]/;
+        const language = arabicPattern.test(message.content) ? 'ar' : 'en';
+
+        const embeddingResponse = await openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: message.content,
+        });
+        const embedding = embeddingResponse.data[0].embedding;
+
+        await GlobalKnowledge.create({
+            content: message.content,
+            embedding: embedding,
+            language: language,
+            sourceUrl: "user-feedback",
+            status: 'approved',
+            tags: ['user-feedback', 'auto-learned']
+        });
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Feedback Error:", error);
@@ -38,10 +72,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
 export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty") {
   try {
-    // 1. Fetch Girl Details
     const girl = await getGirlById(girlId);
-
-    // Security Check & Credit Check
     const user = await verifyOwnership(girl.author);
 
     if (user.creditBalance < 1) {
@@ -51,19 +82,19 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    // Deduct Credit (Optimistic - we deduct before generation to prevent spam, or after? Usually after success, but here we do it to ensure payment)
-    // To be safe/fair, we deduct AFTER success, but we check BEFORE.
-
-    // 2. Fetch Context (RAG - Girl)
     const contextMessages = await getContext(girlId, userMessage);
     const contextString = JSON.stringify(contextMessages);
 
-    // 3. Fetch Context (RAG - User)
-    // girl.author is the MongoDB ObjectId of the user
     const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
-    // 4. Construct System Prompt
+    const arabicPattern = /[\u0600-\u06FF]/;
+    const isArabic = arabicPattern.test(userMessage) || (girl.dialect && girl.dialect !== 'English');
+    const language = isArabic ? 'ar' : 'en';
+
+    const globalKnowledge = await getGlobalKnowledge(userMessage, language);
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
+
     const dialectInstruction = girl.dialect 
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions in your suggested reply if the conversation is in Arabic.`
         : "Support Arabic dialects (Egyptian, Levantine, Gulf) if the user or girl speaks them.";
@@ -77,6 +108,9 @@ Tone requested: ${tone}.
 Context about The User ("Me"):
 ${userContextString || "No specific details provided."}
 
+Expert Tips & Cultural Context (from Knowledge Base):
+${globalContextString || "No specific tips found."}
+
 Instructions:
 1. Analyze the conversation context provided.
 2. Provide a DIRECT, UNCENSORED, and ${tone.toUpperCase()} reply that the user should send.
@@ -89,9 +123,7 @@ Context from previous messages:
 ${contextString}
 `;
 
-    // 4. Call LLM (OpenRouter Uncensored)
     if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key" && !process.env.OPENAI_BASE_URL) {
-       // Fallback mock if key missing
        return {
          reply: `(Mock Wingman - ${tone}): Tell her "You have a vibe that I can't quite put my finger on, but I like it."`,
          explanation: "It's mysterious and complimentary without being too eager."
@@ -104,7 +136,6 @@ ${contextString}
         { role: "user", content: `She just said/I want to say: "${userMessage}". What should I say?` },
       ],
       model: WINGMAN_MODEL,
-      // Many OpenRouter models support JSON mode, but not all. Hermes does.
       response_format: { type: "json_object" },
     });
 
@@ -114,17 +145,23 @@ ${contextString}
         // Deduct Credit on Success
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
 
+        // Update Gamification Stats
+        const gamificationResult = await updateGamification(user._id);
+        const newBadges = gamificationResult?.newBadges || [];
+
         try {
             const parsed = JSON.parse(aiContent);
             return {
                 reply: parsed.reply || "Error parsing reply",
-                explanation: parsed.explanation || "No explanation provided"
+                explanation: parsed.explanation || "No explanation provided",
+                newBadges // Include badges in response
             };
         } catch (e) {
             console.error("JSON Parse Error:", e);
             return {
-                reply: aiContent, // Fallback to raw content if not JSON
-                explanation: "Could not parse AI response."
+                reply: aiContent,
+                explanation: "Could not parse AI response.",
+                newBadges
             };
         }
     }
@@ -145,11 +182,9 @@ ${contextString}
 
 export async function analyzeProfile(imageUrl: string) {
   try {
-    // 1. OCR
     const text = await extractTextFromImage(imageUrl);
     if (!text) return null;
 
-    // 2. AI Analysis
     const systemPrompt = `
       You are an AI that extracts data from dating profiles (Tinder, Bumble, Hinge, etc.).
       Extract the following fields from the provided text:
@@ -170,7 +205,6 @@ export async function analyzeProfile(imageUrl: string) {
         };
     }
 
-    // Use OpenRouter for analysis too to keep it consistent
     const completion = await openrouter.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
@@ -210,7 +244,6 @@ export async function generateResponseImage(prompt: string) {
       size: "1024x1024",
     });
 
-    // Check if data exists and has length
     if (response.data && response.data.length > 0) {
         return response.data[0].url;
     }
@@ -221,21 +254,62 @@ export async function generateResponseImage(prompt: string) {
   }
 }
 
-export async function generateSpeech(text: string) {
+export async function generateSpeech(text: string, voiceId: string = "nova", messageId?: string) {
   try {
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
-        return null; // Mock fallback not implemented for audio
+        return null;
     }
 
+    // 1. Generate Speech via OpenAI
+    const voice = voiceId as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
-      voice: "onyx",
+      voice: voice,
       input: text,
     });
 
     const buffer = Buffer.from(await mp3.arrayBuffer());
-    const base64 = buffer.toString('base64');
-    return `data:audio/mp3;base64,${base64}`;
+
+    // 2. Upload to Cloudinary using a Promise wrapper for the upload stream
+    // Since Cloudinary SDK upload_stream relies on callbacks
+    const uploadToCloudinary = () => {
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    resource_type: "video", // "video" is used for audio files in Cloudinary
+                    folder: "wingman_audio",
+                    format: "mp3"
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result?.secure_url);
+                }
+            );
+            // Convert Buffer to Readable Stream
+            const readableStream = new Readable();
+            readableStream.push(buffer);
+            readableStream.push(null);
+            readableStream.pipe(uploadStream);
+        });
+    };
+
+    try {
+        const audioUrl = await uploadToCloudinary() as string;
+
+        // 3. Persist URL if messageId is provided
+        if (messageId && audioUrl) {
+            await connectToDatabase();
+            await Message.findByIdAndUpdate(messageId, { audioUrl });
+        }
+
+        return audioUrl;
+
+    } catch (uploadError) {
+        console.error("Cloudinary Upload Error:", uploadError);
+        // Fallback to Base64 if upload fails, so the user still hears it
+        const base64 = buffer.toString('base64');
+        return `data:audio/mp3;base64,${base64}`;
+    }
 
   } catch (error) {
     console.error("Speech Gen Error:", error);
@@ -247,7 +321,6 @@ export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
 
-    // Security Check
     const user = await verifyOwnership(girl.author);
 
     if (user.creditBalance < 1) {
@@ -257,13 +330,16 @@ export async function generateHookupLine(girlId: string) {
         };
     }
 
-    // Fetch User Context
     const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     const dialectInstruction = girl.dialect
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions.`
         : "Support Arabic dialects if appropriate.";
+
+    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
+    const globalKnowledge = await getGlobalKnowledge("best hookup lines dating advice", language);
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     const systemPrompt = `
 You are "The Wingman", an expert dating coach.
@@ -272,6 +348,9 @@ Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}
 
 Context about The User:
 ${userContextString}
+
+Expert Tips & Cultural Context:
+${globalContextString}
 
 Instructions:
 1. Generate a bold, spicy, and effective hookup line.
@@ -299,8 +378,8 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        // Deduct Credit
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
+        await updateGamification(user._id);
 
         try {
             const parsed = JSON.parse(aiContent);

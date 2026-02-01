@@ -4,13 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera, Share2 } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
 import { generateArt } from "@/lib/actions/image.actions";
-import { clearChat as clearChatAction } from "@/lib/actions/girl.actions";
+import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
@@ -37,6 +37,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 type Message = {
   _id?: string;
@@ -44,6 +46,7 @@ type Message = {
   content: string;
   createdAt?: string;
   feedback?: "up" | "down" | null;
+  audioUrl?: string; // Add audioUrl to type
 };
 
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
@@ -53,8 +56,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [tone, setTone] = useState("Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [voiceId, setVoiceId] = useState<string>("nova");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
 
@@ -64,6 +67,20 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   }, [messages]);
 
+  useEffect(() => {
+    const fetchGirlVoice = async () => {
+        try {
+            const girl = await getGirlById(girlId);
+            if (girl && girl.voiceId) {
+                setVoiceId(girl.voiceId);
+            }
+        } catch (error) {
+            console.error("Failed to fetch girl details:", error);
+        }
+    };
+    fetchGirlVoice();
+  }, [girlId]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -71,25 +88,19 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     setInputValue("");
     setIsLoading(true);
 
-    // 1. Add User Message
     const newMsg: Message = { role: "user", content: userMsg };
     setMessages((prev) => [...prev, newMsg]);
 
     try {
       await addMessage({ girlId, role: "user", content: userMsg });
 
-      // 2. Generate Wingman Reply
-      const { reply, explanation } = await generateWingmanReply(girlId, userMsg, tone);
+      const { reply, explanation, newBadges } = await generateWingmanReply(girlId, userMsg, tone);
       
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
-      // We need to fetch the newly created message to get its ID for feedback
-      // For now, we will optimistically update and rely on revalidation or refetch if needed
-      // Ideally, `addMessage` should return the full message object
       const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
 
-      // Update the last message with the real ID from DB
       setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = savedMsg;
@@ -102,6 +113,17 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         duration: 6000,
       });
 
+      if (newBadges && newBadges.length > 0) {
+          newBadges.forEach((badge: string) => {
+              toast({
+                  title: "🏆 Achievement Unlocked!",
+                  description: `You earned the '${badge}' badge!`,
+                  className: "bg-yellow-50 border-yellow-200 text-yellow-800",
+                  duration: 5000
+              });
+          });
+      }
+
     } catch (error) {
       console.error(error);
       toast({ title: t('errorTitle'), description: t('errorReply'), variant: "destructive" });
@@ -111,14 +133,12 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   };
 
   const handleRegenerate = async (index: number) => {
-    // Ensure there is a preceding user message
     if (index <= 0) return;
     const userMsg = messages[index - 1];
-    if (userMsg.role !== "user" && userMsg.role !== "girl") return; // Only regenerate if responding to user/girl
+    if (userMsg.role !== "user" && userMsg.role !== "girl") return;
 
     setIsLoading(true);
     try {
-        // Optimistically show loading
         const newMsgs = [...messages];
         newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
         setMessages(newMsgs);
@@ -128,10 +148,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         const updatedMsgs = [...messages];
         updatedMsgs[index] = { ...updatedMsgs[index], content: reply || "Error" };
         setMessages(updatedMsgs);
-
-        // Don't add to DB again, or update existing?
-        // For simplicity, we just show the new one.
-        // Ideally we might update the DB record if we had the ID.
 
         toast({
             title: "Regenerated Tip",
@@ -156,10 +172,44 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     });
   };
 
-  const handlePlayAudio = async (text: string, msgIndex: number) => {
+  const handleShare = async (text: string, isImage: boolean = false) => {
+      const shareData = {
+          title: 'ArabianRizz',
+          text: isImage ? 'Check out this generated image!' : text,
+          url: isImage ? text : undefined
+      };
+
+      if (navigator.share) {
+          try {
+              await navigator.share(shareData);
+          } catch (err) {
+              console.error(err);
+          }
+      } else {
+          // Fallback: Copy to clipboard
+          handleCopy(text);
+          toast({ title: "Copied Link", description: "Sharing not supported, link copied." });
+      }
+  };
+
+  const handlePlayAudio = async (message: Message, idx: number) => {
     try {
-        setPlayingAudioId(msgIndex.toString());
-        const audioUrl = await generateSpeech(text);
+        setPlayingAudioId(idx.toString());
+        let audioUrl = message.audioUrl;
+
+        // If no persistent URL, generate and upload (which returns a URL)
+        if (!audioUrl) {
+            audioUrl = await generateSpeech(message.content, voiceId, message._id);
+
+            // Update local state with new URL to avoid re-generating next time
+            if (audioUrl && message._id) {
+                setMessages(prev => {
+                    const updated = [...prev];
+                    updated[idx] = { ...updated[idx], audioUrl: audioUrl };
+                    return updated;
+                });
+            }
+        }
 
         if (audioUrl) {
             const audio = new Audio(audioUrl);
@@ -181,7 +231,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     toast({ title: t('readingScreenshot'), description: t('readingScreenshotDesc') });
 
     try {
-        // 1. OCR
         const text = await extractTextFromImage(url);
         if (!text) {
             toast({ title: t('errorTitle'), description: t('noTextInImage'), variant: "destructive" });
@@ -189,12 +238,10 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             return;
         }
 
-        // 2. Add Girl Message (Context)
         const newMsg: Message = { role: "girl", content: `(Screenshot): ${text}` };
         setMessages((prev) => [...prev, newMsg]);
         await addMessage({ girlId, role: "girl", content: text });
 
-        // 3. Generate Reply
         const { reply, explanation } = await generateWingmanReply(girlId, text, tone);
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
@@ -223,6 +270,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
   const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
   const [artPrompt, setArtPrompt] = useState("");
+  const [artMode, setArtMode] = useState<'standard' | 'selfie'>('standard');
 
   const handleGenerateArt = async () => {
     if (!artPrompt.trim()) return;
@@ -232,7 +280,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     toast({ title: "Generating Art", description: "This may take a few seconds..." });
 
     try {
-        const { imageUrl, error } = await generateArt(artPrompt, girlId);
+        const { imageUrl, error } = await generateArt(artPrompt, girlId, artMode);
 
         if (imageUrl) {
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
@@ -292,7 +340,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
 
-      {/* Top Bar for Actions */}
       <div className="absolute top-2 right-2 z-10 flex gap-2">
           {messages.length > 0 && (
             <AlertDialog>
@@ -323,7 +370,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           )}
       </div>
 
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
         {messages.length === 0 && (
             <div className="flex-center h-full text-gray-400">
@@ -353,13 +399,24 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
               {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">{t('sheSaid')}</div>}
               
               {msg.content.startsWith("[IMAGE]:") ? (
-                  <Image 
-                    src={msg.content.replace("[IMAGE]: ", "")} 
-                    alt="Generated" 
-                    width={500}
-                    height={500}
-                    className="rounded-lg max-w-full h-auto" 
-                  />
+                  <div className="relative">
+                    <Image
+                        src={msg.content.replace("[IMAGE]: ", "")}
+                        alt="Generated"
+                        width={500}
+                        height={500}
+                        className="rounded-lg max-w-full h-auto"
+                    />
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute bottom-2 right-2 bg-white/80 hover:bg-white text-gray-700"
+                        onClick={() => handleShare(msg.content.replace("[IMAGE]: ", ""), true)}
+                        title="Share Image"
+                    >
+                        <Share2 size={16} />
+                    </Button>
+                  </div>
               ) : (
                   <div className="flex flex-col gap-1">
                       <div className="flex items-start gap-2">
@@ -371,7 +428,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6 text-purple-400 hover:text-purple-600"
-                                    onClick={() => handlePlayAudio(msg.content, idx)}
+                                    onClick={() => handlePlayAudio(msg, idx)}
                                     disabled={playingAudioId !== null}
                                     title="Play Audio"
                                     aria-label="Play audio"
@@ -399,6 +456,16 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                 >
                                     <Copy size={14} />
                                 </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-gray-400 hover:text-green-600"
+                                    onClick={() => handleShare(msg.content)}
+                                    title="Share"
+                                    aria-label="Share message"
+                                >
+                                    <Share2 size={14} />
+                                </Button>
                             </div>
                             {msg._id && <Feedback messageId={msg._id} />}
                           </div>
@@ -424,7 +491,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         )}
       </div>
 
-      {/* Input Area */}
       <div className="bg-white border-t p-4 flex items-end gap-2">
         <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
         
@@ -434,39 +500,55 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Generate Art</DialogTitle>
                     <DialogDescription>
-                        Describe the scene or outfit you want to see her in. The AI will use her persona.
-                        <br/><span className="text-xs text-purple-500 font-semibold">Cost: 3 Credits</span>
+                        Create an image of her. <span className="text-purple-600 font-semibold">Cost: 3 Credits</span>
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4">
-                    <Input
-                        value={artPrompt}
-                        onChange={(e) => setArtPrompt(e.target.value)}
-                        placeholder="e.g., Wearing a red dress at a cafe..."
-                        onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
-                    />
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Style</Label>
+                        <RadioGroup defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
+                                <RadioGroupItem value="standard" id="mode-standard" />
+                                <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
+                                <RadioGroupItem value="selfie" id="mode-selfie" />
+                                <Label htmlFor="mode-selfie" className="cursor-pointer flex items-center gap-1">
+                                    <Camera size={14} /> Selfie Mode
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Prompt</Label>
+                        <Input
+                            value={artPrompt}
+                            onChange={(e) => setArtPrompt(e.target.value)}
+                            placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
+                            onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
+                        />
+                    </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600">
-                        Generate
+                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600 w-full">
+                        Generate Image
                     </Button>
                 </DialogFooter>
             </DialogContent>
-                </DialogContent>
-            </Dialog>
+        </Dialog>
 
         <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
         </Button>
 
-        <Button variant="ghost" size="icon" onClick={handleClearChat} disabled={isLoading} title="Clear Chat" aria-label="Clear chat">
-            <Trash2 size={24} className="text-dark-400 hover:text-red-500"/>
-        </Button>
-
+        <Select onValueChange={setTone} defaultValue="Flirty">
+            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0">
+                <SelectValue placeholder="Tone" />
+            </SelectTrigger>
             <SelectContent>
                 <SelectItem value="Flirty">Flirty</SelectItem>
                 <SelectItem value="Funny">Funny</SelectItem>
