@@ -4,9 +4,20 @@ import { crawlUrl, processAndSave } from "@/lib/services/crawler.service";
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export const crawlAndStage = async (url: string, language: string) => {
   try {
+    const { userId } = auth();
+    if (!userId) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    if (!checkRateLimit(userId)) {
+        return { success: false, error: "Rate limit exceeded. Try again in a minute." };
+    }
+
     const { chunks, tags } = await crawlUrl(url);
     const results = await processAndSave(chunks, language, url, tags);
     revalidatePath("/admin/knowledge");

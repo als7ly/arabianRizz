@@ -38,15 +38,15 @@ const CreditBalance = ({ userId }: { userId: string }) => {
       <Badge
         variant="secondary"
         className={cn(
-            "text-lg px-4 py-1 border",
+            "text-lg px-4 py-1 border transition-all duration-500",
             isLowBalance
-                ? "bg-red-100 text-red-700 border-red-200"
+                ? "bg-red-100 text-red-700 border-red-200 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]"
                 : "bg-purple-100 text-purple-700 border-purple-200"
         )}
       >
         {balance} Credits
       </Badge>
-      <Link href="/credits" className="bg-purple-600 text-white p-1 rounded-full hover:bg-purple-700 transition-colors" title="Buy Credits">
+      <Link href="/credits" className="bg-purple-600 text-white p-1 rounded-full hover:bg-purple-700 transition-colors shadow-sm hover:scale-110" title="Buy Credits">
         <Plus size={16} />
       </Link>
     </div>
