@@ -319,21 +319,19 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   };
 
   const handleClearChat = async () => {
-    if (confirm("Are you sure you want to clear the chat history? This cannot be undone.")) {
-        setIsLoading(true);
-        try {
-            await clearChatAction(girlId, pathname);
-            setMessages([]);
-            toast({
-                title: "Chat Cleared",
-                description: "All messages have been deleted.",
-            });
-        } catch (error) {
-            console.error(error);
-            toast({ title: "Error", description: "Failed to clear chat.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
-        }
+    setIsLoading(true);
+    try {
+        await clearChatAction(girlId, pathname);
+        setMessages([]);
+        toast({
+            title: "Chat Cleared",
+            description: "All messages have been deleted.",
+        });
+    } catch (error) {
+        console.error(error);
+        toast({ title: "Error", description: "Failed to clear chat.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -573,7 +571,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                 className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
                 aria-label="Send message"
             >
-                <Send size={18} className="text-white ml-0.5" />
+                {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
             </Button>
         </div>
       </div>

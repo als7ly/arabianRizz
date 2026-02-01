@@ -29,3 +29,7 @@
 ## 2024-05-24 - Internationalization of ARIA Labels
 **Learning:** Some buttons use `t()` for `title` attributes, but `aria-label`s are often hardcoded strings. This creates an accessibility gap for non-English users using screen readers.
 **Action:** When adding `aria-label`s to components that use `useTranslations`, ensure the label text is also localized using the `t()` function.
+
+## 2024-05-24 - Broken Dialog and Redundant Actions
+**Learning:** Found a severe syntax error in `ChatInterface.tsx` (extra closing tags) and a redundant "Clear Chat" button. The redundant button was using a native `confirm()` which is poor UX compared to the `AlertDialog` used elsewhere. Also, `Select` component was malformed.
+**Action:** Always check for matching tags in complex components. Avoid using native `confirm()` when custom modals exist. Ensure form controls like `Select` are properly structured with triggers.
