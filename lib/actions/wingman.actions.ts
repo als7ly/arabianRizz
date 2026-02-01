@@ -12,6 +12,14 @@ import { connectToDatabase } from "../database/mongoose";
 import { auth } from "@clerk/nextjs";
 import User from "../database/models/user.model";
 import GlobalKnowledge from "../database/models/global-knowledge.model";
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
+
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 async function verifyOwnership(girlAuthorId: any) {
     const { userId: clerkId } = auth();
@@ -238,15 +246,14 @@ export async function generateResponseImage(prompt: string) {
   }
 }
 
-export async function generateSpeech(text: string, voiceId: string = "nova") {
+export async function generateSpeech(text: string, voiceId: string = "nova", messageId?: string) {
   try {
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return null;
     }
 
-    // Cast voiceId to the specific string literal type required by OpenAI SDK
+    // 1. Generate Speech via OpenAI
     const voice = voiceId as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
       voice: voice,
@@ -254,8 +261,47 @@ export async function generateSpeech(text: string, voiceId: string = "nova") {
     });
 
     const buffer = Buffer.from(await mp3.arrayBuffer());
-    const base64 = buffer.toString('base64');
-    return `data:audio/mp3;base64,${base64}`;
+
+    // 2. Upload to Cloudinary using a Promise wrapper for the upload stream
+    // Since Cloudinary SDK upload_stream relies on callbacks
+    const uploadToCloudinary = () => {
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    resource_type: "video", // "video" is used for audio files in Cloudinary
+                    folder: "wingman_audio",
+                    format: "mp3"
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result?.secure_url);
+                }
+            );
+            // Convert Buffer to Readable Stream
+            const readableStream = new Readable();
+            readableStream.push(buffer);
+            readableStream.push(null);
+            readableStream.pipe(uploadStream);
+        });
+    };
+
+    try {
+        const audioUrl = await uploadToCloudinary() as string;
+
+        // 3. Persist URL if messageId is provided
+        if (messageId && audioUrl) {
+            await connectToDatabase();
+            await Message.findByIdAndUpdate(messageId, { audioUrl });
+        }
+
+        return audioUrl;
+
+    } catch (uploadError) {
+        console.error("Cloudinary Upload Error:", uploadError);
+        // Fallback to Base64 if upload fails, so the user still hears it
+        const base64 = buffer.toString('base64');
+        return `data:audio/mp3;base64,${base64}`;
+    }
 
   } catch (error) {
     console.error("Speech Gen Error:", error);
@@ -266,6 +312,7 @@ export async function generateSpeech(text: string, voiceId: string = "nova") {
 export async function generateHookupLine(girlId: string) {
   try {
     const girl = await getGirlById(girlId);
+
     const user = await verifyOwnership(girl.author);
 
     if (user.creditBalance < 1) {

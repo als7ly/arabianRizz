@@ -44,6 +44,7 @@ type Message = {
   content: string;
   createdAt?: string;
   feedback?: "up" | "down" | null;
+  audioUrl?: string; // Add audioUrl to type
 };
 
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
@@ -53,7 +54,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const [tone, setTone] = useState("Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
-  const [voiceId, setVoiceId] = useState<string>("nova"); // Default to nova
+  const [voiceId, setVoiceId] = useState<string>("nova");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
@@ -64,7 +65,6 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   }, [messages]);
 
-  // Fetch Voice ID on mount
   useEffect(() => {
     const fetchGirlVoice = async () => {
         try {
@@ -159,11 +159,24 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     });
   };
 
-  const handlePlayAudio = async (text: string, msgIndex: number) => {
+  const handlePlayAudio = async (message: Message, idx: number) => {
     try {
-        setPlayingAudioId(msgIndex.toString());
-        // Pass voiceId to generateSpeech
-        const audioUrl = await generateSpeech(text, voiceId);
+        setPlayingAudioId(idx.toString());
+        let audioUrl = message.audioUrl;
+
+        // If no persistent URL, generate and upload (which returns a URL)
+        if (!audioUrl) {
+            audioUrl = await generateSpeech(message.content, voiceId, message._id);
+
+            // Update local state with new URL to avoid re-generating next time
+            if (audioUrl && message._id) {
+                setMessages(prev => {
+                    const updated = [...prev];
+                    updated[idx] = { ...updated[idx], audioUrl: audioUrl };
+                    return updated;
+                });
+            }
+        }
 
         if (audioUrl) {
             const audio = new Audio(audioUrl);
@@ -370,7 +383,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6 text-purple-400 hover:text-purple-600"
-                                    onClick={() => handlePlayAudio(msg.content, idx)}
+                                    onClick={() => handlePlayAudio(msg, idx)}
                                     disabled={playingAudioId !== null}
                                     title="Play Audio"
                                     aria-label="Play audio"
