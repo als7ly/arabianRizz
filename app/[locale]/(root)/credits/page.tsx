@@ -6,9 +6,12 @@ import { auth } from "@clerk/nextjs";
 import { getUserById } from "@/lib/actions/user.actions";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { getTranslations } from "next-intl/server";
 
 const Credits = async () => {
   const { userId } = auth();
+  const t = await getTranslations('Credits');
+  const tPlans = await getTranslations('Plans');
 
   if (!userId) redirect("/sign-in");
 
@@ -16,7 +19,7 @@ const Credits = async () => {
 
   return (
     <>
-      <Header title="Buy Credits" subtitle="Choose a credit package that suits your needs!" />
+      <Header title={t('title')} subtitle={t('subtitle')} />
 
       <section>
         <ul className="credits-list mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -25,17 +28,17 @@ const Credits = async () => {
               <div className="flex-center flex-col gap-3">
                 <Image src={plan.icon} alt="check" width={50} height={50} />
                 <p className="p-20-semibold mt-2 text-purple-500">
-                  {plan.name}
+                  {tPlans(`names.${plan.translationKey}`)}
                 </p>
                 <p className="h1-semibold text-dark-600">${plan.price}</p>
-                <p className="p-14-regular">{plan.credits} Credits</p>
+                <p className="p-14-regular">{plan.credits} {t('credits')}</p>
               </div>
 
               {/* Inclusions */}
               <ul className="flex flex-col gap-5 py-9">
                 {plan.inclusions.map((inclusion) => (
                   <li
-                    key={plan.name + inclusion.label}
+                    key={plan.name + inclusion.key}
                     className="flex items-center gap-4"
                   >
                     <Image
@@ -46,14 +49,14 @@ const Credits = async () => {
                       width={24}
                       height={24}
                     />
-                    <p className="p-16-regular">{inclusion.label}</p>
+                    <p className="p-16-regular">{tPlans(`inclusions.${inclusion.key}`)}</p>
                   </li>
                 ))}
               </ul>
 
               {plan.name === "Free" ? (
                 <Button variant="outline" className="credits-btn">
-                  Free Consumable
+                  {t('freeConsumable')}
                 </Button>
               ) : (
                 <Checkout

@@ -15,6 +15,10 @@ const GirlSchema = new Schema({
     type: String, // e.g., "Egyptian", "Levantine", "Gulf", "Maghrebi", "Modern Standard Arabic"
     default: "Modern Standard Arabic",
   },
+  voiceId: {
+    type: String, // OpenAI Voice ID: alloy, echo, fable, onyx, nova, shimmer
+    default: "nova", // Default to a female-sounding voice
+  },
   relationshipStatus: {
     type: String, // e.g., "Just met", "Talking", "Dating"
     default: "Just met",

@@ -9,6 +9,13 @@ const UserSchema = new Schema({
   lastName: { type: String },
   planId: { type: Number, default: 1 },
   creditBalance: { type: Number, default: 20 },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  streak: {
+    current: { type: Number, default: 0 },
+    lastActive: { type: Date, default: Date.now }
+  },
+  badges: { type: [String], default: [] },
+  totalInteractions: { type: Number, default: 0 },
 });
 
 const User = models?.User || model("User", UserSchema);
