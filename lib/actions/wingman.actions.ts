@@ -70,7 +70,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
   }
 }
 
-export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty") {
+export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty", senderRole: "user" | "girl" = "user") {
   try {
     // Security: Validate tone to prevent prompt injection
     const ALLOWED_TONES = ['Flirty', 'Funny', 'Serious', 'Mysterious'];
@@ -134,10 +134,14 @@ ${contextString}
        };
     }
 
+    const contextInstruction = senderRole === 'girl'
+        ? `She just said: "${userMessage}". What should I say?`
+        : `I want to say: "${userMessage}". Improve this or tell me what to say instead.`;
+
     const completion = await openrouter.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `She just said/I want to say: "${userMessage}". What should I say?` },
+        { role: "user", content: contextInstruction },
       ],
       model: WINGMAN_MODEL,
       response_format: { type: "json_object" },
