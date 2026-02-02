@@ -33,3 +33,7 @@
 ## 2024-05-24 - Broken Dialog and Redundant Actions
 **Learning:** Found a severe syntax error in `ChatInterface.tsx` (extra closing tags) and a redundant "Clear Chat" button. The redundant button was using a native `confirm()` which is poor UX compared to the `AlertDialog` used elsewhere. Also, `Select` component was malformed.
 **Action:** Always check for matching tags in complex components. Avoid using native `confirm()` when custom modals exist. Ensure form controls like `Select` are properly structured with triggers.
+
+## 2024-05-24 - Native Confirm Dialog Replacement
+**Learning:** The `DeleteGirlButton` component was using `window.confirm()` which halts the main thread and provides a poor native UI experience that doesn't match the application's design system.
+**Action:** Replaced `window.confirm()` with the `AlertDialog` component from the design system. This provides a consistent, accessible, and stylable confirmation modal. Added `aria-label` to the trigger button for better accessibility.
