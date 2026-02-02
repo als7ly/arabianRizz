@@ -53,6 +53,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const pathname = usePathname();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
+  const [sender, setSender] = useState<'user' | 'girl'>('user');
   const [tone, setTone] = useState("Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -84,17 +85,19 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const userMsg = inputValue;
+    const msgContent = inputValue;
     setInputValue("");
     setIsLoading(true);
 
-    const newMsg: Message = { role: "user", content: userMsg };
+    const role = sender === 'girl' ? 'girl' : 'user';
+
+    const newMsg: Message = { role: role, content: msgContent };
     setMessages((prev) => [...prev, newMsg]);
 
     try {
-      await addMessage({ girlId, role: "user", content: userMsg });
+      await addMessage({ girlId, role: role, content: msgContent });
 
-      const { reply, explanation, newBadges } = await generateWingmanReply(girlId, userMsg, tone);
+      const { reply, explanation, newBadges } = await generateWingmanReply(girlId, msgContent, tone, role);
       
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
@@ -129,6 +132,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
       toast({ title: t('errorTitle'), description: t('errorReply'), variant: "destructive" });
     } finally {
       setIsLoading(false);
+      setSender('user'); // Reset to user default
     }
   };
 
@@ -556,11 +560,29 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         </Select>
 
         <div className="flex-1 flex gap-2 w-full md:w-auto">
+             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10">
+                <Button
+                    variant={sender === 'user' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
+                    onClick={() => setSender('user')}
+                >
+                    Me
+                </Button>
+                <Button
+                    variant={sender === 'girl' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
+                    onClick={() => setSender('girl')}
+                >
+                    Her
+                </Button>
+            </div>
              <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                placeholder={t('inputPlaceholder')}
+                placeholder={sender === 'girl' ? "What did she say?" : t('inputPlaceholder')}
                 className="flex-1"
                 disabled={isLoading}
                 aria-label="Message input"
