@@ -39,6 +39,15 @@ async function verifyOwnership(girlAuthorId: any) {
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
   try {
     await connectToDatabase();
+
+    // Security: Verify ownership before updating
+    const originalMessage = await Message.findById(messageId);
+    if (!originalMessage) {
+        return { success: false };
+    }
+    const girl = await getGirlById(originalMessage.girl.toString());
+    await verifyOwnership(girl.author);
+
     // 1. Update the message
     const message = await Message.findByIdAndUpdate(messageId, { feedback }, { new: true });
 
