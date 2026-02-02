@@ -47,6 +47,9 @@ const GirlSchema = new Schema({
   },
 });
 
+// Optimize queries by author (filtering) and createdAt (sorting)
+GirlSchema.index({ author: 1, createdAt: -1 });
+
 const Girl = models?.Girl || model("Girl", GirlSchema);
 
 export default Girl;

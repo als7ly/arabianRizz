@@ -20,6 +20,9 @@ const UserKnowledgeSchema = new Schema({
   },
 });
 
+// Optimize queries by user (filtering) and createdAt (sorting)
+UserKnowledgeSchema.index({ user: 1, createdAt: -1 });
+
 const UserKnowledge = models.UserKnowledge || model("UserKnowledge", UserKnowledgeSchema);
 
 export default UserKnowledge;
