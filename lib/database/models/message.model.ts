@@ -32,6 +32,9 @@ const MessageSchema = new Schema({
   },
 });
 
+// Optimize queries by girl (filtering) and createdAt (sorting)
+MessageSchema.index({ girl: 1, createdAt: -1 });
+
 const Message = models.Message || model("Message", MessageSchema);
 
 export default Message;
