@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera, Share2 } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera, Share2, Heart, Coffee, Flame, MessageCircle } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -39,6 +39,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 type Message = {
   _id?: string;
@@ -339,6 +347,66 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   };
 
+  const handleQuickAction = async (action: string) => {
+    setIsLoading(true);
+    let instruction = "";
+
+    switch (action) {
+        case "date":
+            instruction = "Suggest a creative and fun date idea based on our conversation.";
+            break;
+        case "roast":
+            instruction = "Give me a playful, flirty roast to tease her.";
+            break;
+        case "comfort":
+            instruction = "She seems upset. Suggest a comforting and supportive message.";
+            break;
+        case "topic":
+            instruction = "Change the subject to something interesting and engaging.";
+            break;
+        default:
+            instruction = "What should I say next?";
+    }
+
+    try {
+        const { reply, explanation, newBadges } = await generateWingmanReply(girlId, instruction, tone, "instruction");
+
+        const aiMsg: Message = { role: "wingman", content: reply || "..." };
+        setMessages((prev) => [...prev, aiMsg]);
+
+        const savedMsg = await addMessage({ girlId, role: "wingman", content: reply || "..." });
+
+        setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = savedMsg;
+            return updated;
+        });
+
+        toast({
+            title: t('wingmanTip'),
+            description: explanation,
+            duration: 6000,
+        });
+
+         if (newBadges && newBadges.length > 0) {
+          newBadges.forEach((badge: string) => {
+              toast({
+                  title: "🏆 Achievement Unlocked!",
+                  description: `You earned the '${badge}' badge!`,
+                  className: "bg-yellow-50 border-yellow-200 text-yellow-800",
+                  duration: 5000
+              });
+          });
+      }
+
+    } catch (error) {
+        console.error(error);
+        toast({ title: t('errorTitle'), description: "Failed to generate action.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
 
@@ -546,6 +614,34 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
         </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" disabled={isLoading} title="Quick Actions" aria-label="Quick Actions">
+                <Sparkles size={24} className="text-dark-400 hover:text-purple-500"/>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleQuickAction('date')} className="cursor-pointer">
+                <Coffee className="mr-2 h-4 w-4 text-orange-500" />
+                <span>Date Idea</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleQuickAction('roast')} className="cursor-pointer">
+                <Flame className="mr-2 h-4 w-4 text-red-500" />
+                <span>Playful Roast</span>
+            </DropdownMenuItem>
+             <DropdownMenuItem onClick={() => handleQuickAction('comfort')} className="cursor-pointer">
+                <Heart className="mr-2 h-4 w-4 text-pink-500" />
+                <span>Comfort Her</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleQuickAction('topic')} className="cursor-pointer">
+                <MessageCircle className="mr-2 h-4 w-4 text-blue-500" />
+                <span>Change Topic</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Select onValueChange={setTone} defaultValue="Flirty">
             <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0">

@@ -125,6 +125,30 @@ describe('Wingman Actions', () => {
         explanation: 'Something went wrong with the AI.',
       });
     });
+
+    it('should handle instruction sender role correctly', async () => {
+      (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+      (getContext as jest.Mock).mockResolvedValue([]);
+      (getUserContext as jest.Mock).mockResolvedValue([]);
+
+      const mockAiResponse = {
+        reply: 'Sure, how about a picnic?',
+        explanation: 'Picnics are romantic.',
+      };
+
+      (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+        choices: [{ message: { content: JSON.stringify(mockAiResponse) } }],
+      });
+
+      const result = await generateWingmanReply('girl123', 'Suggest a date', 'Flirty', 'instruction');
+
+      expect(openrouter.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({ role: 'user', content: expect.stringContaining('User Instruction: "Suggest a date"') }),
+        ]),
+      }));
+      expect(result).toEqual(mockAiResponse);
+    });
   });
 
   describe('analyzeProfile', () => {
