@@ -3,12 +3,24 @@
 import { crawlUrl, processAndSave } from "@/lib/services/crawler.service";
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
+import User from "@/lib/database/models/user.model";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs";
 import { checkRateLimit } from "@/lib/ratelimit";
 
+const requireAdmin = async () => {
+  const { userId } = auth();
+  if (!userId) throw new Error("Unauthorized");
+  await connectToDatabase();
+  const user = await User.findOne({ clerkId: userId });
+  if (!user || user.role !== 'admin') {
+    throw new Error("Unauthorized: Admin access required");
+  }
+};
+
 export const crawlAndStage = async (url: string, language: string) => {
   try {
+    await requireAdmin();
     const { userId } = auth();
     if (!userId) {
         return { success: false, error: "Unauthorized" };
@@ -30,6 +42,7 @@ export const crawlAndStage = async (url: string, language: string) => {
 
 export const getPendingKnowledge = async (page: number = 1, limit: number = 20, language?: string) => {
   try {
+    await requireAdmin();
     await connectToDatabase();
     const skip = (page - 1) * limit;
 
@@ -59,6 +72,7 @@ export const getPendingKnowledge = async (page: number = 1, limit: number = 20, 
 
 export const approveKnowledge = async (id: string) => {
   try {
+    await requireAdmin();
     await connectToDatabase();
     await GlobalKnowledge.findByIdAndUpdate(id, { status: 'approved' });
     revalidatePath("/admin/knowledge");
@@ -71,6 +85,7 @@ export const approveKnowledge = async (id: string) => {
 
 export const rejectKnowledge = async (id: string) => {
   try {
+    await requireAdmin();
     await connectToDatabase();
     await GlobalKnowledge.findByIdAndDelete(id);
     revalidatePath("/admin/knowledge");
@@ -83,6 +98,7 @@ export const rejectKnowledge = async (id: string) => {
 
 export const editKnowledge = async (id: string, content: string) => {
     try {
+        await requireAdmin();
         await connectToDatabase();
         // Recalculate embedding if content changes significantly?
         // For MVP, we might keep old embedding or assume small edits.
