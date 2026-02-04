@@ -7,10 +7,17 @@ import { Link, usePathname } from "@/navigation";
 import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
+import { Home, User, Bookmark } from "lucide-react";
 
 const Sidebar = () => {
   const pathname = usePathname();
   const t = useTranslations("Sidebar");
+
+  const iconMap: { [key: string]: any } = {
+    home: Home,
+    user: User,
+    bookmark: Bookmark
+  };
 
   return (
     <aside className="sidebar">
@@ -24,6 +31,7 @@ const Sidebar = () => {
             <ul className="sidebar-nav_elements">
               {navLinks.slice(0, 6).map((link) => {
                 const isActive = link.route === pathname;
+                const IconComponent = iconMap[link.icon] || Home;
 
                 return (
                   <li
@@ -33,13 +41,7 @@ const Sidebar = () => {
                     }`}
                   >
                     <Link className="sidebar-link" href={link.route}>
-                      <Image
-                        src={link.icon}
-                        alt="logo"
-                        width={24}
-                        height={24}
-                        className={`${isActive && "brightness-200"}`}
-                      />
+                      <IconComponent className={`w-6 h-6 ${isActive ? "text-white" : "text-gray-500 group-hover:text-purple-600"}`} />
                       {t(link.key)}
                     </Link>
                   </li>

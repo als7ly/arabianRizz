@@ -3,13 +3,19 @@ export const navLinks = [
     label: "Home",
     key: "home",
     route: "/",
-    icon: "/assets/icons/home.svg",
+    icon: "home",
+  },
+  {
+    label: "Saved Lines",
+    key: "saved",
+    route: "/saved",
+    icon: "bookmark",
   },
   {
     label: "Profile",
     key: "profile",
     route: "/profile",
-    icon: "/assets/icons/profile.svg",
+    icon: "user",
   },
 ];
 

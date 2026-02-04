@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navLinks } from "@/constants";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Home, User, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -13,6 +13,12 @@ import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 const MobileNav = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  const iconMap: { [key: string]: any } = {
+    home: Home,
+    user: User,
+    bookmark: Bookmark
+  };
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -48,6 +54,7 @@ const MobileNav = () => {
             <ul className="flex flex-col gap-4">
               {navLinks.map((link) => {
                 const isActive = link.route === pathname;
+                const IconComponent = iconMap[link.icon] || Home;
 
                 return (
                   <li
@@ -58,12 +65,7 @@ const MobileNav = () => {
                     )}
                   >
                     <Link className="flex w-full items-center gap-4 p-3" href={link.route} onClick={toggleMenu}>
-                        <Image
-                            src={link.icon}
-                            alt="logo"
-                            width={24}
-                            height={24}
-                        />
+                        <IconComponent className={cn("w-6 h-6", isActive ? "text-purple-600" : "text-gray-500")} />
                       {link.label}
                     </Link>
                   </li>
