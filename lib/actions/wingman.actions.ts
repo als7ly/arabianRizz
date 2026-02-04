@@ -14,7 +14,7 @@ import User from "../database/models/user.model";
 import GlobalKnowledge from "../database/models/global-knowledge.model";
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
-import { updateGamification } from "./gamification.actions";
+import { updateGamification } from "@/lib/services/gamification.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,

@@ -12,3 +12,8 @@
 **Vulnerability:** The `createTransaction` function was exported from a file with `"use server"`, allowing any client to invoke it and grant free credits.
 **Learning:** Placing sensitive administrative logic in Server Action files (marked with `"use server"`) exposes them as public API endpoints, even if they are only intended for internal use.
 **Prevention:** Move internal logic/services to separate files *without* `"use server"` directives. Only export functions that are explicitly intended to be called by the client from Server Action files.
+
+## 2024-05-22 - [HIGH] Exposed Gamification Logic
+**Vulnerability:** The `updateGamification` function was exported from a `"use server"` file without any authentication checks, allowing potential IDOR or gamification abuse.
+**Learning:** Even low-risk logic like gamification should not be exposed as a public API if it modifies state.
+**Prevention:** Move internal state-modifying logic to service files.
