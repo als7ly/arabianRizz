@@ -14,7 +14,15 @@
     "step3": "Start chatting and ask for <b>Hookup Lines</b>!",
     "balance": "My Balance",
     "createProfileDesc": "Create a profile for the girl you want to hook up with.",
-    "searchPlaceholder": "Search girls by name or vibe..."
+    "searchPlaceholder": "Search girls by name or vibe...",
+    "deleteProfileTitle": "Delete Profile",
+    "deleteProfileAria": "Delete Profile",
+    "deleteDialogTitle": "Delete Profile?",
+    "deleteDialogDesc": "Are you sure you want to delete this profile? This cannot be undone.",
+    "deleteDialogCancel": "Cancel",
+    "deleteDialogConfirm": "Delete",
+    "chatBtn": "Chat",
+    "noNotes": "No notes yet."
   },
   "Sidebar": {
     "home": "Home",
@@ -135,6 +143,8 @@
     "inputAria": "Message input",
     "sendAria": "Send message",
     "inputPlaceholderGirl": "What did she say?",
+    "uploadScreenshotTitle": "Upload Screenshot",
+    "uploadScreenshotAria": "Upload screenshot",
     "QuickActions": {
         "title": "Quick Actions",
         "date": "Date Idea",
