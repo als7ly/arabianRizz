@@ -34,6 +34,12 @@ export const DeleteGirlButton = ({ girlId, className, iconSize = 24 }: DeleteGir
     });
   };
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    // Prevent navigation if used inside a Link.
+    // e.preventDefault() is NOT used because it prevents the AlertDialog from opening.
+    e.stopPropagation();
+  };
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -44,11 +50,12 @@ export const DeleteGirlButton = ({ girlId, className, iconSize = 24 }: DeleteGir
           className={cn("text-red-400 hover:bg-red-50 hover:text-red-600", className)}
           title="Delete Profile"
           aria-label="Delete Profile"
+          onClick={handleTriggerClick}
         >
           <Trash2 size={iconSize} />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Profile?</AlertDialogTitle>
           <AlertDialogDescription>
