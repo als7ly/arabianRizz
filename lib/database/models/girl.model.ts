@@ -11,6 +11,10 @@ const GirlSchema = new Schema({
   vibe: {
     type: String, // Description of her personality/notes
   },
+  language: {
+    type: String,
+    default: "en", // Default to English
+  },
   dialect: {
     type: String, // e.g., "Egyptian", "Levantine", "Gulf", "Maghrebi", "Modern Standard Arabic"
     default: "Modern Standard Arabic",
