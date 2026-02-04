@@ -644,7 +644,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         </DropdownMenu>
 
         <Select onValueChange={setTone} defaultValue="Flirty">
-            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0">
+            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone">
                 <SelectValue placeholder="Tone" />
             </SelectTrigger>
             <SelectContent>
@@ -656,12 +656,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         </Select>
 
         <div className="flex-1 flex gap-2 w-full md:w-auto">
-             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10">
+             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label="Message sender">
                 <Button
                     variant={sender === 'user' ? 'secondary' : 'ghost'}
                     size="sm"
                     className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
                     onClick={() => setSender('user')}
+                    aria-pressed={sender === 'user'}
+                    aria-label="Set sender to Me"
                 >
                     Me
                 </Button>
@@ -670,6 +672,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     size="sm"
                     className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
                     onClick={() => setSender('girl')}
+                    aria-pressed={sender === 'girl'}
+                    aria-label="Set sender to Her"
                 >
                     Her
                 </Button>
