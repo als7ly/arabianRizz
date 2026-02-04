@@ -6,6 +6,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs";
 import { checkRateLimit } from "@/lib/ratelimit";
+import { generateEmbedding } from "./rag.actions";
 
 export const crawlAndStage = async (url: string, language: string) => {
   try {
@@ -84,12 +85,15 @@ export const rejectKnowledge = async (id: string) => {
 export const editKnowledge = async (id: string, content: string) => {
     try {
         await connectToDatabase();
-        // Recalculate embedding if content changes significantly?
-        // For MVP, we might keep old embedding or assume small edits.
-        // Ideally, we regenerate embedding.
 
-        // Let's assume we just update text for now to fix typos.
-        await GlobalKnowledge.findByIdAndUpdate(id, { content });
+        // Regenerate embedding for the updated content
+        const embedding = await generateEmbedding(content);
+
+        await GlobalKnowledge.findByIdAndUpdate(id, {
+            content,
+            embedding // Update the vector as well
+        });
+
         revalidatePath("/admin/knowledge");
         return { success: true };
     } catch (error) {
