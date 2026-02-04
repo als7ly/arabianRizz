@@ -617,28 +617,28 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={isLoading} title="Quick Actions" aria-label="Quick Actions">
+            <Button variant="ghost" size="icon" disabled={isLoading} title={t('QuickActions.title')} aria-label={t('QuickActions.title')}>
                 <Sparkles size={24} className="text-dark-400 hover:text-purple-500"/>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('QuickActions.title')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => handleQuickAction('date')} className="cursor-pointer">
                 <Coffee className="mr-2 h-4 w-4 text-orange-500" />
-                <span>Date Idea</span>
+                <span>{t('QuickActions.date')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleQuickAction('roast')} className="cursor-pointer">
                 <Flame className="mr-2 h-4 w-4 text-red-500" />
-                <span>Playful Roast</span>
+                <span>{t('QuickActions.roast')}</span>
             </DropdownMenuItem>
              <DropdownMenuItem onClick={() => handleQuickAction('comfort')} className="cursor-pointer">
                 <Heart className="mr-2 h-4 w-4 text-pink-500" />
-                <span>Comfort Her</span>
+                <span>{t('QuickActions.comfort')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleQuickAction('topic')} className="cursor-pointer">
                 <MessageCircle className="mr-2 h-4 w-4 text-blue-500" />
-                <span>Change Topic</span>
+                <span>{t('QuickActions.topic')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

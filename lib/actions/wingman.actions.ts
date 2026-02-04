@@ -101,16 +101,26 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
-    const arabicPattern = /[\u0600-\u06FF]/;
-    const isArabic = arabicPattern.test(userMessage) || (girl.dialect && girl.dialect !== 'English');
-    const language = isArabic ? 'ar' : 'en';
+    // Language Handling
+    const languageCode = girl.language || 'en';
+    const languageMap: { [key: string]: string } = {
+        'en': 'English', 'ar': 'Arabic', 'fr': 'French', 'zh': 'Chinese',
+        'ja': 'Japanese', 'es': 'Spanish', 'hi': 'Hindi', 'pt': 'Portuguese',
+        'ru': 'Russian', 'de': 'German'
+    };
+    const fullLanguage = languageMap[languageCode] || 'English';
 
-    const globalKnowledge = await getGlobalKnowledge(userMessage, language);
+    // RAG Knowledge: Attempt to find relevant info in that language
+    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
-    const dialectInstruction = girl.dialect 
-        ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions in your suggested reply if the conversation is in Arabic.`
-        : "Support Arabic dialects (Egyptian, Levantine, Gulf) if the user or girl speaks them.";
+    // Dialect Handling (Only for Arabic)
+    let dialectInstruction = "";
+    if (languageCode === 'ar' && girl.dialect) {
+        dialectInstruction = `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions in your suggested reply.`;
+    } else {
+        dialectInstruction = `You MUST generate the reply in ${fullLanguage}.`;
+    }
 
     const systemPrompt = `
 You are "The Wingman", an expert dating coach and master of female psychology.

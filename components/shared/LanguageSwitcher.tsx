@@ -10,6 +10,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/navigation";
 import { Globe } from "lucide-react";
+import { updateUserLocale } from "@/lib/actions/locale.actions";
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
@@ -17,7 +18,8 @@ export default function LanguageSwitcher() {
   const pathname = usePathname();
   const t = useTranslations("Sidebar");
 
-  const onSelectChange = (nextLocale: string) => {
+  const onSelectChange = async (nextLocale: string) => {
+    await updateUserLocale(nextLocale);
     router.replace(pathname, { locale: nextLocale });
   };
 

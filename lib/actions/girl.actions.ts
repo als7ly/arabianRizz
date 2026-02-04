@@ -41,6 +41,7 @@ export async function createGirl(girl: CreateGirlParams) {
     try {
         const newGirl = await Girl.create({
             ...girl,
+            language: girl.language || "en", // Default to English
             author: user._id
         });
 
@@ -138,7 +139,8 @@ export async function updateGirl(girl: UpdateGirlParams) {
         age: girl.age,
         vibe: girl.vibe,
         dialect: girl.dialect,
-        voiceId: girl.voiceId, // Added Voice ID support
+        language: girl.language,
+        voiceId: girl.voiceId,
         relationshipStatus: girl.relationshipStatus,
         rating: girl.rating,
         socialMediaHandle: girl.socialMediaHandle,

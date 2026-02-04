@@ -10,6 +10,7 @@ const UserSchema = new Schema({
   planId: { type: Number, default: 1 },
   creditBalance: { type: Number, default: 20 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  locale: { type: String, default: 'en' },
   streak: {
     current: { type: Number, default: 0 },
     lastActive: { type: Date, default: Date.now }
