@@ -115,6 +115,25 @@
     "sheSaid": "She said",
     "wingman": "Wingman",
     "inputPlaceholder": "Type what you want to say...",
-    "wingmanTip": "Wingman Tip"
+    "wingmanTip": "Wingman Tip",
+    "QuickActions": {
+        "title": "Quick Actions",
+        "date": "Date Idea",
+        "roast": "Playful Roast",
+        "comfort": "Comfort Her",
+        "topic": "Change Topic"
+    }
+  },
+  "Languages": {
+    "en": "English",
+    "ar": "Arabic",
+    "fr": "French",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "es": "Spanish",
+    "hi": "Hindi",
+    "pt": "Portuguese",
+    "ru": "Russian",
+    "de": "German"
   }
 }

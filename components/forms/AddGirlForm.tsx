@@ -36,6 +36,7 @@ const formSchema = z.object({
   age: z.coerce.number().optional(),
   vibe: z.string().optional(),
   dialect: z.string().optional(),
+  language: z.string().optional(),
   voiceId: z.string().optional(),
   relationshipStatus: z.string(),
   rating: z.coerce.number().min(1).max(10).default(5),
@@ -47,6 +48,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
   const pathname = usePathname();
   const { toast } = useToast();
   const t = useTranslations('Forms');
+  const tLang = useTranslations('Languages');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -57,6 +59,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
       age: undefined,
       vibe: "",
       dialect: "Modern Standard Arabic",
+      language: "en",
       voiceId: "nova",
       relationshipStatus: "Just met",
       rating: 5,
@@ -116,6 +119,7 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         socialMediaHandle: values.socialMediaHandle,
         vibe: values.vibe,
         dialect: values.dialect,
+        language: values.language,
         voiceId: values.voiceId,
         relationshipStatus: values.relationshipStatus,
         userId,
@@ -265,29 +269,54 @@ export function AddGirlForm({ userId, closeDialog }: { userId: string, closeDial
         <div className="flex gap-4">
             <FormField
             control={form.control}
-            name="dialect"
+            name="language"
             render={({ field }) => (
                 <FormItem className="flex-1">
-                <FormLabel>Dialect</FormLabel>
+                <FormLabel>Language</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                     <SelectTrigger className="select-field">
-                        <SelectValue placeholder="Select dialect" />
+                        <SelectValue placeholder="Select Language" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Modern Standard Arabic">{t('DialectOptions.msa')}</SelectItem>
-                      <SelectItem value="Egyptian">{t('DialectOptions.egyptian')}</SelectItem>
-                      <SelectItem value="Levantine">{t('DialectOptions.levantine')}</SelectItem>
-                      <SelectItem value="Gulf">{t('DialectOptions.gulf')}</SelectItem>
-                      <SelectItem value="Maghrebi">{t('DialectOptions.maghrebi')}</SelectItem>
-                      <SelectItem value="Iraqi">{t('DialectOptions.iraqi')}</SelectItem>
+                        {['en','ar','fr','zh','ja','es','hi','pt','ru','de'].map((lang) => (
+                            <SelectItem key={lang} value={lang}>{tLang(lang)}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
                 <FormMessage />
                 </FormItem>
             )}
             />
+
+            {form.watch("language") === "ar" && (
+                <FormField
+                control={form.control}
+                name="dialect"
+                render={({ field }) => (
+                    <FormItem className="flex-1">
+                    <FormLabel>Dialect</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger className="select-field">
+                            <SelectValue placeholder="Select dialect" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="Modern Standard Arabic">{t('DialectOptions.msa')}</SelectItem>
+                        <SelectItem value="Egyptian">{t('DialectOptions.egyptian')}</SelectItem>
+                        <SelectItem value="Levantine">{t('DialectOptions.levantine')}</SelectItem>
+                        <SelectItem value="Gulf">{t('DialectOptions.gulf')}</SelectItem>
+                        <SelectItem value="Maghrebi">{t('DialectOptions.maghrebi')}</SelectItem>
+                        <SelectItem value="Iraqi">{t('DialectOptions.iraqi')}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
 
             <FormField
             control={form.control}

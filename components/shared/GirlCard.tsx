@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Star } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
+import { DeleteGirlButton } from "./DeleteGirlButton";
 
 export const GirlCard = ({ girl }: { girl: any }) => {
   const pathname = usePathname();
@@ -56,7 +56,13 @@ export const GirlCard = ({ girl }: { girl: any }) => {
                 <MessageCircle size={18} />
                 Chat
             </Button>
-            <DeleteGirlButton girlId={girl._id} iconSize={18} className="z-10" />
+            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <DeleteGirlButton
+                    girlId={girl._id}
+                    className="text-red-400 hover:bg-red-50 hover:text-red-600 z-10"
+                    iconSize={18}
+                />
+            </div>
         </div>
       </div>
     </Link>
