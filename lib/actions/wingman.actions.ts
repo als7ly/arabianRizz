@@ -67,7 +67,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
             embedding: embedding,
             language: language,
             sourceUrl: "user-feedback",
-            status: 'approved',
+            status: 'pending',
             tags: ['user-feedback', 'auto-learned']
         });
     }
