@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteGirl } from "@/lib/actions/girl.actions";
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +18,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export const DeleteGirlButton = ({ girlId }: { girlId: string }) => {
+interface DeleteGirlButtonProps {
+  girlId: string;
+  className?: string;
+  iconSize?: number;
+}
+
+export const DeleteGirlButton = ({ girlId, className, iconSize = 24 }: DeleteGirlButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const t = useTranslations('Index'); // Using generic translations for now, or add specific ones
 
@@ -27,6 +34,12 @@ export const DeleteGirlButton = ({ girlId }: { girlId: string }) => {
     });
   };
 
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    // Prevent navigation if used inside a Link.
+    // e.preventDefault() is NOT used because it prevents the AlertDialog from opening.
+    e.stopPropagation();
+  };
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -34,14 +47,15 @@ export const DeleteGirlButton = ({ girlId }: { girlId: string }) => {
           variant="ghost"
           size="icon"
           disabled={isPending}
-          className="text-red-400 hover:bg-red-50 hover:text-red-600"
+          className={cn("text-red-400 hover:bg-red-50 hover:text-red-600", className)}
           title="Delete Profile"
           aria-label="Delete Profile"
+          onClick={handleTriggerClick}
         >
-          <Trash2 size={24} />
+          <Trash2 size={iconSize} />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Profile?</AlertDialogTitle>
           <AlertDialogDescription>

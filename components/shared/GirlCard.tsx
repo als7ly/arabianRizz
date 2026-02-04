@@ -3,25 +3,13 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Trash2, Star, AtSign } from "lucide-react";
-import { deleteGirl } from "@/lib/actions/girl.actions";
-import { useTransition } from "react";
+import { MessageCircle, Star } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
 
 export const GirlCard = ({ girl }: { girl: any }) => {
   const pathname = usePathname();
   const locale = pathname.split('/')[1] || 'en';
-  const [isPending, startTransition] = useTransition();
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
-    e.stopPropagation();
-    if (confirm("Are you sure?")) {
-      startTransition(async () => {
-        await deleteGirl(girl._id);
-      });
-    }
-  };
 
   return (
     <Link href={`/${locale}/girls/${girl._id}`}>
@@ -68,16 +56,7 @@ export const GirlCard = ({ girl }: { girl: any }) => {
                 <MessageCircle size={18} />
                 Chat
             </Button>
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-red-400 hover:bg-red-50 hover:text-red-600 z-10"
-                onClick={handleDelete}
-                aria-label="Delete profile"
-                title="Delete profile"
-            >
-                <Trash2 size={18} />
-            </Button>
+            <DeleteGirlButton girlId={girl._id} iconSize={18} className="z-10" />
         </div>
       </div>
     </Link>
