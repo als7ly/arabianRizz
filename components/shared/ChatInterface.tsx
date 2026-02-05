@@ -10,6 +10,7 @@ import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
 import { generateArt } from "@/lib/actions/image.actions";
+import { toggleSaveMessage, getSavedMessages } from "@/lib/actions/saved-message.actions";
 import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -79,6 +80,50 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     };
     fetchGirlVoice();
   }, [girlId]);
+
+  const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const fetchSaved = async () => {
+        try {
+            const saved = await getSavedMessages();
+            const ids = new Set(saved.map((s: any) => s.message?._id).filter(Boolean));
+            setSavedMessageIds(ids);
+        } catch (e) {
+            console.error("Failed to fetch saved messages", e);
+        }
+    };
+    fetchSaved();
+  }, []);
+
+  const handleToggleSave = async (msg: Message) => {
+    if (!msg._id) return;
+    const isSaved = savedMessageIds.has(msg._id);
+
+    // Optimistic Update
+    const newSet = new Set(savedMessageIds);
+    if (isSaved) newSet.delete(msg._id);
+    else newSet.add(msg._id);
+    setSavedMessageIds(newSet);
+
+    try {
+        const result = await toggleSaveMessage(msg._id, pathname);
+        if (result.isSaved) {
+             toast({ title: "Saved", description: "Message saved to bookmarks." });
+        } else {
+             toast({ title: "Removed", description: "Message removed from bookmarks." });
+        }
+    } catch (e) {
+        // Revert
+        setSavedMessageIds(prev => {
+             const reverted = new Set(prev);
+             if (isSaved) reverted.add(msg._id!);
+             else reverted.delete(msg._id!);
+             return reverted;
+        });
+        toast({ title: "Error", description: "Failed to save message.", variant: "destructive" });
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;

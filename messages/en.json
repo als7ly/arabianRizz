@@ -27,6 +27,7 @@
   "Sidebar": {
     "home": "Home",
     "profile": "Profile",
+    "saved": "Saved Lines",
     "login": "Login",
     "signOut": "Sign Out",
     "language": "Language"
@@ -156,6 +157,13 @@
         "comfort": "Comfort Her",
         "topic": "Change Topic"
     }
+  },
+  "Saved": {
+    "title": "Saved Lines",
+    "subtitle": "Your collection of best Rizz",
+    "empty": "No saved lines yet. Start chatting to save some!",
+    "copy": "Copy",
+    "remove": "Remove"
   },
   "Languages": {
     "en": "English",
