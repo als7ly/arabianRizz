@@ -145,6 +145,10 @@
     "inputPlaceholderGirl": "What did she say?",
     "uploadScreenshotTitle": "Upload Screenshot",
     "uploadScreenshotAria": "Upload screenshot",
+    "thumbsUpTitle": "Helpful",
+    "thumbsUpAria": "Rate as helpful",
+    "thumbsDownTitle": "Not Helpful",
+    "thumbsDownAria": "Rate as not helpful",
     "QuickActions": {
         "title": "Quick Actions",
         "date": "Date Idea",
