@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { createTransaction } from "@/lib/actions/transaction.actions";
+import { createTransaction } from "@/lib/services/transaction.service";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { connectToDatabase } from "@/lib/database/mongoose";
