@@ -19,12 +19,6 @@ const UserSchema = new Schema({
   totalInteractions: { type: Number, default: 0 },
 });
 
-// Optimize Leaderboard (sort by interactions)
-UserSchema.index({ totalInteractions: -1 });
-
-// Optimize Analytics (filter by last active date)
-UserSchema.index({ "streak.lastActive": -1 });
-
 const User = models?.User || model("User", UserSchema);
 
 export default User;
