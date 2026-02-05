@@ -13,7 +13,7 @@ const UserSchema = new Schema({
   locale: { type: String, default: 'en' },
   streak: {
     current: { type: Number, default: 0 },
-    lastActive: { type: Date, default: Date.now }
+    lastActive: { type: Date, default: Date.now, index: true }
   },
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
