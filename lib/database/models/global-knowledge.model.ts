@@ -20,6 +20,9 @@ const GlobalKnowledgeSchema = new Schema({
   tags: { type: [String], default: [] },
 }, { timestamps: true });
 
+// Optimize queries by status (filtering), language (filtering) and createdAt (sorting)
+GlobalKnowledgeSchema.index({ status: 1, language: 1, createdAt: -1 });
+
 const GlobalKnowledge = models.GlobalKnowledge || model<IGlobalKnowledge>("GlobalKnowledge", GlobalKnowledgeSchema);
 
 export default GlobalKnowledge;

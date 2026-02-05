@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Volume2, RotateCw, Copy, Camera, Share2, Heart, Coffee, Flame, MessageCircle, Bookmark } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Heart, Coffee, Flame, MessageCircle, Camera } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -13,11 +13,10 @@ import { generateArt } from "@/lib/actions/image.actions";
 import { toggleSaveMessage, getSavedMessages } from "@/lib/actions/saved-message.actions";
 import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
-import Feedback from "./Feedback";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MessageBubble, { Message } from "./MessageBubble";
 import {
   Dialog,
   DialogContent,
@@ -48,15 +47,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-
-type Message = {
-  _id?: string;
-  role: string;
-  content: string;
-  createdAt?: string;
-  feedback?: "up" | "down" | null;
-  audioUrl?: string; // Add audioUrl to type
-};
 
 export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
   const pathname = usePathname();
@@ -189,7 +179,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     }
   };
 
-  const handleRegenerate = async (index: number) => {
+  const handleRegenerate = useCallback(async (index: number) => {
     if (index <= 0) return;
     const userMsg = messages[index - 1];
     if (userMsg.role !== "user" && userMsg.role !== "girl") return;
@@ -218,18 +208,18 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [messages, girlId, tone, t, toast]);
 
-  const handleCopy = (text: string) => {
+  const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
     toast({
         title: "Copied!",
         description: "Message copied to clipboard.",
         duration: 3000,
     });
-  };
+  }, [toast]);
 
-  const handleShare = async (text: string, isImage: boolean = false) => {
+  const handleShare = useCallback(async (text: string, isImage: boolean = false) => {
       const shareData = {
           title: 'ArabianRizz',
           text: isImage ? 'Check out this generated image!' : text,
@@ -247,9 +237,9 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
           handleCopy(text);
           toast({ title: "Copied Link", description: "Sharing not supported, link copied." });
       }
-  };
+  }, [handleCopy, toast]);
 
-  const handlePlayAudio = async (message: Message, idx: number) => {
+  const handlePlayAudio = useCallback(async (message: Message, idx: number) => {
     try {
         setPlayingAudioId(idx.toString());
         let audioUrl = message.audioUrl;
@@ -281,7 +271,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         toast({ title: t('errorTitle'), description: "Audio playback failed.", variant: "destructive" });
         setPlayingAudioId(null);
     }
-  };
+  }, [voiceId, t, toast]);
 
   const handleImageUpload = async (url: string) => {
     setIsLoading(true);
@@ -463,17 +453,17 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm"
-                        title="Clear Chat"
-                        aria-label="Clear chat history"
+                        title={t('clearChatTitle')}
+                        aria-label={t('clearChatAria')}
                     >
                         <Trash2 size={16} />
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('clearChatDialogTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete all messages with this girl. This action cannot be undone.
+                        {t('clearChatDialogDesc')}
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -492,118 +482,17 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             </div>
         )}
         {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              "flex w-full group animate-fade-in-up",
-              msg.role === "user" ? "justify-end" : "justify-start"
-            )}
-            style={{ animationDelay: `${idx * 0.05}s` }}
-          >
-            <div
-              className={cn(
-                "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap relative",
-                msg.role === "user"
-                  ? "bg-purple-600 text-white rounded-br-none"
-                  : msg.role === "wingman"
-                  ? "bg-white border border-purple-100 text-dark-600 rounded-bl-none shadow-sm"
-                  : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
-              )}
-            >
-              {msg.role === "wingman" && <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> {t('wingman')}</div>}
-              {msg.role === "girl" && <div className="text-xs font-bold text-gray-500 mb-1">{t('sheSaid')}</div>}
-              
-              {msg.content.startsWith("[IMAGE]:") ? (
-                  <div className="relative">
-                    <Image
-                        src={msg.content.replace("[IMAGE]: ", "")}
-                        alt="Generated"
-                        width={500}
-                        height={500}
-                        className="rounded-lg max-w-full h-auto"
-                    />
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute bottom-2 right-2 bg-white/80 hover:bg-white text-gray-700"
-                        onClick={() => handleShare(msg.content.replace("[IMAGE]: ", ""), true)}
-                        title="Share Image"
-                    >
-                        <Share2 size={16} />
-                    </Button>
-                  </div>
-              ) : (
-                  <div className="flex flex-col gap-1">
-                      <div className="flex items-start gap-2">
-                          <span className="flex-1">{msg.content}</span>
-                          {msg.role === "wingman" && (
-                              <div className="flex flex-col gap-1">
-                            <div className="flex gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-purple-400 hover:text-purple-600"
-                                    onClick={() => handlePlayAudio(msg, idx)}
-                                    disabled={playingAudioId !== null}
-                                    title="Play Audio"
-                                    aria-label="Play audio"
-                                >
-                                    {playingAudioId === idx.toString() ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-blue-400 hover:text-blue-600"
-                                    onClick={() => handleRegenerate(idx)}
-                                    disabled={isLoading}
-                                    title="Regenerate Response"
-                                    aria-label="Regenerate response"
-                                >
-                                    <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                                    onClick={() => handleCopy(msg.content)}
-                                    title="Copy to Clipboard"
-                                    aria-label="Copy to clipboard"
-                                >
-                                    <Copy size={14} />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-gray-400 hover:text-green-600"
-                                    onClick={() => handleShare(msg.content)}
-                                    title="Share"
-                                    aria-label="Share message"
-                                >
-                                    <Share2 size={14} />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn("h-6 w-6 text-gray-400 hover:text-yellow-600", msg._id && savedMessageIds.has(msg._id) && "text-yellow-500 fill-yellow-500")}
-                                    onClick={() => handleToggleSave(msg)}
-                                    disabled={!msg._id}
-                                    title={msg._id && savedMessageIds.has(msg._id) ? "Unsave" : "Save"}
-                                    aria-label={msg._id && savedMessageIds.has(msg._id) ? "Unsave message" : "Save message"}
-                                >
-                                    <Bookmark size={14} />
-                                </Button>
-                            </div>
-                            {msg._id && <Feedback messageId={msg._id} />}
-                          </div>
-                          )}
-                      </div>
-                      <span className="text-[10px] text-gray-400 self-end">
-                        {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                  </div>
-              )}
-            </div>
-          </div>
+          <MessageBubble
+            key={msg._id || idx}
+            msg={msg}
+            index={idx}
+            playingAudioId={playingAudioId}
+            isLoading={isLoading}
+            onPlayAudio={handlePlayAudio}
+            onRegenerate={handleRegenerate}
+            onCopy={handleCopy}
+            onShare={handleShare}
+          />
         ))}
         {isLoading && (
             <div className="flex justify-start w-full animate-pulse" role="status" aria-live="polite">
@@ -622,7 +511,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         
         <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art" aria-label="Open art generation">
+                <Button variant="ghost" size="icon" disabled={isLoading} title={t('generateArtTitle')} aria-label={t('generateArtAria')}>
                     <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
                 </Button>
             </DialogTrigger>
@@ -700,7 +589,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         </DropdownMenu>
 
         <Select onValueChange={setTone} defaultValue="Flirty">
-            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0">
+            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone">
                 <SelectValue placeholder="Tone" />
             </SelectTrigger>
             <SelectContent>
@@ -712,12 +601,14 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         </Select>
 
         <div className="flex-1 flex gap-2 w-full md:w-auto">
-             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10">
+             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label="Message sender">
                 <Button
                     variant={sender === 'user' ? 'secondary' : 'ghost'}
                     size="sm"
                     className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
                     onClick={() => setSender('user')}
+                    aria-pressed={sender === 'user'}
+                    aria-label="Set sender to Me"
                 >
                     Me
                 </Button>
@@ -726,6 +617,8 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                     size="sm"
                     className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
                     onClick={() => setSender('girl')}
+                    aria-pressed={sender === 'girl'}
+                    aria-label="Set sender to Her"
                 >
                     Her
                 </Button>
@@ -734,16 +627,16 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                placeholder={sender === 'girl' ? "What did she say?" : t('inputPlaceholder')}
+                placeholder={sender === 'girl' ? t('inputPlaceholderGirl') : t('inputPlaceholder')}
                 className="flex-1"
                 disabled={isLoading}
-                aria-label="Message input"
+                aria-label={t('inputAria')}
             />
              <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || isLoading}
                 className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
-                aria-label="Send message"
+                aria-label={t('sendAria')}
             >
                 {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
             </Button>

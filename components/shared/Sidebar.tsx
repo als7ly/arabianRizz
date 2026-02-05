@@ -23,7 +23,7 @@ const Sidebar = () => {
     <aside className="sidebar">
       <div className="flex size-full flex-col gap-4">
         <Link href="/" className="sidebar-logo">
-          <Image src="/assets/images/logo-text.svg" alt="logo" width={180} height={28} />
+          <Image src="/assets/images/logo-text.svg" alt="ArabianRizz" width={180} height={28} />
         </Link>
 
         <nav className="sidebar-nav">
@@ -41,7 +41,13 @@ const Sidebar = () => {
                     }`}
                   >
                     <Link className="sidebar-link" href={link.route}>
-                      <IconComponent className={`w-6 h-6 ${isActive ? "text-white" : "text-gray-500 group-hover:text-purple-600"}`} />
+                      <Image
+                        src={link.icon}
+                        alt={t(link.key)}
+                        width={24}
+                        height={24}
+                        className={`${isActive && "brightness-200"}`}
+                      />
                       {t(link.key)}
                     </Link>
                   </li>

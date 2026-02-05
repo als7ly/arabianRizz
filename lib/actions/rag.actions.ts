@@ -7,6 +7,7 @@ import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
 import { handleError } from "../utils";
 import { auth } from "@clerk/nextjs";
+import mongoose from "mongoose";
 
 async function verifyGirlOwnership(girlId: string) {
     const { userId: clerkId } = auth();
@@ -85,7 +86,7 @@ export async function getContext(girlId: string, query: string) {
           numCandidates: 100,
           limit: 5,
           filter: {
-            girl: { $eq: girlId } 
+            girl: { $eq: new mongoose.Types.ObjectId(girlId) }
           }
         }
       } as any,

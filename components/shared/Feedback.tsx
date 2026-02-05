@@ -5,6 +5,7 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { submitFeedback } from "@/lib/actions/wingman.actions";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 interface FeedbackProps {
   messageId?: string;
@@ -14,6 +15,7 @@ interface FeedbackProps {
 const Feedback = ({ messageId, initialFeedback }: FeedbackProps) => {
   const [feedback, setFeedback] = useState<"positive" | "negative" | null>(initialFeedback || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const t = useTranslations('Chat');
 
   if (!messageId) return null;
 
@@ -40,7 +42,8 @@ const Feedback = ({ messageId, initialFeedback }: FeedbackProps) => {
         className={cn("h-6 w-6", feedback === "positive" ? "text-green-500" : "text-gray-300 hover:text-green-500")}
         onClick={() => handleFeedback("positive")}
         disabled={isSubmitting}
-        aria-label="Thumbs up"
+        title={t('thumbsUpTitle')}
+        aria-label={t('thumbsUpAria')}
       >
         <ThumbsUp size={14} />
       </Button>
@@ -50,7 +53,8 @@ const Feedback = ({ messageId, initialFeedback }: FeedbackProps) => {
         className={cn("h-6 w-6", feedback === "negative" ? "text-red-500" : "text-gray-300 hover:text-red-500")}
         onClick={() => handleFeedback("negative")}
         disabled={isSubmitting}
-        aria-label="Thumbs down"
+        title={t('thumbsDownTitle')}
+        aria-label={t('thumbsDownAria')}
       >
         <ThumbsDown size={14} />
       </Button>
