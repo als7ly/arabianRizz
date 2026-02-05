@@ -13,11 +13,15 @@ const UserSchema = new Schema({
   locale: { type: String, default: 'en' },
   streak: {
     current: { type: Number, default: 0 },
-    lastActive: { type: Date, default: Date.now }
+    lastActive: { type: Date, default: Date.now, index: true }
   },
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
 });
+
+// Optimize queries for Analytics (Active Users) and Leaderboard (Top Users)
+UserSchema.index({ "streak.lastActive": -1 });
+UserSchema.index({ totalInteractions: -1 });
 
 const User = models?.User || model("User", UserSchema);
 

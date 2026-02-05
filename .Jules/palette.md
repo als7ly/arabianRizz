@@ -37,3 +37,7 @@
 ## 2024-05-24 - Native Confirm Dialog Replacement
 **Learning:** The `DeleteGirlButton` component was using `window.confirm()` which halts the main thread and provides a poor native UI experience that doesn't match the application's design system.
 **Action:** Replaced `window.confirm()` with the `AlertDialog` component from the design system. This provides a consistent, accessible, and stylable confirmation modal. Added `aria-label` to the trigger button for better accessibility.
+
+## 2024-05-25 - Localized Accessibility Attributes
+**Learning:** Discovered that ensuring all interactive elements (buttons, inputs) have localized `aria-label` and `title` attributes significantly improves the experience for international users relying on assistive technology. Consistent use of translation namespaces (e.g., `Chat`, `Dashboard`) keeps the codebase organized.
+**Action:** Systematically audited `ChatInterface`, `Sidebar`, `GirlCard`, and `Feedback` components to replace hardcoded strings with `t()` calls, adding missing keys to `messages/en.json` where necessary.

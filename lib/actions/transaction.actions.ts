@@ -2,10 +2,6 @@
 
 import { redirect } from "next/navigation";
 import Stripe from "stripe";
-import { handleError } from "../utils";
-import { connectToDatabase } from "../database/mongoose";
-import Transaction from "../database/models/transaction.model";
-import User from "../database/models/user.model";
 import { plans } from '@/constants';
 
 export async function checkoutCredits(transaction: CheckoutTransactionParams) {
@@ -48,3 +44,4 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams) {
     throw error;
   }
 }
+
