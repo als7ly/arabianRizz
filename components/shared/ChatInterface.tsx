@@ -408,17 +408,17 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm"
-                        title="Clear Chat"
-                        aria-label="Clear chat history"
+                        title={t('clearChatTitle')}
+                        aria-label={t('clearChatAria')}
                     >
                         <Trash2 size={16} />
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Clear Chat History?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('clearChatDialogTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete all messages with this girl. This action cannot be undone.
+                        {t('clearChatDialogDesc')}
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -466,7 +466,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
         
         <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading} title="Generate Art" aria-label="Open art generation">
+                <Button variant="ghost" size="icon" disabled={isLoading} title={t('generateArtTitle')} aria-label={t('generateArtAria')}>
                     <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
                 </Button>
             </DialogTrigger>
@@ -578,16 +578,16 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                placeholder={sender === 'girl' ? "What did she say?" : t('inputPlaceholder')}
+                placeholder={sender === 'girl' ? t('inputPlaceholderGirl') : t('inputPlaceholder')}
                 className="flex-1"
                 disabled={isLoading}
-                aria-label="Message input"
+                aria-label={t('inputAria')}
             />
              <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || isLoading}
                 className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
-                aria-label="Send message"
+                aria-label={t('sendAria')}
             >
                 {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
             </Button>

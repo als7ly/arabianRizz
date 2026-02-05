@@ -40,6 +40,7 @@ const Search = ({ placeholder = "Search..." }: { placeholder?: string }) => {
       <Input
         type="text"
         placeholder={placeholder}
+        aria-label={placeholder}
         onChange={(e) => setQuery(e.target.value)}
         className="p-16-medium h-[50px] border-0 bg-transparent placeholder:text-dark-400 focus:ring-0 focus:ring-offset-0 !important shadow-none outline-none"
       />

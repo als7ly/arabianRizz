@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, Star } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { DeleteGirlButton } from "./DeleteGirlButton";
+import { useTranslations } from "next-intl";
 
 export const GirlCard = ({ girl }: { girl: any }) => {
   const pathname = usePathname();
   const locale = pathname.split('/')[1] || 'en';
+  const t = useTranslations('Dashboard');
 
   return (
     <Link href={`/${locale}/girls/${girl._id}`}>
@@ -48,13 +50,13 @@ export const GirlCard = ({ girl }: { girl: any }) => {
         </div>
         
         <p className="p-16-medium line-clamp-2 text-dark-400/80 min-h-[3rem]">
-            {girl.vibe || "No notes yet."}
+            {girl.vibe || t('noNotes')}
         </p>
 
         <div className="flex justify-between items-center mt-2">
             <Button variant="ghost" size="sm" className="text-purple-500 gap-2 pl-0 hover:bg-transparent hover:text-purple-600">
                 <MessageCircle size={18} />
-                Chat
+                {t('chatBtn')}
             </Button>
             <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                 <DeleteGirlButton

@@ -26,7 +26,7 @@ interface DeleteGirlButtonProps {
 
 export const DeleteGirlButton = ({ girlId, className, iconSize = 24 }: DeleteGirlButtonProps) => {
   const [isPending, startTransition] = useTransition();
-  const t = useTranslations('Index'); // Using generic translations for now, or add specific ones
+  const t = useTranslations('Dashboard');
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -48,8 +48,8 @@ export const DeleteGirlButton = ({ girlId, className, iconSize = 24 }: DeleteGir
           size="icon"
           disabled={isPending}
           className={cn("text-red-400 hover:bg-red-50 hover:text-red-600", className)}
-          title="Delete Profile"
-          aria-label="Delete Profile"
+          title={t('deleteProfileTitle')}
+          aria-label={t('deleteProfileAria')}
           onClick={handleTriggerClick}
         >
           <Trash2 size={iconSize} />
@@ -57,15 +57,15 @@ export const DeleteGirlButton = ({ girlId, className, iconSize = 24 }: DeleteGir
       </AlertDialogTrigger>
       <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Profile?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteDialogTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this profile? This cannot be undone.
+            {t('deleteDialogDesc')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t('deleteDialogCancel')}</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
-            Delete
+            {t('deleteDialogConfirm')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
