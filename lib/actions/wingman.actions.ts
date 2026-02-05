@@ -14,7 +14,7 @@ import User from "../database/models/user.model";
 import GlobalKnowledge from "../database/models/global-knowledge.model";
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
-import { updateGamification } from "./gamification.actions";
+import { updateGamification } from "@/lib/services/gamification.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -67,7 +67,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
             embedding: embedding,
             language: language,
             sourceUrl: "user-feedback",
-            status: 'approved',
+            status: 'pending',
             tags: ['user-feedback', 'auto-learned']
         });
     }
