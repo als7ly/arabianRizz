@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    minimumCacheTTL: 604800, // Cache images for 1 week
     remotePatterns: [
       {
         protocol: 'https',
