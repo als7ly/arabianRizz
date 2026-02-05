@@ -39,7 +39,10 @@ export default function LanguageSwitcher() {
   return (
     <div className="px-4 py-2">
       <Select defaultValue={locale} onValueChange={onSelectChange}>
-        <SelectTrigger className="w-full bg-transparent border-none text-gray-700 focus:ring-0 focus:ring-offset-0 gap-2 px-2">
+        <SelectTrigger
+          className="w-full bg-transparent border-none text-gray-700 focus:ring-0 focus:ring-offset-0 gap-2 px-2"
+          aria-label={t('language')}
+        >
            <Globe size={20} className="text-gray-500" />
            <SelectValue placeholder={t('language')} />
         </SelectTrigger>

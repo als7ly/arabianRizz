@@ -91,6 +91,7 @@ export default function SavedList({ initialMessages }: { initialMessages: SavedM
                 size="icon"
                 onClick={() => handleCopy(msg.content)}
                 title={t("copy")}
+                aria-label={t("copy")}
                 className="text-gray-400 hover:text-purple-600"
               >
                 <Copy size={18} />
@@ -101,6 +102,7 @@ export default function SavedList({ initialMessages }: { initialMessages: SavedM
                 onClick={() => handleDelete(msg._id)}
                 disabled={isDeleting === msg._id}
                 title={t("remove")}
+                aria-label={t("remove")}
                 className="text-gray-400 hover:text-red-500"
               >
                 <Trash2 size={18} />

@@ -40,6 +40,7 @@ const Feedback = ({ messageId, initialFeedback }: FeedbackProps) => {
         className={cn("h-6 w-6", feedback === "positive" ? "text-green-500" : "text-gray-300 hover:text-green-500")}
         onClick={() => handleFeedback("positive")}
         disabled={isSubmitting}
+        aria-label="Thumbs up"
       >
         <ThumbsUp size={14} />
       </Button>
@@ -49,6 +50,7 @@ const Feedback = ({ messageId, initialFeedback }: FeedbackProps) => {
         className={cn("h-6 w-6", feedback === "negative" ? "text-red-500" : "text-gray-300 hover:text-red-500")}
         onClick={() => handleFeedback("negative")}
         disabled={isSubmitting}
+        aria-label="Thumbs down"
       >
         <ThumbsDown size={14} />
       </Button>

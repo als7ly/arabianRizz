@@ -46,7 +46,7 @@ const CreditBalance = ({ userId }: { userId: string }) => {
       >
         {balance} Credits
       </Badge>
-      <Link href="/credits" className="bg-purple-600 text-white p-1 rounded-full hover:bg-purple-700 transition-colors shadow-sm hover:scale-110" title="Buy Credits">
+      <Link href="/credits" className="bg-purple-600 text-white p-1 rounded-full hover:bg-purple-700 transition-colors shadow-sm hover:scale-110" title="Buy Credits" aria-label="Buy Credits">
         <Plus size={16} />
       </Link>
     </div>
