@@ -1,8 +1,8 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import Image from "next/image";
-import { Sparkles, Share2, Volume2, Loader2, RotateCw, Copy } from "lucide-react";
+import { Sparkles, Share2, Volume2, Loader2, RotateCw, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Feedback from "./Feedback";
@@ -40,10 +40,17 @@ const MessageBubble = memo(({
   onShare
 }: MessageBubbleProps) => {
   const t = useTranslations('Chat');
+  const [isCopied, setIsCopied] = useState(false);
   const isWingman = msg.role === "wingman";
   const isUser = msg.role === "user";
   const isGirl = msg.role === "girl";
   const isPlaying = playingAudioId === index.toString();
+
+  const handleCopyClick = () => {
+    onCopy(msg.content);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   return (
     <div
@@ -86,7 +93,8 @@ const MessageBubble = memo(({
                   size="icon"
                   className="absolute bottom-2 right-2 bg-white/80 hover:bg-white text-gray-700"
                   onClick={() => onShare(msg.content.replace("[IMAGE]: ", ""), true)}
-                  title="Share Image"
+                  title={t('shareImageTitle')}
+                  aria-label={t('shareImageAria')}
               >
                   <Share2 size={16} />
               </Button>
@@ -97,48 +105,48 @@ const MessageBubble = memo(({
                     <span className="flex-1">{msg.content}</span>
                     {isWingman && (
                         <div className="flex flex-col gap-1">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" role="toolbar" aria-label="Message actions">
                           <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-purple-400 hover:text-purple-600"
+                              className="h-8 w-8 text-purple-400 hover:text-purple-600"
                               onClick={() => onPlayAudio(msg, index)}
                               disabled={playingAudioId !== null}
-                              title="Play Audio"
-                              aria-label="Play audio"
+                              title={t('playAudioTitle')}
+                              aria-label={t('playAudioAria')}
                           >
-                              {isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
+                              {isPlaying ? <Loader2 size={16} className="animate-spin"/> : <Volume2 size={16} />}
                           </Button>
                           <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-blue-400 hover:text-blue-600"
+                              className="h-8 w-8 text-blue-400 hover:text-blue-600"
                               onClick={() => onRegenerate(index)}
                               disabled={isLoading}
-                              title="Regenerate Response"
-                              aria-label="Regenerate response"
+                              title={t('regenerateTitle')}
+                              aria-label={t('regenerateAria')}
                           >
-                              <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
+                              <RotateCw size={16} className={isLoading ? "animate-spin" : ""} />
                           </Button>
                           <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                              onClick={() => onCopy(msg.content)}
-                              title="Copy to Clipboard"
-                              aria-label="Copy to clipboard"
+                              className="h-8 w-8 text-gray-400 hover:text-gray-600"
+                              onClick={handleCopyClick}
+                              title={isCopied ? "Copied" : t('copyTitle')}
+                              aria-label={t('copyAria')}
                           >
-                              <Copy size={14} />
+                              {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                           </Button>
                           <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-gray-400 hover:text-green-600"
+                              className="h-8 w-8 text-gray-400 hover:text-green-600"
                               onClick={() => onShare(msg.content)}
-                              title="Share"
-                              aria-label="Share message"
+                              title={t('shareTitle')}
+                              aria-label={t('shareAria')}
                           >
-                              <Share2 size={14} />
+                              <Share2 size={16} />
                           </Button>
                       </div>
                       {msg._id && <Feedback messageId={msg._id} />}
