@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Heart, Coffee, Flame, MessageCircle, Camera } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Heart, Coffee, Flame, MessageCircle, Camera, AlertCircle } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MessageBubble, { Message } from "./MessageBubble";
 import { ChatHeaderActions } from "./ChatHeaderActions";
+import { Link } from "@/navigation";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +39,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, initialMessages: Message[] }) => {
+export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girlId: string, initialMessages: Message[], creditBalance?: number }) => {
   const pathname = usePathname();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
@@ -471,6 +472,13 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
             </div>
         )}
       </div>
+
+      {creditBalance !== undefined && creditBalance < 5 && (
+        <Link href="/credits" className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-200 text-red-600 px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-red-200 transition-colors">
+            <AlertCircle size={12} />
+            {creditBalance === 0 ? "No Credits Left" : `Low Credits: ${creditBalance}`}
+        </Link>
+      )}
 
       <div className="bg-white border-t p-4 flex items-end gap-2">
         <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />

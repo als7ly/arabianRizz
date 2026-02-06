@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs";
 import { getGirlById } from "@/lib/actions/girl.actions";
+import { getUserById } from "@/lib/actions/user.actions";
 import Message from "@/lib/database/models/message.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import Header from "@/components/shared/Header";
@@ -12,6 +13,7 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
   const { userId } = auth();
   if (!userId) return null;
 
+  const user = await getUserById(userId);
   const girl = await getGirlById(id);
 
   // Fetch initial messages (last 50)
@@ -45,7 +47,11 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
       </div>
 
       <section className="w-full max-w-4xl mx-auto">
-        <ChatInterface girlId={girl._id} initialMessages={serializedMessages} />
+        <ChatInterface
+          girlId={girl._id}
+          initialMessages={serializedMessages}
+          creditBalance={user.creditBalance}
+        />
       </section>
     </>
   );

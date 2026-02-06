@@ -4,8 +4,11 @@ import { getGirlById } from '@/lib/actions/girl.actions';
 import { getContext } from '@/lib/actions/rag.actions';
 import { getUserContext } from '@/lib/actions/user-knowledge.actions';
 import { extractTextFromImage } from '@/lib/actions/ocr.actions';
+import { updateGamification } from '@/lib/services/gamification.service';
 import Message from '@/lib/database/models/message.model';
+import User from '@/lib/database/models/user.model';
 import { connectToDatabase } from '@/lib/database/mongoose';
+import { auth } from "@clerk/nextjs";
 
 // Mocks
 jest.mock('@/lib/openrouter', () => ({
@@ -42,18 +45,35 @@ jest.mock('@/lib/actions/ocr.actions', () => ({
   extractTextFromImage: jest.fn(),
 }));
 
+jest.mock('@/lib/services/gamification.service', () => ({
+  updateGamification: jest.fn(),
+}));
+
 jest.mock('@/lib/database/mongoose', () => ({
   connectToDatabase: jest.fn(),
 }));
 
 jest.mock('@/lib/database/models/message.model', () => ({
+  findById: jest.fn(),
   findByIdAndUpdate: jest.fn(),
+}));
+
+jest.mock('@/lib/database/models/user.model', () => ({
+  findOne: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+}));
+
+jest.mock("@clerk/nextjs", () => ({
+  auth: jest.fn(),
 }));
 
 describe('Wingman Actions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (connectToDatabase as jest.Mock).mockResolvedValue(true);
+    (auth as jest.Mock).mockReturnValue({ userId: 'clerk_user_123' });
+    (User.findOne as jest.Mock).mockResolvedValue({ _id: 'user123', creditBalance: 10 });
+    (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
   });
 
   describe('generateWingmanReply', () => {
@@ -95,7 +115,7 @@ describe('Wingman Actions', () => {
           expect.objectContaining({ role: 'user' }),
         ]),
       }));
-      expect(result).toEqual(mockAiResponse);
+      expect(result).toEqual({ ...mockAiResponse, newBadges: [] });
     });
 
     it('should handle invalid JSON from AI gracefully', async () => {
@@ -112,6 +132,7 @@ describe('Wingman Actions', () => {
       expect(result).toEqual({
         reply: 'Not valid JSON',
         explanation: 'Could not parse AI response.',
+        newBadges: []
       });
     });
 
@@ -147,7 +168,7 @@ describe('Wingman Actions', () => {
           expect.objectContaining({ role: 'user', content: expect.stringContaining('User Instruction: "Suggest a date"') }),
         ]),
       }));
-      expect(result).toEqual(mockAiResponse);
+      expect(result).toEqual({ ...mockAiResponse, newBadges: [] });
     });
   });
 
@@ -205,6 +226,7 @@ describe('Wingman Actions', () => {
       it('should generate hookup line successfully', async () => {
         (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
         (getUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
+        (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
 
         const mockResponse = {
           line: 'Nice shoes.',
@@ -223,22 +245,32 @@ describe('Wingman Actions', () => {
                 expect.objectContaining({ role: 'system', content: expect.stringContaining('Levantine') })
             ])
         }));
-        expect(result).toEqual(mockResponse);
+        expect(result).toEqual({ ...mockResponse, newBadges: [] });
       });
   });
 
   describe('submitFeedback', () => {
       it('should update message feedback', async () => {
-          (Message.findByIdAndUpdate as jest.Mock).mockResolvedValue({});
+          // Setup Mocks for Ownership Verification
+          const mockMsg = { _id: 'msg123', girl: 'girl123', role: 'wingman', content: 'hello' };
+          const mockGirl = { _id: 'girl123', author: 'user123' };
+          const mockUser = { _id: 'user123' };
+
+          (Message.findById as jest.Mock).mockResolvedValue(mockMsg);
+          (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+          (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+          (Message.findByIdAndUpdate as jest.Mock).mockResolvedValue({ ...mockMsg, feedback: 'positive' });
 
           const result = await submitFeedback('msg123', 'positive');
 
-          expect(Message.findByIdAndUpdate).toHaveBeenCalledWith('msg123', { feedback: 'positive' });
+          expect(Message.findById).toHaveBeenCalledWith('msg123');
+          expect(getGirlById).toHaveBeenCalledWith('girl123');
+          expect(Message.findByIdAndUpdate).toHaveBeenCalledWith('msg123', { feedback: 'positive' }, { new: true });
           expect(result).toEqual({ success: true });
       });
 
       it('should handle errors', async () => {
-          (Message.findByIdAndUpdate as jest.Mock).mockRejectedValue(new Error('DB Error'));
+          (Message.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
           const result = await submitFeedback('msg123', 'positive');
 
