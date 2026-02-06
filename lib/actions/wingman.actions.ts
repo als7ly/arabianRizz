@@ -245,7 +245,7 @@ ${contextString}
         await checkAndNotifyLowBalance(updatedUser);
 
         // Update Gamification Stats
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
@@ -489,7 +489,7 @@ Instructions:
         // Check for Low Balance
         await checkAndNotifyLowBalance(updatedUser);
 
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
