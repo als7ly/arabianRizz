@@ -52,6 +52,12 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
   const { toast } = useToast();
   const t = useTranslations('Chat');
 
+  // Bolt Optimization: Use ref to track messages for stable callbacks
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -170,22 +176,31 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     }
   };
 
+  // Bolt Optimization: Stabilized callback using messagesRef and functional state updates
+  // This allows React.memo on MessageBubble to work correctly by keeping the onRegenerate prop stable
   const handleRegenerate = useCallback(async (index: number) => {
     if (index <= 0) return;
-    const userMsg = messages[index - 1];
+
+    // Use ref to get current messages without adding to dependency array
+    const currentMessages = messagesRef.current;
+    const userMsg = currentMessages[index - 1];
     if (userMsg.role !== "user" && userMsg.role !== "girl") return;
 
     setIsLoading(true);
     try {
-        const newMsgs = [...messages];
-        newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
-        setMessages(newMsgs);
+        setMessages(prev => {
+            const newMsgs = [...prev];
+            newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
+            return newMsgs;
+        });
 
         const { reply, explanation } = await generateWingmanReply(girlId, userMsg.content, tone);
 
-        const updatedMsgs = [...messages];
-        updatedMsgs[index] = { ...updatedMsgs[index], content: reply || "Error" };
-        setMessages(updatedMsgs);
+        setMessages(prev => {
+            const updatedMsgs = [...prev];
+            updatedMsgs[index] = { ...updatedMsgs[index], content: reply || "Error" };
+            return updatedMsgs;
+        });
 
         toast({
             title: "Regenerated Tip",
@@ -199,7 +214,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     } finally {
         setIsLoading(false);
     }
-  }, [messages, girlId, tone, t, toast]);
+  }, [girlId, tone, t, toast]); // Dependency on 'messages' removed!
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
@@ -264,7 +279,8 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     }
   }, [voiceId, t, toast]);
 
-  const handleImageUpload = async (url: string) => {
+  // Bolt Optimization: Stabilized callback
+  const handleImageUpload = useCallback(async (url: string) => {
     setIsLoading(true);
     toast({ title: t('readingScreenshot'), description: t('readingScreenshotDesc') });
 
@@ -304,7 +320,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [girlId, tone, t, toast]);
 
   const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
   const [artPrompt, setArtPrompt] = useState("");
