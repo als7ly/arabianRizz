@@ -328,9 +328,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         } else {
              toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
         }
-    } catch(e) {
+    } catch(e: any) {
         console.error(e);
-        toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
+        toast({ title: "Error", description: e.message || "Something went wrong.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
