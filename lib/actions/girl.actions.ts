@@ -57,6 +57,29 @@ export async function createGirl(girl: CreateGirlParams) {
   }
 }
 
+// GET CHAT HISTORY
+export async function getChatHistory(girlId: string) {
+  try {
+    await connectToDatabase();
+
+    const girl = await Girl.findById(girlId);
+    if (!girl) throw new Error("Girl not found");
+
+    // Security Check
+    const user = await getCurrentUser();
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    const messages = await Message.find({ girl: girlId })
+      .sort({ createdAt: 1 }); // Oldest first for history export
+
+    return JSON.parse(JSON.stringify(messages));
+  } catch (error) {
+    handleError(error);
+  }
+}
+
 
 // GET GIRL BY ID
 export async function getGirlById(girlId: string) {

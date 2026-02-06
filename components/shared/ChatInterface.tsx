@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Trash2, Heart, Coffee, Flame, MessageCircle, Camera } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Heart, Coffee, Flame, MessageCircle, Camera } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MessageBubble, { Message } from "./MessageBubble";
+import { ChatHeaderActions } from "./ChatHeaderActions";
 import {
   Dialog,
   DialogContent,
@@ -26,17 +27,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
@@ -447,31 +437,7 @@ export const ChatInterface = ({ girlId, initialMessages }: { girlId: string, ini
 
       <div className="absolute top-2 right-2 z-10 flex gap-2">
           {messages.length > 0 && (
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-red-500 bg-white/50 backdrop-blur-sm shadow-sm"
-                        title={t('clearChatTitle')}
-                        aria-label={t('clearChatAria')}
-                    >
-                        <Trash2 size={16} />
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>{t('clearChatDialogTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        {t('clearChatDialogDesc')}
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearChat} className="bg-red-500 hover:bg-red-600">Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <ChatHeaderActions girlId={girlId} onClearChat={handleClearChat} />
           )}
       </div>
 
