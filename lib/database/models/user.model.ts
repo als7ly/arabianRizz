@@ -17,6 +17,13 @@ const UserSchema = new Schema({
   },
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
+
+  // Subscription fields
+  stripeCustomerId: { type: String, index: true },
+  stripeSubscriptionId: { type: String },
+  stripePriceId: { type: String },
+  stripeCurrentPeriodEnd: { type: Date },
+  subscriptionStatus: { type: String, default: 'inactive' },
 });
 
 // Optimize queries for Analytics (Active Users) and Leaderboard (Top Users)
