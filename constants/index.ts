@@ -155,3 +155,9 @@ export const plans = [
 ];
 
 export const creditFee = -1;
+
+export const BLOCKED_KEYWORDS = [
+  "child", "minor", "underage", "teen", "baby", "rape", "abuse", "kill", "murder", "suicide", "terror", "bomb"
+];
+
+export const LOW_BALANCE_THRESHOLD = 10;
