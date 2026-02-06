@@ -33,6 +33,21 @@ export async function POST(request: Request) {
 
   // Handle One-Time Payments (Checkout Session)
   if (eventType === "checkout.session.completed") {
+    const { id, amount_total, metadata, customer_details, customer, subscription, mode } = event.data.object;
+
+    // Update User with Stripe Customer ID
+    if (metadata?.buyerId && customer) {
+        await connectToDatabase();
+        const updateData: any = { stripeCustomerId: customer };
+
+        if (mode === 'subscription' && subscription) {
+            updateData.stripeSubscriptionId = subscription;
+            updateData.subscriptionStatus = 'active';
+        }
+
+        await User.findByIdAndUpdate(metadata.buyerId, updateData);
+        logger.info(`Updated user ${metadata.buyerId} with Stripe Customer ID ${customer}`);
+    }
     const session = event.data.object;
     const { id, amount_total, metadata, customer_details } = session;
 

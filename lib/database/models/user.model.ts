@@ -17,6 +17,12 @@ const UserSchema = new Schema({
   },
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
+
+  stripeCustomerId: { type: String, unique: true, sparse: true },
+  stripeSubscriptionId: { type: String, unique: true, sparse: true },
+  stripePriceId: { type: String },
+  stripeCurrentPeriodEnd: { type: Date },
+  subscriptionStatus: { type: String },
   subscriptionPeriodEnd: { type: Date },
 });
 
