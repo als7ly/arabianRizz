@@ -26,6 +26,9 @@ const TransactionSchema = new Schema({
   },
 });
 
+// Optimize queries for user transaction history
+TransactionSchema.index({ buyer: 1, createdAt: -1 });
+
 const Transaction = models?.Transaction || model("Transaction", TransactionSchema);
 
 export default Transaction;
