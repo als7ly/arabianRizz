@@ -75,15 +75,28 @@ async function verifyOwnership(girlAuthorId: any) {
 async function checkAndNotifyLowBalance(user: any) {
     // Threshold: 10 credits
     if (user.creditBalance < 10) {
-        // Send Notification
-        // NOTE: In a real app, we should check a 'lastLowBalanceEmailSent' timestamp to prevent spam.
-        // For this MVP, we log and send, assuming the mock email service handles basic deduplication or we accept the risk.
+        // Rate Limiting: Check last email sent timestamp
+        if (user.lastLowBalanceEmailSent) {
+            const lastSent = new Date(user.lastLowBalanceEmailSent);
+            const now = new Date();
+            const hoursSinceLastSent = (now.getTime() - lastSent.getTime()) / (1000 * 60 * 60);
+
+            if (hoursSinceLastSent < 24) {
+                logger.info("Low balance email skipped (rate limited)", { userId: user._id, lastSent });
+                return;
+            }
+        }
+
         try {
             await sendEmail({
                 to: user.email,
                 subject: "⚡ Low Balance Alert - Top Up Your Rizz",
                 html: `<h1>Running Low on Rizz?</h1><p>You have fewer than 10 credits left (${user.creditBalance}). Don't get left on read. <a href="${process.env.NEXT_PUBLIC_SERVER_URL}/credits">Top up now</a>.</p>`
             });
+
+            // Update lastLowBalanceEmailSent timestamp
+            await User.findByIdAndUpdate(user._id, { lastLowBalanceEmailSent: new Date() });
+
             logger.info("Low balance alert sent", { userId: user._id });
         } catch (e) {
             logger.error("Failed to send low balance email", e);
