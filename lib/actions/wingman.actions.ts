@@ -411,18 +411,21 @@ Instructions:
 
     if (aiContent) {
         await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } });
-        await updateGamification(user._id);
+        const gamificationResult = await updateGamification(user._id);
+        const newBadges = gamificationResult?.newBadges || [];
 
         try {
             const parsed = JSON.parse(aiContent);
             return {
                 line: parsed.line || parsed.reply || "Error parsing line",
-                explanation: parsed.explanation || "No explanation provided"
+                explanation: parsed.explanation || "No explanation provided",
+                newBadges
             };
         } catch (e) {
              return {
                 line: aiContent,
-                explanation: "Could not parse AI response."
+                explanation: "Could not parse AI response.",
+                newBadges
             };
         }
     }
