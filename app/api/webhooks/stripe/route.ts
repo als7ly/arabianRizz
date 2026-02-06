@@ -33,7 +33,8 @@ export async function POST(request: Request) {
 
   // Handle One-Time Payments (Checkout Session)
   if (eventType === "checkout.session.completed") {
-    const { id, amount_total, metadata, customer_details } = event.data.object;
+    const session = event.data.object;
+    const { id, amount_total, metadata, customer_details } = session;
 
     const transaction = {
       stripeId: id,
@@ -45,6 +46,15 @@ export async function POST(request: Request) {
     };
 
     const newTransaction = await createTransaction(transaction);
+
+    // Update User with Subscription Details if Subscription Mode
+    if (session.mode === 'subscription' && metadata?.buyerId) {
+        await connectToDatabase();
+        await User.findByIdAndUpdate(metadata.buyerId, {
+            stripeCustomerId: session.customer,
+            stripeSubscriptionId: session.subscription,
+        });
+    }
 
     // Send Receipt Email
     if (customer_details?.email) {
@@ -62,17 +72,29 @@ export async function POST(request: Request) {
   if (eventType === "invoice.payment_succeeded") {
       const invoice = event.data.object;
       const customerEmail = invoice.customer_email;
+      const customerId = invoice.customer;
 
       const priceId = invoice.lines?.data[0]?.price?.id;
 
-      if (!customerEmail) {
-          logger.warn("Invoice processed but no email found");
-          return NextResponse.json({ message: "No customer email found in invoice" });
+      if (!customerEmail && !customerId) {
+          logger.warn("Invoice processed but no email or customer ID found");
+          return NextResponse.json({ message: "No customer identifier found in invoice" });
       }
 
       await connectToDatabase();
 
-      const user = await User.findOne({ email: customerEmail });
+      // Try to find user by Stripe Customer ID first, then fallback to email
+      let user = null;
+      if (customerId) {
+        user = await User.findOne({ stripeCustomerId: customerId });
+      }
+      if (!user && customerEmail) {
+        user = await User.findOne({ email: customerEmail });
+        // If found by email but no customerId stored, update it
+        if (user && customerId && !user.stripeCustomerId) {
+            await User.findByIdAndUpdate(user._id, { stripeCustomerId: customerId });
+        }
+      }
 
       if (user) {
           // Identify Plan by Stripe Price ID
@@ -80,7 +102,8 @@ export async function POST(request: Request) {
 
           if (matchedPlan) {
               await User.findByIdAndUpdate(user._id, {
-                  $inc: { creditBalance: matchedPlan.credits }
+                  $inc: { creditBalance: matchedPlan.credits },
+                  subscriptionPeriodEnd: new Date(invoice.lines.data[0].period.end * 1000)
               });
 
               await createTransaction({
@@ -108,7 +131,8 @@ export async function POST(request: Request) {
 
              if (amountMatchedPlan) {
                 await User.findByIdAndUpdate(user._id, {
-                    $inc: { creditBalance: amountMatchedPlan.credits }
+                    $inc: { creditBalance: amountMatchedPlan.credits },
+                    subscriptionPeriodEnd: new Date(invoice.lines.data[0].period.end * 1000)
                 });
 
                 await createTransaction({
@@ -125,6 +149,45 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json({ message: "Invoice Processed but User/Plan not matched" });
+  }
+
+  // Handle Subscription Lifecycle Events
+  if (eventType === "customer.subscription.created" || eventType === "customer.subscription.updated") {
+      const subscription = event.data.object;
+      await connectToDatabase();
+
+      const user = await User.findOne({ stripeCustomerId: subscription.customer });
+
+      if (user) {
+          const priceId = subscription.items.data[0].price.id;
+          const matchedPlan = plans.find(p => p.stripePriceId === priceId);
+
+          await User.findByIdAndUpdate(user._id, {
+              subscriptionStatus: subscription.status,
+              stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              stripeSubscriptionId: subscription.id,
+              stripePriceId: priceId,
+              planId: matchedPlan ? matchedPlan._id : user.planId
+          });
+          logger.info(`Updated subscription status for user ${user._id} to ${subscription.status}`);
+      }
+      return NextResponse.json({ message: "Subscription Updated" });
+  }
+
+  if (eventType === "customer.subscription.deleted") {
+      const subscription = event.data.object;
+      await connectToDatabase();
+
+      const user = await User.findOne({ stripeCustomerId: subscription.customer });
+
+      if (user) {
+          await User.findByIdAndUpdate(user._id, {
+              subscriptionStatus: 'canceled',
+              planId: 1 // Revert to Free
+          });
+          logger.info(`Subscription deleted for user ${user._id}`);
+      }
+      return NextResponse.json({ message: "Subscription Deleted" });
   }
 
   return new Response("", { status: 200 });

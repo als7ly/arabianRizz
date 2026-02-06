@@ -41,3 +41,7 @@
 ## 2024-05-25 - Localized Accessibility Attributes
 **Learning:** Discovered that ensuring all interactive elements (buttons, inputs) have localized `aria-label` and `title` attributes significantly improves the experience for international users relying on assistive technology. Consistent use of translation namespaces (e.g., `Chat`, `Dashboard`) keeps the codebase organized.
 **Action:** Systematically audited `ChatInterface`, `Sidebar`, `GirlCard`, and `Feedback` components to replace hardcoded strings with `t()` calls, adding missing keys to `messages/en.json` where necessary.
+
+## 2026-02-06 - Missing Form Labels in Wizards
+**Learning:** The OnboardingWizard used inputs with placeholders but no labels. This is a common anti-pattern that hurts accessibility (screen readers) and usability (context loss when typing).
+**Action:** When creating forms, always wrap inputs in a container with a visible `<Label>` component linked via `htmlFor`/`id`, or use `aria-label` if a visible label is visually impossible.

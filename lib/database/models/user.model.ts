@@ -17,7 +17,7 @@ const UserSchema = new Schema({
   },
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
-  lastLowBalanceEmailSent: { type: Date },
+  subscriptionPeriodEnd: { type: Date },
 });
 
 // Optimize queries for Analytics (Active Users) and Leaderboard (Top Users)

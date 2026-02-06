@@ -57,6 +57,39 @@ export async function createGirl(girl: CreateGirlParams) {
   }
 }
 
+// SEARCH MESSAGES
+export async function searchMessages(girlId: string, query: string): Promise<{ success: boolean; data: Message[]; error?: string }> {
+  try {
+    await connectToDatabase();
+
+    const girl = await Girl.findById(girlId);
+    if (!girl) return { success: false, data: [], error: "Girl not found" };
+
+    // Security Check
+    const user = await getCurrentUser();
+    if (girl.author.toString() !== user._id.toString()) {
+        return { success: false, data: [], error: "Unauthorized" };
+    }
+
+    if (!query || query.trim().length === 0) {
+        return { success: true, data: [] };
+    }
+
+    // Escape special regex characters
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const messages = await Message.find({
+        girl: girlId,
+        content: { $regex: escapedQuery, $options: 'i' }
+    }).sort({ createdAt: 1 });
+
+    return { success: true, data: JSON.parse(JSON.stringify(messages)) };
+  } catch (error) {
+    console.error("Search Messages Error:", error);
+    return { success: false, data: [], error: "Internal Server Error" };
+  }
+}
+
 // GET CHAT HISTORY
 export async function getChatHistory(girlId: string) {
   try {
@@ -102,7 +135,7 @@ export async function getGirlById(girlId: string) {
 }
 
 // GET ALL GIRLS FOR USER
-export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: { userId: string, page?: number, limit?: number, query?: string }) {
+export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: { userId: string, page?: number, limit?: number, query?: string }): Promise<{ data: Girl[], totalPages: number } | undefined> {
   try {
     await connectToDatabase();
     

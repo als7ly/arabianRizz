@@ -46,6 +46,22 @@ declare type UpdateGirlParams = {
   path: string;
 };
 
+declare type Girl = {
+  _id: string;
+  name: string;
+  age?: number;
+  vibe?: string;
+  dialect?: string;
+  language?: string;
+  voiceId?: string;
+  relationshipStatus?: string;
+  rating?: number;
+  socialMediaHandle?: string;
+  author: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 // ====== MESSAGE PARAMS
 declare type CreateMessageParams = {
   girlId: string;
