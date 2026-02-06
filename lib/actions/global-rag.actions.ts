@@ -2,11 +2,11 @@ import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { generateEmbedding } from "@/lib/actions/rag.actions";
 
-export const getGlobalKnowledge = async (query: string, language: string) => {
+export const getGlobalKnowledge = async (query: string, language: string, embedding?: number[]) => {
   try {
     await connectToDatabase();
 
-    const embedding = await generateEmbedding(query);
+    const queryEmbedding = embedding || await generateEmbedding(query);
 
     // Using MongoDB Atlas Vector Search
     // Assuming an index "global_vector_index" exists on the GlobalKnowledge collection
@@ -22,7 +22,7 @@ export const getGlobalKnowledge = async (query: string, language: string) => {
             $vectorSearch: {
               index: "vector_index",
               path: "embedding",
-              queryVector: embedding,
+              queryVector: queryEmbedding,
               numCandidates: 100,
               limit: 3,
               filter: {

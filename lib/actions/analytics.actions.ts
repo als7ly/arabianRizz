@@ -7,6 +7,7 @@ import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
 import Event from "@/lib/database/models/event.model";
 import { logger } from "@/lib/services/logger.service";
 import { auth } from "@clerk/nextjs";
+import { logger } from "@/lib/services/logger.service";
 
 export async function getAnalyticsData() {
   try {

@@ -17,3 +17,8 @@
 **Vulnerability:** The `updateGamification` function was exported from a `"use server"` file without any authentication checks, allowing potential IDOR or gamification abuse.
 **Learning:** Even low-risk logic like gamification should not be exposed as a public API if it modifies state.
 **Prevention:** Move internal state-modifying logic to service files.
+
+## 2024-05-24 - [CRITICAL] IDOR in Transaction History
+**Vulnerability:** The `getTransactions` Server Action allowed any user to fetch transaction history for any other user by providing their MongoDB ID.
+**Learning:** Server Actions are public endpoints. Verification of ownership must be explicit, comparing the authenticated user's ID with the requested resource's owner ID.
+**Prevention:** Always derive the user context from `auth()` inside the server action and validate it against input parameters.

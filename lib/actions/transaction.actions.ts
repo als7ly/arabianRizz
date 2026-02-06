@@ -54,6 +54,17 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
 export async function getTransactions(userId: string) {
   try {
     await connectToDatabase();
+
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    if (user._id.toString() !== userId) {
+      throw new Error("Unauthorized access to transactions");
+    }
+
     const transactions = await Transaction.find({ buyer: userId }).sort({ createdAt: -1 });
     return JSON.parse(JSON.stringify(transactions));
   } catch (error) {
@@ -71,42 +82,35 @@ export async function createCustomerPortalSession() {
     await connectToDatabase();
     const user = await User.findOne({ clerkId: userId });
 
-    // We need to find a transaction with a Stripe Customer ID or similar
-    // For this MVP, we assume we can look up the customer ID from the latest transaction
-    // Or ideally, store customerId on the User model.
-    // Since User model doesn't explicitly have stripeCustomerId, we'll try to find it on a transaction
-    // Or we will rely on creating a new customer portal which requires a customer ID.
-
-    // NOTE: In a real app, you MUST save `stripeCustomerId` on the User model during webhook `checkout.session.completed`.
-    // For now, we will attempt to find a transaction that might have it, or fail gracefully.
-
-    // If we can't find a customer ID, we can't open the portal.
-    // In the webhook, we normally save this. Let's assume for this "fix" we can't easily add a field to User schema
-    // without a migration, but we can look for the most recent transaction which MIGHT have customer info if we stored it (we didn't).
-
-    // Correct approach for this existing codebase:
-    // We need to rely on the fact that we can't open the portal without a customer ID.
-    // Since we don't store it, this feature is strictly limited.
-    // However, to satisfy the requirement, I will add logic that *would* work if we had the ID,
-    // and instruct to add `stripeCustomerId` to User model in a future migration.
-
-    // Wait! The prompt says "Implement Subscription Management".
-    // I should create the action. If it fails due to missing ID, that's a data issue, but the code is implemented.
-    // To be robust, I'll attempt to retrieve a customer ID from Stripe using the user's email.
+    if (!user) {
+        throw new Error("User not found");
+    }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
     try {
-        const customers = await stripe.customers.list({
-            email: user.email,
-            limit: 1,
-        });
+        let customerId = user.stripeCustomerId;
 
-        if (customers.data.length === 0) {
-             throw new Error("No Stripe customer found for this user.");
+        // If no stripeCustomerId on user, fallback to email lookup
+        if (!customerId) {
+            const customers = await stripe.customers.list({
+                email: user.email,
+                limit: 1,
+            });
+
+            if (customers.data.length > 0) {
+                customerId = customers.data[0].id;
+
+                // Optional: Save it back to the user for next time?
+                // We'll leave it as just a lookup to avoid side-effects in this read-heavy action,
+                // but strictly speaking we should probably save it.
+                // For now, just using it is enough.
+            }
         }
 
-        const customerId = customers.data[0].id;
+        if (!customerId) {
+             throw new Error("No Stripe customer found for this user.");
+        }
 
         const session = await stripe.billingPortal.sessions.create({
             customer: customerId,
