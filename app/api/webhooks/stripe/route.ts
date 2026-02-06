@@ -50,6 +50,10 @@ export async function POST(request: Request) {
       const invoice = event.data.object;
       const customerEmail = invoice.customer_email;
 
+      // Get the price ID from the invoice line item
+      // This is more robust than guessing by amount
+      const priceId = invoice.lines?.data[0]?.price?.id;
+
       if (!customerEmail) {
           return NextResponse.json({ message: "No customer email found in invoice" });
       }
@@ -59,13 +63,8 @@ export async function POST(request: Request) {
       const user = await User.findOne({ email: customerEmail });
 
       if (user) {
-          // Identify Plan
-          // Ideally, use invoice.lines.data[0].price.id to match product
-          // For this MVP, we assume a standard refill amount or check description
-
-          // Heuristic: Check amount paid to guess plan
-          const amountPaid = invoice.amount_paid / 100;
-          const matchedPlan = plans.find(p => p.price === amountPaid);
+          // Identify Plan by Stripe Price ID
+          const matchedPlan = plans.find(p => p.stripePriceId === priceId);
 
           if (matchedPlan) {
               await User.findByIdAndUpdate(user._id, {
@@ -75,7 +74,7 @@ export async function POST(request: Request) {
               // Log transaction for record keeping
               await createTransaction({
                   stripeId: invoice.id,
-                  amount: amountPaid,
+                  amount: invoice.amount_paid / 100,
                   plan: matchedPlan.name + " (Renewal)",
                   credits: matchedPlan.credits,
                   buyerId: user._id,
@@ -83,6 +82,27 @@ export async function POST(request: Request) {
               });
 
               return NextResponse.json({ message: `Renewed ${matchedPlan.name} for ${user.username}` });
+          } else {
+             // Fallback to legacy amount-based matching if Price ID fails
+             console.warn(`Price ID ${priceId} not found in constants. Falling back to amount.`);
+             const amountPaid = invoice.amount_paid / 100;
+             const amountMatchedPlan = plans.find(p => p.price === amountPaid);
+
+             if (amountMatchedPlan) {
+                await User.findByIdAndUpdate(user._id, {
+                    $inc: { creditBalance: amountMatchedPlan.credits }
+                });
+
+                await createTransaction({
+                  stripeId: invoice.id,
+                  amount: amountPaid,
+                  plan: amountMatchedPlan.name + " (Renewal/Fallback)",
+                  credits: amountMatchedPlan.credits,
+                  buyerId: user._id,
+                  createdAt: new Date(),
+                });
+                return NextResponse.json({ message: `Renewed (Fallback) ${amountMatchedPlan.name}` });
+             }
           }
       }
 
