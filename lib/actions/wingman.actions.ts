@@ -2,7 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { getContext } from "./rag.actions";
+import { retrieveContext } from "../services/rag.service";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -159,7 +159,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    const contextMessages = await getContext(girlId, userMessage);
+    const contextMessages = await retrieveContext(girlId, userMessage);
     const contextString = JSON.stringify(contextMessages);
 
     const userContext = await getUserContext(girl.author.toString(), userMessage);
