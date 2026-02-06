@@ -15,6 +15,7 @@ import GlobalKnowledge from "../database/models/global-knowledge.model";
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
 import { updateGamification } from "@/lib/services/gamification.service";
+import { logger } from "@/lib/services/logger.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -84,7 +85,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
     return { success: true };
   } catch (error) {
-    console.error("Feedback Error:", error);
+    logger.error("Feedback Error:", error);
     return { success: false };
   }
 }
@@ -93,6 +94,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
   try {
     // Safety Check
     if (!checkContentSafety(userMessage)) {
+        logger.warn("Content safety violation blocked", { userMessage });
         return {
             reply: "I cannot generate a response for this content as it violates our safety guidelines.",
             explanation: "Content violation detected."
@@ -207,7 +209,7 @@ ${contextString}
                 newBadges // Include badges in response
             };
         } catch (e) {
-            console.error("JSON Parse Error:", e);
+            logger.error("JSON Parse Error:", e);
             return {
                 reply: aiContent,
                 explanation: "Could not parse AI response.",
@@ -222,7 +224,7 @@ ${contextString}
     };
 
   } catch (error) {
-    console.error("Wingman Error:", error);
+    logger.error("Wingman Error:", error);
     return {
         reply: "Error generating reply.",
         explanation: "Something went wrong with the AI."
@@ -269,14 +271,14 @@ export async function analyzeProfile(imageUrl: string) {
         try {
             return JSON.parse(aiContent);
         } catch (e) {
-            console.error("JSON Parse Error:", e);
+            logger.error("JSON Parse Error:", e);
             return null;
         }
     }
     return null;
 
   } catch (error) {
-    console.error("Analyze Profile Error:", error);
+    logger.error("Analyze Profile Error:", error);
     return null;
   }
 }
@@ -289,6 +291,7 @@ export async function generateResponseImage(prompt: string) {
 
     // Safety Check for Image Generation
     if (!checkContentSafety(prompt)) {
+        logger.warn("Content safety violation blocked in image gen", { prompt });
         return "https://via.placeholder.com/1024x1024.png?text=Content+Violation";
     }
 
@@ -304,7 +307,7 @@ export async function generateResponseImage(prompt: string) {
     }
     return null;
   } catch (error) {
-    console.error("Image Gen Error:", error);
+    logger.error("Image Gen Error:", error);
     return null;
   }
 }
@@ -360,14 +363,14 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
         return audioUrl;
 
     } catch (uploadError) {
-        console.error("Cloudinary Upload Error:", uploadError);
+        logger.error("Cloudinary Upload Error:", uploadError);
         // Fallback to Base64 if upload fails, so the user still hears it
         const base64 = buffer.toString('base64');
         return `data:audio/mp3;base64,${base64}`;
     }
 
   } catch (error) {
-    console.error("Speech Gen Error:", error);
+    logger.error("Speech Gen Error:", error);
     return null;
   }
 }
@@ -459,7 +462,7 @@ Instructions:
     };
 
   } catch (error) {
-    console.error("Hookup Line Error:", error);
+    logger.error("Hookup Line Error:", error);
     return {
         line: "Error generating line.",
         explanation: "Something went wrong."

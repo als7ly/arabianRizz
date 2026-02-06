@@ -22,6 +22,7 @@ This document outlines the current state of the codebase, missing features requi
 *   **Webhooks:** Enhanced webhook listener at `app/api/webhooks/stripe/route.ts` handling `checkout.session.completed` and `invoice.payment_succeeded` using Price ID matching (with fallback).
 *   **Billing UI:** Transaction history visible on Profile page.
 *   **Subscription Management:** Stripe Customer Portal implemented for managing subscriptions (`createCustomerPortalSession`).
+*   **Notifications:** Mock Email Service integrated for payment receipts.
 
 ### ✅ Infrastructure
 *   **Database:** MongoDB Mongoose schemas defined for `User`, `Girl`, `Message`, `Transaction`.
@@ -30,18 +31,18 @@ This document outlines the current state of the codebase, missing features requi
 *   **Legal:** Terms of Service and Privacy Policy pages created.
 *   **Age Verification:** Client-side 18+ gate modal implemented.
 *   **Env Validation:** Strict Zod schema (`lib/env.ts`) ensures strict environment variable validation at startup.
+*   **Logging:** Structured JSON logging implemented (`logger.service.ts`) replacing raw console calls.
 
 ---
 
-## 2. Production Readiness Checklist (Remaining Items)
+## 2. Production Readiness Checklist
 
-Before launching, the following items **should** be addressed:
+**Phase 1 Complete!** All critical items for the initial launch have been implemented.
 
-### 🟡 User Experience (UX)
-1.  **Email Notifications:** Send receipt emails or "Low Balance" alerts via Resend or SendGrid.
-
-### 🟡 DevOps
-2.  **Logging:** Implement structured logging (e.g., Sentry) for production error tracking.
+### 🟡 Future Enhancements (Post-Launch)
+1.  **Real Email Provider:** Swap `MockEmailService` with Resend or SendGrid API.
+2.  **Advanced Moderation:** Integrate OpenAI Moderation API instead of keyword blocking.
+3.  **Analytics:** Add PostHog or Google Analytics for user behavior tracking.
 
 ---
 
