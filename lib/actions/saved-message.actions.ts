@@ -5,6 +5,7 @@ import { connectToDatabase } from "../database/mongoose";
 import SavedMessage from "../database/models/saved-message.model";
 import Message from "../database/models/message.model";
 import User from "../database/models/user.model";
+import "../database/models/girl.model"; // Ensure Girl model is registered for population
 import { auth } from "@clerk/nextjs";
 
 export async function toggleSaveMessage(messageId: string, path: string) {
@@ -23,8 +24,13 @@ export async function toggleSaveMessage(messageId: string, path: string) {
       revalidatePath(path);
       return { isSaved: false, message: "Removed from saved lines." };
     } else {
-      const msg = await Message.findById(messageId);
+      const msg = await Message.findById(messageId).populate("girl");
       if (!msg) throw new Error("Message not found");
+
+      // Security: Ensure the user owns the girl associated with the message
+      if (!msg.girl || msg.girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+      }
 
       await SavedMessage.create({
         user: user._id,

@@ -22,3 +22,8 @@
 **Vulnerability:** The `getTransactions` Server Action allowed any user to fetch transaction history for any other user by providing their MongoDB ID.
 **Learning:** Server Actions are public endpoints. Verification of ownership must be explicit, comparing the authenticated user's ID with the requested resource's owner ID.
 **Prevention:** Always derive the user context from `auth()` inside the server action and validate it against input parameters.
+
+## 2024-05-25 - [HIGH] IDOR in Saved Messages
+**Vulnerability:** The `toggleSaveMessage` action allowed saving any message by ID without verifying if the user was part of the conversation (owned the associated Girl).
+**Learning:** Relational ownership checks (e.g., Message -> Girl -> User) are crucial when the resource itself (Message) doesn't store the owner directly. Populate necessary fields to traverse the ownership graph.
+**Prevention:** In actions acting on child resources, always populate and verify the parent resource's ownership.
