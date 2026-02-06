@@ -5,6 +5,8 @@ import Stripe from "stripe";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import { plans } from "@/constants";
+import { logger } from "@/lib/services/logger.service";
+import { sendEmail } from "@/lib/services/email.service";
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -22,14 +24,16 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
   } catch (err) {
-    return NextResponse.json({ message: "Webhook error", error: err });
+    logger.error("Webhook Signature Verification Failed", err);
+    return NextResponse.json({ message: "Webhook error", error: err }, { status: 400 });
   }
 
   const eventType = event.type;
+  logger.info(`Webhook Received: ${eventType}`, { id: event.id });
 
   // Handle One-Time Payments (Checkout Session)
   if (eventType === "checkout.session.completed") {
-    const { id, amount_total, metadata } = event.data.object;
+    const { id, amount_total, metadata, customer_details } = event.data.object;
 
     const transaction = {
       stripeId: id,
@@ -42,6 +46,15 @@ export async function POST(request: Request) {
 
     const newTransaction = await createTransaction(transaction);
 
+    // Send Receipt Email
+    if (customer_details?.email) {
+        await sendEmail({
+            to: customer_details.email,
+            subject: "Purchase Confirmation - ArabianRizz",
+            html: `<h1>Thank you for your purchase!</h1><p>You have successfully purchased the ${metadata?.plan}. ${metadata?.credits} credits have been added to your account.</p>`
+        });
+    }
+
     return NextResponse.json({ message: "OK", transaction: newTransaction });
   }
 
@@ -50,7 +63,10 @@ export async function POST(request: Request) {
       const invoice = event.data.object;
       const customerEmail = invoice.customer_email;
 
+      const priceId = invoice.lines?.data[0]?.price?.id;
+
       if (!customerEmail) {
+          logger.warn("Invoice processed but no email found");
           return NextResponse.json({ message: "No customer email found in invoice" });
       }
 
@@ -59,30 +75,52 @@ export async function POST(request: Request) {
       const user = await User.findOne({ email: customerEmail });
 
       if (user) {
-          // Identify Plan
-          // Ideally, use invoice.lines.data[0].price.id to match product
-          // For this MVP, we assume a standard refill amount or check description
-
-          // Heuristic: Check amount paid to guess plan
-          const amountPaid = invoice.amount_paid / 100;
-          const matchedPlan = plans.find(p => p.price === amountPaid);
+          // Identify Plan by Stripe Price ID
+          const matchedPlan = plans.find(p => p.stripePriceId === priceId);
 
           if (matchedPlan) {
               await User.findByIdAndUpdate(user._id, {
                   $inc: { creditBalance: matchedPlan.credits }
               });
 
-              // Log transaction for record keeping
               await createTransaction({
                   stripeId: invoice.id,
-                  amount: amountPaid,
+                  amount: invoice.amount_paid / 100,
                   plan: matchedPlan.name + " (Renewal)",
                   credits: matchedPlan.credits,
                   buyerId: user._id,
                   createdAt: new Date(),
               });
 
+              await sendEmail({
+                to: user.email,
+                subject: "Subscription Renewed - ArabianRizz",
+                html: `<h1>Your subscription has renewed!</h1><p>Your ${matchedPlan.name} is active. ${matchedPlan.credits} credits have been added.</p>`
+              });
+
+              logger.info(`Subscription renewed for user ${user._id}`);
               return NextResponse.json({ message: `Renewed ${matchedPlan.name} for ${user.username}` });
+          } else {
+             // Fallback
+             logger.warn(`Price ID ${priceId} not found in constants. Falling back to amount.`);
+             const amountPaid = invoice.amount_paid / 100;
+             const amountMatchedPlan = plans.find(p => p.price === amountPaid);
+
+             if (amountMatchedPlan) {
+                await User.findByIdAndUpdate(user._id, {
+                    $inc: { creditBalance: amountMatchedPlan.credits }
+                });
+
+                await createTransaction({
+                  stripeId: invoice.id,
+                  amount: amountPaid,
+                  plan: amountMatchedPlan.name + " (Renewal/Fallback)",
+                  credits: amountMatchedPlan.credits,
+                  buyerId: user._id,
+                  createdAt: new Date(),
+                });
+                return NextResponse.json({ message: `Renewed (Fallback) ${amountMatchedPlan.name}` });
+             }
           }
       }
 

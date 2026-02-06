@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
+import { logger } from "@/lib/services/logger.service";
 
 export async function getAnalyticsData() {
   try {
@@ -40,7 +41,7 @@ export async function getAnalyticsData() {
     };
 
   } catch (error) {
-    console.error("Analytics Error:", error);
+    logger.error("Analytics Error:", error);
     return {
         totalRevenue: 0,
         activeUsers: 0,
