@@ -3,10 +3,10 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { checkoutCredits } from '@/lib/actions/transaction.action';
+import { checkoutCredits } from '@/lib/actions/transaction.actions';
 import { Button } from '../ui/button';
 
-const Checkout = ({ plan, amount, credits, buyerId }: { plan: string, amount: number, credits: number, buyerId: string }) => {
+const Checkout = ({ plan, amount, credits, buyerId, mode = 'payment' }: { plan: string, amount: number, credits: number, buyerId: string, mode?: 'payment' | 'subscription' }) => {
   const { toast } = useToast();
 
   useEffect(() => {
@@ -14,7 +14,6 @@ const Checkout = ({ plan, amount, credits, buyerId }: { plan: string, amount: nu
   }, []);
 
   useEffect(() => {
-    // Check to see if this is a redirect back from Checkout
     const query = new URLSearchParams(window.location.search);
     if (query.get('success')) {
       toast({
@@ -41,6 +40,7 @@ const Checkout = ({ plan, amount, credits, buyerId }: { plan: string, amount: nu
       amount,
       credits,
       buyerId,
+      mode, // Pass mode to server action
     };
 
     await checkoutCredits(transaction);
@@ -50,7 +50,7 @@ const Checkout = ({ plan, amount, credits, buyerId }: { plan: string, amount: nu
     <form action={onCheckout} method="POST">
       <section>
         <Button type="submit" role="link" className="w-full rounded-full bg-purple-gradient bg-cover">
-          Buy Credit
+          {mode === 'subscription' ? 'Subscribe' : 'Buy Credit'}
         </Button>
       </section>
     </form>

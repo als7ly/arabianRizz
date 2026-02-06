@@ -8,6 +8,7 @@ import { ChatInterface } from "@/components/shared/ChatInterface";
 import { DeleteGirlButton } from "@/components/shared/DeleteGirlButton";
 import { Badge } from "@/components/ui/badge";
 import { EditGirlAction } from "@/components/shared/EditGirlAction";
+import ChatErrorBoundary from "@/components/shared/ChatErrorBoundary";
 
 const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
   const { userId } = auth();
@@ -47,11 +48,13 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
       </div>
 
       <section className="w-full max-w-4xl mx-auto">
-        <ChatInterface
-          girlId={girl._id}
-          initialMessages={serializedMessages}
-          creditBalance={user.creditBalance}
-        />
+        <ChatErrorBoundary>
+          <ChatInterface
+            girlId={girl._id}
+            initialMessages={serializedMessages}
+            creditBalance={user.creditBalance}
+          />
+        </ChatErrorBoundary>
       </section>
     </>
   );
