@@ -176,7 +176,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const fullLanguage = languageMap[languageCode] || 'English';
 
     // RAG Knowledge: Attempt to find relevant info in that language
-    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode);
+    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode, embedding);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     // Dialect Handling (Only for Arabic)
