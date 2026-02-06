@@ -1,6 +1,7 @@
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import OpenAI from "openai";
+import { validateUrl } from "@/lib/security/url-validator";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,6 +9,9 @@ const openai = new OpenAI({
 
 export const crawlUrl = async (url: string) => {
   try {
+    // Validate URL to prevent SSRF
+    validateUrl(url);
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch URL: ${response.statusText}`);
