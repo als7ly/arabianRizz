@@ -62,7 +62,7 @@ export async function getTransactions(userId: string) {
     if (!user) throw new Error("User not found");
 
     if (user._id.toString() !== userId) {
-      throw new Error("Unauthorized");
+      throw new Error("Unauthorized access to transactions");
     }
 
     const transactions = await Transaction.find({ buyer: userId }).sort({ createdAt: -1 });
