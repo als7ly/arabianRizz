@@ -84,10 +84,16 @@ export async function getUserKnowledgeList() {
 // RAG Retrieval
 export async function getUserContext(userId: string, query: string, embedding?: number[]) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) return [];
+
     await connectToDatabase();
 
     // Ensure we are searching for the correct user (mongo ID)
-    // userId passed here is the MongoDB _id string
+    const user = await User.findOne({ clerkId });
+    if (!user || user._id.toString() !== userId) {
+      return [];
+    }
 
     const queryEmbedding = embedding || await generateEmbedding(query);
 
