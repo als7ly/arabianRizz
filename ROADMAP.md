@@ -9,7 +9,7 @@ This document outlines the current state of the codebase, missing features requi
 *   **RAG System:** Retrieves context from Conversation History (`rag.actions.ts`), User Persona (`user-knowledge.actions.ts`), and Global Knowledge Base (`global-rag.actions.ts`).
 *   **Dialect Support:** Explicit logic for Arabic dialects handling.
 *   **Ownership:** `verifyOwnership` middleware ensures data privacy.
-*   **Safety Filter:** Basic content moderation using keyword blocking implemented in `wingman.actions.ts`.
+*   **Safety Filter:** Advanced moderation using OpenAI Moderation API with keyword fallback implemented in `wingman.actions.ts`.
 
 ### ✅ Rich Chat Interface
 *   **Media:** Support for text, generated images (DALL-E 3), and audio messages (OpenAI TTS).
@@ -42,8 +42,7 @@ This document outlines the current state of the codebase, missing features requi
 
 ### 🟡 Future Enhancements (Post-Launch)
 1.  **Real Email Provider:** Swap `MockEmailService` with Resend or SendGrid API.
-2.  **Advanced Moderation:** Integrate OpenAI Moderation API instead of keyword blocking.
-3.  **Analytics:** Add PostHog or Google Analytics for user behavior tracking.
+2.  **Analytics:** Add PostHog or Google Analytics for user behavior tracking.
 
 ---
 
@@ -79,7 +78,7 @@ Used for high-value AI actions.
 4.  **"My Persona" Unlimited:** Unlimited storage for RAG context (vs. 50 entries limit for free users).
 
 ### 🚀 Upsell Opportunities
-*   **Low Balance Trigger:** Send an email/push notification when credits drop below 10.
+*   **Low Balance Trigger:** Automated email notification sends when credits drop below 10. (Implemented)
 *   **"Unlock Dialect":** Charge a small fee (or locked behind Pro) for specific niche dialects (e.g., specific country slang).
 
 ---
