@@ -5,7 +5,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { Toaster } from "@/components/ui/toaster";
 import "@/lib/env"; // Trigger Env Validation
-import AnalyticsProvider from "@/components/shared/AnalyticsProvider";
 
 import "../globals.css";
 

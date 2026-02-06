@@ -4,9 +4,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
-import Event from "@/lib/database/models/event.model";
 import { logger } from "@/lib/services/logger.service";
-import { auth } from "@clerk/nextjs";
 
 export async function getAnalyticsData() {
   try {
