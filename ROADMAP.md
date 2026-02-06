@@ -26,13 +26,14 @@ This document outlines the current state of the codebase, missing features requi
 *   **Subscription UI:** Frontend support for subscription checkout mode (`Checkout.tsx`), status display (`SubscriptionStatus.tsx`), and management portal.
 
 ### ✅ Infrastructure
-*   **Database:** MongoDB Mongoose schemas defined for `User`, `Girl`, `Message`, `Transaction`.
+*   **Database:** MongoDB Mongoose schemas defined for `User`, `Girl`, `Message`, `Transaction`, `Event`.
 *   **Localization:** `next-intl` set up for 10+ languages.
 *   **Admin:** Back-end actions for crawling and knowledge management exist.
 *   **Legal:** Terms of Service and Privacy Policy pages created.
 *   **Age Verification:** Client-side 18+ gate modal implemented.
 *   **Env Validation:** Strict Zod schema (`lib/env.ts`) ensures strict environment variable validation at startup.
 *   **Logging:** Structured JSON logging implemented (`logger.service.ts`) and applied to Wingman, Analysis, Analytics, and Payment actions.
+*   **Analytics:** Internal Event Tracking implemented (`Event` model, `logEvent` action, `AnalyticsProvider` component).
 
 ---
 
