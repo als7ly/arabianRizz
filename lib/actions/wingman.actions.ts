@@ -2,7 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { getContext } from "./rag.actions";
+import { retrieveContext } from "../services/rag.service";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -159,10 +159,11 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    const contextMessages = await getContext(girlId, userMessage);
+    const [contextMessages, userContext] = await Promise.all([
+      getContext(girlId, userMessage),
+      getUserContext(girl.author.toString(), userMessage)
+    ]);
     const contextString = JSON.stringify(contextMessages);
-
-    const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     // Language Handling
@@ -175,7 +176,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const fullLanguage = languageMap[languageCode] || 'English';
 
     // RAG Knowledge: Attempt to find relevant info in that language
-    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode);
+    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode, embedding);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     // Dialect Handling (Only for Arabic)
@@ -242,10 +243,10 @@ ${contextString}
         const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
 
         // Check for Low Balance
-        await checkAndNotifyLowBalance(updatedUser);
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
         // Update Gamification Stats
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
@@ -487,9 +488,9 @@ Instructions:
         const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
 
         // Check for Low Balance
-        await checkAndNotifyLowBalance(updatedUser);
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {

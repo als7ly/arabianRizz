@@ -12,9 +12,41 @@ export const crawlUrl = async (url: string) => {
     // Validate URL to prevent SSRF
     validateUrl(url);
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.statusText}`);
+    let currentUrl = url;
+    let response: Response | undefined;
+    const maxRedirects = 5;
+    let redirectCount = 0;
+
+    while (redirectCount < maxRedirects) {
+      response = await fetch(currentUrl, { redirect: 'manual' });
+      const status = response.status;
+
+      if (status >= 300 && status < 400 && response.headers.get('location')) {
+        redirectCount++;
+        const location = response.headers.get('location');
+        if (!location) {
+          throw new Error('Redirect with no Location header');
+        }
+
+        // Resolve relative URLs
+        const nextUrl = new URL(location, currentUrl).toString();
+
+        // Validate the NEW URL
+        validateUrl(nextUrl);
+
+        currentUrl = nextUrl;
+        continue;
+      }
+
+      break;
+    }
+
+    if (redirectCount >= maxRedirects) {
+      throw new Error('Too many redirects');
+    }
+
+    if (!response || !response.ok) {
+      throw new Error(`Failed to fetch URL: ${response ? response.statusText : 'Unknown Error'}`);
     }
     const html = await response.text();
 
