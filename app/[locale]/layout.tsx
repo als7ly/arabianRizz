@@ -44,6 +44,7 @@ export default function RootLayout({
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
             <Toaster />
+            <AnalyticsProvider />
           </NextIntlClientProvider>
         </body>
       </html>

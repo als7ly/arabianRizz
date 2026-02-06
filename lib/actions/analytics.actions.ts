@@ -51,3 +51,27 @@ export async function getAnalyticsData() {
     };
   }
 }
+
+export async function logEvent(eventType: string, path: string, metadata: any = {}) {
+    try {
+        const { userId: clerkId } = auth();
+        await connectToDatabase();
+
+        let userId = null;
+        if (clerkId) {
+            const user = await User.findOne({ clerkId });
+            if (user) userId = user._id;
+        }
+
+        await Event.create({
+            user: userId,
+            eventType,
+            path,
+            metadata
+        });
+
+    } catch (error) {
+        // Fail silently for analytics to not block UX
+        logger.error("Failed to log event", error);
+    }
+}
