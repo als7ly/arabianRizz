@@ -23,10 +23,11 @@ const SubscriptionStatus = ({ user }: { user: any }) => {
                     Active Subscription
                 </Badge>
             </div>
-            {/* Mock renewal date for MVP visual */}
-            <p className="text-xs text-gray-400">
-                Renews on {format(new Date(new Date().setDate(new Date().getDate() + 30)), "MMM dd, yyyy")}
-            </p>
+            {user.subscriptionPeriodEnd && (
+                <p className="text-xs text-gray-400">
+                    Renews on {format(new Date(user.subscriptionPeriodEnd), "MMM dd, yyyy")}
+                </p>
+            )}
         </div>
     );
 };
