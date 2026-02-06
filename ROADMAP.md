@@ -31,7 +31,7 @@ This document outlines the current state of the codebase, missing features requi
 *   **Legal:** Terms of Service and Privacy Policy pages created.
 *   **Age Verification:** Client-side 18+ gate modal implemented.
 *   **Env Validation:** Strict Zod schema (`lib/env.ts`) ensures strict environment variable validation at startup.
-*   **Logging:** Structured JSON logging implemented (`logger.service.ts`) replacing raw console calls.
+*   **Logging:** Structured JSON logging implemented (`logger.service.ts`) and applied to Wingman, Analysis, Analytics, and Payment actions.
 
 ---
 
