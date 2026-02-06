@@ -21,6 +21,7 @@ This document outlines the current state of the codebase, missing features requi
 *   **Integration:** Stripe Checkout implemented for one-time payments (`checkoutCredits`).
 *   **Webhooks:** Enhanced webhook listener at `app/api/webhooks/stripe/route.ts` handling `checkout.session.completed` and `invoice.payment_succeeded` using Price ID matching (with fallback).
 *   **Billing UI:** Transaction history visible on Profile page.
+*   **Subscription Management:** Stripe Customer Portal implemented for managing subscriptions (`createCustomerPortalSession`).
 
 ### ✅ Infrastructure
 *   **Database:** MongoDB Mongoose schemas defined for `User`, `Girl`, `Message`, `Transaction`.
@@ -28,6 +29,7 @@ This document outlines the current state of the codebase, missing features requi
 *   **Admin:** Back-end actions for crawling and knowledge management exist.
 *   **Legal:** Terms of Service and Privacy Policy pages created.
 *   **Age Verification:** Client-side 18+ gate modal implemented.
+*   **Env Validation:** Strict Zod schema (`lib/env.ts`) ensures strict environment variable validation at startup.
 
 ---
 
@@ -36,12 +38,10 @@ This document outlines the current state of the codebase, missing features requi
 Before launching, the following items **should** be addressed:
 
 ### 🟡 User Experience (UX)
-1.  **Subscription Management:** While billing history is visible, users cannot yet *cancel* subscriptions directly from the UI. Need to implement Stripe Customer Portal link.
-2.  **Email Notifications:** Send receipt emails or "Low Balance" alerts via Resend or SendGrid.
+1.  **Email Notifications:** Send receipt emails or "Low Balance" alerts via Resend or SendGrid.
 
 ### 🟡 DevOps
-3.  **Env Variable Safety:** Replace `dummy-key` logic with strict Zod validation schema for environment variables.
-4.  **Logging:** Implement structured logging (e.g., Sentry) for production error tracking.
+2.  **Logging:** Implement structured logging (e.g., Sentry) for production error tracking.
 
 ---
 

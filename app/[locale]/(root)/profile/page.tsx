@@ -13,6 +13,7 @@ import { getTransactions } from "@/lib/actions/transaction.actions";
 import CreditBalance from "@/components/shared/CreditBalance";
 import PersonaManager from "@/components/shared/PersonaManager";
 import BillingHistory from "@/components/shared/BillingHistory";
+import ManageSubscriptionButton from "@/components/shared/ManageSubscriptionButton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -49,18 +50,21 @@ const Profile = async () => {
             {/* Credits Section */}
             <div className="border-t border-gray-100 pt-6">
                 <h3 className="h4-medium text-dark-600 mb-4">{t('subscription')}</h3>
-                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg flex-wrap gap-4">
                     <div>
                         <p className="p-16-semibold text-dark-600">{t('currentPlan')} <span className="text-purple-600">{tPlans('names.free')}</span></p>
                         <div className="mt-2">
                             <CreditBalance userId={user.clerkId} />
                         </div>
                     </div>
-                    <Link href="/credits">
-                        <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
-                            {t('upgrade')}
-                        </Button>
-                    </Link>
+                    <div className="flex gap-2">
+                         <ManageSubscriptionButton />
+                         <Link href="/credits">
+                            <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
+                                {t('upgrade')}
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             </div>
 
