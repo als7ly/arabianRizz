@@ -54,6 +54,17 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
 export async function getTransactions(userId: string) {
   try {
     await connectToDatabase();
+
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    if (user._id.toString() !== userId) {
+      throw new Error("Unauthorized access to transactions");
+    }
+
     const transactions = await Transaction.find({ buyer: userId }).sort({ createdAt: -1 });
     return JSON.parse(JSON.stringify(transactions));
   } catch (error) {

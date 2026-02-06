@@ -23,6 +23,7 @@ const UserSchema = new Schema({
   stripePriceId: { type: String },
   stripeCurrentPeriodEnd: { type: Date },
   subscriptionStatus: { type: String },
+  subscriptionPeriodEnd: { type: Date },
 });
 
 // Optimize queries for Analytics (Active Users) and Leaderboard (Top Users)

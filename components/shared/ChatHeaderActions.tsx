@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Trash2, Download } from "lucide-react";
+import { MoreVertical, Trash2, Download, Search } from "lucide-react";
+import { SearchChatDialog } from "./SearchChatDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,7 @@ interface ChatHeaderActionsProps {
 export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProps) => {
   const [isExporting, setIsExporting] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
   const { toast } = useToast();
 
   const handleExport = async () => {
@@ -73,6 +75,10 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setShowSearchDialog(true)} className="cursor-pointer">
+            <Search className="mr-2 h-4 w-4" />
+            <span>Search Chat</span>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExport} disabled={isExporting} className="cursor-pointer">
             <Download className="mr-2 h-4 w-4" />
             <span>{isExporting ? "Exporting..." : "Export Chat"}</span>
@@ -110,6 +116,12 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SearchChatDialog
+        girlId={girlId}
+        open={showSearchDialog}
+        onOpenChange={setShowSearchDialog}
+      />
     </>
   );
 };

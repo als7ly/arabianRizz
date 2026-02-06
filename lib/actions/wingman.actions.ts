@@ -2,7 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { getContext } from "./rag.actions";
+import { retrieveContext } from "../services/rag.service";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -75,15 +75,28 @@ async function verifyOwnership(girlAuthorId: any) {
 async function checkAndNotifyLowBalance(user: any) {
     // Threshold: 10 credits
     if (user.creditBalance < 10) {
-        // Send Notification
-        // NOTE: In a real app, we should check a 'lastLowBalanceEmailSent' timestamp to prevent spam.
-        // For this MVP, we log and send, assuming the mock email service handles basic deduplication or we accept the risk.
+        // Rate Limiting: Check last email sent timestamp
+        if (user.lastLowBalanceEmailSent) {
+            const lastSent = new Date(user.lastLowBalanceEmailSent);
+            const now = new Date();
+            const hoursSinceLastSent = (now.getTime() - lastSent.getTime()) / (1000 * 60 * 60);
+
+            if (hoursSinceLastSent < 24) {
+                logger.info("Low balance email skipped (rate limited)", { userId: user._id, lastSent });
+                return;
+            }
+        }
+
         try {
             await sendEmail({
                 to: user.email,
                 subject: "⚡ Low Balance Alert - Top Up Your Rizz",
                 html: `<h1>Running Low on Rizz?</h1><p>You have fewer than 10 credits left (${user.creditBalance}). Don't get left on read. <a href="${process.env.NEXT_PUBLIC_SERVER_URL}/credits">Top up now</a>.</p>`
             });
+
+            // Update lastLowBalanceEmailSent timestamp
+            await User.findByIdAndUpdate(user._id, { lastLowBalanceEmailSent: new Date() });
+
             logger.info("Low balance alert sent", { userId: user._id });
         } catch (e) {
             logger.error("Failed to send low balance email", e);
@@ -159,10 +172,11 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    const contextMessages = await getContext(girlId, userMessage);
+    const [contextMessages, userContext] = await Promise.all([
+      getContext(girlId, userMessage),
+      getUserContext(girl.author.toString(), userMessage)
+    ]);
     const contextString = JSON.stringify(contextMessages);
-
-    const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     // Language Handling
@@ -175,7 +189,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const fullLanguage = languageMap[languageCode] || 'English';
 
     // RAG Knowledge: Attempt to find relevant info in that language
-    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode);
+    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode, embedding);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     // Dialect Handling (Only for Arabic)
@@ -242,10 +256,10 @@ ${contextString}
         const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
 
         // Check for Low Balance
-        await checkAndNotifyLowBalance(updatedUser);
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
         // Update Gamification Stats
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
@@ -487,9 +501,9 @@ Instructions:
         const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
 
         // Check for Low Balance
-        await checkAndNotifyLowBalance(updatedUser);
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
