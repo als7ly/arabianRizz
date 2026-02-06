@@ -9,40 +9,39 @@ This document outlines the current state of the codebase, missing features requi
 *   **RAG System:** Retrieves context from Conversation History (`rag.actions.ts`), User Persona (`user-knowledge.actions.ts`), and Global Knowledge Base (`global-rag.actions.ts`).
 *   **Dialect Support:** Explicit logic for Arabic dialects handling.
 *   **Ownership:** `verifyOwnership` middleware ensures data privacy.
+*   **Safety Filter:** Basic content moderation using keyword blocking implemented in `wingman.actions.ts`.
 
 ### ✅ Rich Chat Interface
 *   **Media:** Support for text, generated images (DALL-E 3), and audio messages (OpenAI TTS).
 *   **Actions:** Quick Actions (Roast, Date Idea), Saved Lines, and "Copy to Clipboard".
 *   **UI:** Polished React components using Tailwind CSS and Radix UI (`ChatInterface.tsx`, `MessageBubble.tsx`).
+*   **Resilience:** `ChatErrorBoundary` prevents white-screen crashes.
 
 ### ✅ Payments (Basic)
 *   **Integration:** Stripe Checkout implemented for one-time payments (`checkoutCredits`).
-*   **Webhooks:** Basic webhook listener at `app/api/webhooks/stripe/route.ts` handling `checkout.session.completed`.
+*   **Webhooks:** Enhanced webhook listener at `app/api/webhooks/stripe/route.ts` handling `checkout.session.completed` and `invoice.payment_succeeded` using Price ID matching (with fallback).
+*   **Billing UI:** Transaction history visible on Profile page.
 
 ### ✅ Infrastructure
 *   **Database:** MongoDB Mongoose schemas defined for `User`, `Girl`, `Message`, `Transaction`.
 *   **Localization:** `next-intl` set up for 10+ languages.
 *   **Admin:** Back-end actions for crawling and knowledge management exist.
+*   **Legal:** Terms of Service and Privacy Policy pages created.
+*   **Age Verification:** Client-side 18+ gate modal implemented.
 
 ---
 
-## 2. Production Readiness Checklist (Critical Missing Items)
+## 2. Production Readiness Checklist (Remaining Items)
 
-Before launching, the following items **must** be addressed:
+Before launching, the following items **should** be addressed:
 
-### 🔴 Critical Reliability
-1.  **Stripe Webhook Hardening:** The current `invoice.payment_succeeded` logic "guesses" the plan based on the amount paid. This is fragile.
-    *   *Fix:* Update `constants/index.ts` to include real Stripe Price IDs and match against `invoice.lines.data[0].price.id`.
-2.  **Env Variable Safety:** Code currently contains logic checking for `dummy-key`. Ensure strictly validated environment variables in Production.
+### 🟡 User Experience (UX)
+1.  **Subscription Management:** While billing history is visible, users cannot yet *cancel* subscriptions directly from the UI. Need to implement Stripe Customer Portal link.
+2.  **Email Notifications:** Send receipt emails or "Low Balance" alerts via Resend or SendGrid.
 
-### 🔴 Legal & Compliance
-3.  **Legal Pages:** Missing `app/[locale]/(root)/terms/page.tsx` and `privacy/page.tsx`. Required by Stripe.
-4.  **Age Verification:** Ensure there is a clear "18+" gate on the landing page or signup.
-5.  **Content Moderation:** While "Uncensored", illegal content must be blocked. Implement a safety filter (e.g., checking for CSAM/Violence keywords) to protect the platform.
-
-### 🔴 User Experience (UX)
-6.  **Error Boundaries:** Wrap `ChatInterface` in a React Error Boundary to prevent white-screen crashes.
-7.  **Subscription Management:** No UI for users to view or cancel their active subscriptions. Add a "Billing" tab to `/profile`.
+### 🟡 DevOps
+3.  **Env Variable Safety:** Replace `dummy-key` logic with strict Zod validation schema for environment variables.
+4.  **Logging:** Implement structured logging (e.g., Sentry) for production error tracking.
 
 ---
 

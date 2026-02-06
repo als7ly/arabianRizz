@@ -9,8 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { Check } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { getUserById } from "@/lib/actions/user.actions";
+import { getTransactions } from "@/lib/actions/transaction.actions";
 import CreditBalance from "@/components/shared/CreditBalance";
 import PersonaManager from "@/components/shared/PersonaManager";
+import BillingHistory from "@/components/shared/BillingHistory";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -24,6 +26,7 @@ const Profile = async () => {
   if (!userId) redirect("/sign-in");
 
   const user = await getUserById(userId);
+  const transactions = await getTransactions(user._id);
 
   return (
     <>
@@ -59,6 +62,12 @@ const Profile = async () => {
                         </Button>
                     </Link>
                 </div>
+            </div>
+
+            {/* Billing History */}
+            <div className="border-t border-gray-100 pt-6">
+                <h3 className="h4-medium text-dark-600 mb-4">Billing History</h3>
+                <BillingHistory transactions={transactions} />
             </div>
 
             {/* Persona Section */}

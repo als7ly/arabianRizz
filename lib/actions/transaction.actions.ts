@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import Stripe from "stripe";
 import { plans } from '@/constants';
+import { connectToDatabase } from "../database/mongoose";
+import Transaction from "../database/models/transaction.model";
 
 export async function checkoutCredits(transaction: CheckoutTransactionParams) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -45,3 +47,13 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams) {
   }
 }
 
+export async function getTransactions(userId: string) {
+  try {
+    await connectToDatabase();
+    const transactions = await Transaction.find({ buyer: userId }).sort({ createdAt: -1 });
+    return JSON.parse(JSON.stringify(transactions));
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    return [];
+  }
+}

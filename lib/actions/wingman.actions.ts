@@ -22,6 +22,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+function checkContentSafety(text: string): boolean {
+    // Basic keyword blacklist for safety (production should use an external moderation API)
+    const blockedKeywords = [
+        "child", "minor", "underage", "teen", "baby", "rape", "abuse", "kill", "murder", "suicide", "terror", "bomb"
+    ];
+
+    const lowerText = text.toLowerCase();
+    return !blockedKeywords.some(keyword => lowerText.includes(keyword));
+}
+
 async function verifyOwnership(girlAuthorId: any) {
     const { userId: clerkId } = auth();
     if (!clerkId) throw new Error("Unauthorized");
@@ -81,6 +91,14 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
 export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty", senderRole: "user" | "girl" | "instruction" = "user") {
   try {
+    // Safety Check
+    if (!checkContentSafety(userMessage)) {
+        return {
+            reply: "I cannot generate a response for this content as it violates our safety guidelines.",
+            explanation: "Content violation detected."
+        };
+    }
+
     // Security: Validate tone to prevent prompt injection
     const ALLOWED_TONES = ['Flirty', 'Funny', 'Serious', 'Mysterious'];
     const safeTone = ALLOWED_TONES.includes(tone) ? tone : 'Flirty';
@@ -267,6 +285,11 @@ export async function generateResponseImage(prompt: string) {
   try {
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return "https://via.placeholder.com/1024x1024.png?text=Mock+AI+Image";
+    }
+
+    // Safety Check for Image Generation
+    if (!checkContentSafety(prompt)) {
+        return "https://via.placeholder.com/1024x1024.png?text=Content+Violation";
     }
 
     const response = await openai.images.generate({
