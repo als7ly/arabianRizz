@@ -2,11 +2,10 @@
 import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 
-export async function updateGamification(userId: string) {
+export async function updateGamification(user: any) {
   try {
     await connectToDatabase();
 
-    const user = await User.findById(userId);
     if (!user) return;
 
     // 1. Update Interactions
