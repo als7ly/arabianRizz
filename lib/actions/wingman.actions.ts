@@ -17,6 +17,7 @@ import { Readable } from 'stream';
 import { updateGamification } from "@/lib/services/gamification.service";
 import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
+import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -42,12 +43,8 @@ async function checkContentSafety(text: string): Promise<boolean> {
     }
 
     // 2. Basic Keyword Fallback
-    const blockedKeywords = [
-        "child", "minor", "underage", "teen", "baby", "rape", "abuse", "kill", "murder", "suicide", "terror", "bomb"
-    ];
-
     const lowerText = text.toLowerCase();
-    const hasBlockedKeyword = blockedKeywords.some(keyword => lowerText.includes(keyword));
+    const hasBlockedKeyword = BLOCKED_KEYWORDS.some(keyword => lowerText.includes(keyword));
 
     if (hasBlockedKeyword) {
         logger.warn("Keyword Safety Check Failed", { text });
@@ -74,7 +71,7 @@ async function verifyOwnership(girlAuthorId: any) {
 // Low Balance Check Utility
 async function checkAndNotifyLowBalance(user: any) {
     // Threshold: 10 credits
-    if (user.creditBalance < 10) {
+    if (user.creditBalance < LOW_BALANCE_THRESHOLD) {
         // Rate Limiting: Check last email sent timestamp
         if (user.lastLowBalanceEmailSent) {
             const lastSent = new Date(user.lastLowBalanceEmailSent);
@@ -91,7 +88,7 @@ async function checkAndNotifyLowBalance(user: any) {
             await sendEmail({
                 to: user.email,
                 subject: "⚡ Low Balance Alert - Top Up Your Rizz",
-                html: `<h1>Running Low on Rizz?</h1><p>You have fewer than 10 credits left (${user.creditBalance}). Don't get left on read. <a href="${process.env.NEXT_PUBLIC_SERVER_URL}/credits">Top up now</a>.</p>`
+                html: `<h1>Running Low on Rizz?</h1><p>You have fewer than ${LOW_BALANCE_THRESHOLD} credits left (${user.creditBalance}). Don't get left on read. <a href="${process.env.NEXT_PUBLIC_SERVER_URL}/credits">Top up now</a>.</p>`
             });
 
             // Update lastLowBalanceEmailSent timestamp
