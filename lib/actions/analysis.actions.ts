@@ -1,6 +1,7 @@
 "use server";
 
 import { openai } from "../openai";
+import { logger } from "@/lib/services/logger.service";
 
 export async function analyzeProfile(text: string) {
   try {
@@ -32,7 +33,7 @@ export async function analyzeProfile(text: string) {
 
     return JSON.parse(content);
   } catch (error) {
-    console.error("Analysis Error:", error);
+    logger.error("Analysis Error:", error);
     return null;
   }
 }
