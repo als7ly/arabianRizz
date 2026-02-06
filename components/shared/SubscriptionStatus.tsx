@@ -2,9 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
 const SubscriptionStatus = ({ user }: { user: any }) => {
-    // For MVP, we assume planId > 1 implies a paid plan/subscription.
-    // In a real app, you'd check a specific 'subscriptionStatus' field synced from Stripe.
-    const isSubscribed = user.planId && user.planId > 1;
+    // Check specific subscription status from Stripe
+    const isSubscribed = user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing';
 
     if (!isSubscribed) {
         return (
@@ -15,6 +14,10 @@ const SubscriptionStatus = ({ user }: { user: any }) => {
         );
     }
 
+    const renewalDate = user.stripeCurrentPeriodEnd
+        ? format(new Date(user.stripeCurrentPeriodEnd), "MMM dd, yyyy")
+        : "N/A";
+
     return (
         <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-sm">
@@ -23,10 +26,11 @@ const SubscriptionStatus = ({ user }: { user: any }) => {
                     Active Subscription
                 </Badge>
             </div>
-            {/* Mock renewal date for MVP visual */}
-            <p className="text-xs text-gray-400">
-                Renews on {format(new Date(new Date().setDate(new Date().getDate() + 30)), "MMM dd, yyyy")}
-            </p>
+            {user.subscriptionPeriodEnd && (
+                <p className="text-xs text-gray-400">
+                    Renews on {format(new Date(user.subscriptionPeriodEnd), "MMM dd, yyyy")}
+                </p>
+            )}
         </div>
     );
 };
