@@ -167,9 +167,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
           });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ title: t('errorTitle'), description: t('errorReply'), variant: "destructive" });
+      toast({ title: t('errorTitle'), description: error.message || t('errorReply'), variant: "destructive" });
     } finally {
       setIsLoading(false);
       setSender('user'); // Reset to user default
@@ -208,9 +208,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             duration: 6000,
         });
 
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: "Failed to regenerate.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: e.message || "Failed to regenerate.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -314,9 +314,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             duration: 6000,
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        toast({ title: t('errorTitle'), description: t('errorProcessImage'), variant: "destructive" });
+        toast({ title: t('errorTitle'), description: error.message || t('errorProcessImage'), variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -364,9 +364,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
                 duration: 6000,
             });
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: t('errorHookup'), variant: "destructive" });
+        toast({ title: t('errorTitle'), description: e.message || t('errorHookup'), variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -441,9 +441,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
           });
       }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        toast({ title: t('errorTitle'), description: "Failed to generate action.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: error.message || "Failed to generate action.", variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
