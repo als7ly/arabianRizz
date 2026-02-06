@@ -242,7 +242,7 @@ ${contextString}
         const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
 
         // Check for Low Balance
-        await checkAndNotifyLowBalance(updatedUser);
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
         // Update Gamification Stats
         const gamificationResult = await updateGamification(user._id);
@@ -487,7 +487,7 @@ Instructions:
         const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
 
         // Check for Low Balance
-        await checkAndNotifyLowBalance(updatedUser);
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
         const gamificationResult = await updateGamification(user._id);
         const newBadges = gamificationResult?.newBadges || [];
