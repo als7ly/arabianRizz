@@ -26,9 +26,11 @@ const SubscriptionStatus = ({ user }: { user: any }) => {
                     Active Subscription
                 </Badge>
             </div>
-            <p className="text-xs text-gray-400">
-                Renews on {renewalDate}
-            </p>
+            {user.subscriptionPeriodEnd && (
+                <p className="text-xs text-gray-400">
+                    Renews on {format(new Date(user.subscriptionPeriodEnd), "MMM dd, yyyy")}
+                </p>
+            )}
         </div>
     );
 };

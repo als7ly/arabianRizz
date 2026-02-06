@@ -60,7 +60,7 @@ jest.mock('@clerk/nextjs', () => ({
   auth: jest.fn(),
 }));
 
-jest.mock('@/lib/actions/gamification.actions', () => ({
+jest.mock('@/lib/services/gamification.service', () => ({
     updateGamification: jest.fn(),
 }));
 

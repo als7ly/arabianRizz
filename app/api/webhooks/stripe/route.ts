@@ -103,9 +103,7 @@ export async function POST(request: Request) {
           if (matchedPlan) {
               await User.findByIdAndUpdate(user._id, {
                   $inc: { creditBalance: matchedPlan.credits },
-                  subscriptionStatus: 'active',
-                  stripeCurrentPeriodEnd: new Date(invoice.lines.data[0].period_end * 1000),
-                  stripePriceId: priceId,
+                  subscriptionPeriodEnd: new Date(invoice.lines.data[0].period.end * 1000)
               });
 
               await createTransaction({
@@ -134,8 +132,7 @@ export async function POST(request: Request) {
              if (amountMatchedPlan) {
                 await User.findByIdAndUpdate(user._id, {
                     $inc: { creditBalance: amountMatchedPlan.credits },
-                    subscriptionStatus: 'active',
-                    stripeCurrentPeriodEnd: new Date(invoice.lines.data[0].period_end * 1000),
+                    subscriptionPeriodEnd: new Date(invoice.lines.data[0].period.end * 1000)
                 });
 
                 await createTransaction({
