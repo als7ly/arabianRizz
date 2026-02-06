@@ -159,10 +159,11 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    const contextMessages = await getContext(girlId, userMessage);
+    const [contextMessages, userContext] = await Promise.all([
+      getContext(girlId, userMessage),
+      getUserContext(girl.author.toString(), userMessage)
+    ]);
     const contextString = JSON.stringify(contextMessages);
-
-    const userContext = await getUserContext(girl.author.toString(), userMessage);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     // Language Handling
