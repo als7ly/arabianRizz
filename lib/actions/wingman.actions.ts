@@ -2,7 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { getContext } from "./rag.actions";
+import { getContext, generateEmbedding } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -159,10 +159,12 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    const contextMessages = await getContext(girlId, userMessage);
+    const embedding = await generateEmbedding(userMessage);
+
+    const contextMessages = await getContext(girlId, userMessage, embedding);
     const contextString = JSON.stringify(contextMessages);
 
-    const userContext = await getUserContext(girl.author.toString(), userMessage);
+    const userContext = await getUserContext(girl.author.toString(), userMessage, embedding);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     // Language Handling
@@ -175,7 +177,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const fullLanguage = languageMap[languageCode] || 'English';
 
     // RAG Knowledge: Attempt to find relevant info in that language
-    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode);
+    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode, embedding);
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     // Dialect Handling (Only for Arabic)

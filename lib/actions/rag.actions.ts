@@ -70,11 +70,11 @@ export async function addMessage({ girlId, role, content, path }: CreateMessageP
 }
 
 // Retrieve Context (RAG)
-export async function getContext(girlId: string, query: string) {
+export async function getContext(girlId: string, query: string, embedding?: number[]) {
   try {
     await verifyGirlOwnership(girlId);
 
-    const queryEmbedding = await generateEmbedding(query);
+    const queryEmbedding = embedding || await generateEmbedding(query);
 
     // MongoDB Atlas Vector Search Aggregation
     const results = await Message.aggregate([

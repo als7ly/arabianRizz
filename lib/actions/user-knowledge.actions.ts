@@ -82,14 +82,14 @@ export async function getUserKnowledgeList() {
 }
 
 // RAG Retrieval
-export async function getUserContext(userId: string, query: string) {
+export async function getUserContext(userId: string, query: string, embedding?: number[]) {
   try {
     await connectToDatabase();
 
     // Ensure we are searching for the correct user (mongo ID)
     // userId passed here is the MongoDB _id string
 
-    const queryEmbedding = await generateEmbedding(query);
+    const queryEmbedding = embedding || await generateEmbedding(query);
 
     // MongoDB Atlas Vector Search
     // Note: If using Mongoose ObjectId, the filter might need specific handling depending on Atlas config.
