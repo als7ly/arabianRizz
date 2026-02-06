@@ -23,6 +23,7 @@ This document outlines the current state of the codebase, missing features requi
 *   **Billing UI:** Transaction history visible on Profile page.
 *   **Subscription Management:** Stripe Customer Portal implemented for managing subscriptions (`createCustomerPortalSession`).
 *   **Notifications:** Mock Email Service integrated for payment receipts.
+*   **Subscription UI:** Frontend support for subscription checkout mode and status display.
 
 ### ✅ Infrastructure
 *   **Database:** MongoDB Mongoose schemas defined for `User`, `Girl`, `Message`, `Transaction`.

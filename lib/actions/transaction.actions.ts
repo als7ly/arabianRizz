@@ -8,7 +8,7 @@ import Transaction from "../database/models/transaction.model";
 import User from "../database/models/user.model";
 import { auth } from "@clerk/nextjs";
 
-export async function checkoutCredits(transaction: CheckoutTransactionParams) {
+export async function checkoutCredits(transaction: CheckoutTransactionParams & { mode?: 'payment' | 'subscription' }) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   // Validate plan
@@ -18,6 +18,7 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams) {
   // Securely get price from server-side constant
   const amount = selectedPlan.price * 100;
   const credits = selectedPlan.credits;
+  const mode = transaction.mode || 'payment';
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -29,6 +30,7 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams) {
               name: transaction.plan,
             },
             unit_amount: amount,
+            recurring: mode === 'subscription' ? { interval: 'month' } : undefined,
           },
           quantity: 1,
         },
@@ -38,7 +40,7 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams) {
         credits: credits,
         buyerId: transaction.buyerId,
       },
-      mode: 'payment',
+      mode: mode,
       success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/?canceled=true`,
     });
