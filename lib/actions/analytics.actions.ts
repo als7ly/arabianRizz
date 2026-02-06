@@ -4,7 +4,9 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import User from "@/lib/database/models/user.model";
 import Transaction from "@/lib/database/models/transaction.model";
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
+import Event from "@/lib/database/models/event.model";
 import { logger } from "@/lib/services/logger.service";
+import { auth } from "@clerk/nextjs";
 
 export async function getAnalyticsData() {
   try {
@@ -50,4 +52,28 @@ export async function getAnalyticsData() {
         totalInteractions: 0
     };
   }
+}
+
+export async function logEvent(eventType: string, path: string, metadata: any = {}) {
+    try {
+        const { userId: clerkId } = auth();
+        await connectToDatabase();
+
+        let userId = null;
+        if (clerkId) {
+            const user = await User.findOne({ clerkId });
+            if (user) userId = user._id;
+        }
+
+        await Event.create({
+            user: userId,
+            eventType,
+            path,
+            metadata
+        });
+
+    } catch (error) {
+        // Fail silently for analytics to not block UX
+        logger.error("Failed to log event", error);
+    }
 }
