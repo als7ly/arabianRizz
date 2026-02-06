@@ -2,7 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { getContext, generateEmbedding } from "./rag.actions";
+import { retrieveContext } from "../services/rag.service";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -159,12 +159,11 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    const embedding = await generateEmbedding(userMessage);
-
-    const contextMessages = await getContext(girlId, userMessage, embedding);
+    const [contextMessages, userContext] = await Promise.all([
+      getContext(girlId, userMessage),
+      getUserContext(girl.author.toString(), userMessage)
+    ]);
     const contextString = JSON.stringify(contextMessages);
-
-    const userContext = await getUserContext(girl.author.toString(), userMessage, embedding);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     // Language Handling
@@ -247,7 +246,7 @@ ${contextString}
         await checkAndNotifyLowBalance(updatedUser);
 
         // Update Gamification Stats
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
@@ -491,7 +490,7 @@ Instructions:
         // Check for Low Balance
         await checkAndNotifyLowBalance(updatedUser);
 
-        const gamificationResult = await updateGamification(user._id);
+        const gamificationResult = await updateGamification(updatedUser);
         const newBadges = gamificationResult?.newBadges || [];
 
         try {
