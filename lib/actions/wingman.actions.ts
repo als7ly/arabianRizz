@@ -281,11 +281,26 @@ ${contextString}
       explanation: "Something went wrong."
     };
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Wingman Error:", error);
+
+    let explanation = "Something went wrong with the AI.";
+    let reply = "I'm having trouble thinking right now. Please try again.";
+
+    if (error?.status === 429 || error?.message?.includes("rate limit") || error?.code === 'rate_limit_exceeded') {
+        explanation = "High traffic. Please wait a moment.";
+        reply = "Too many requests! Give me a second to catch my breath.";
+    } else if (error?.status === 400 || error?.message?.includes("context length") || error?.code === 'context_length_exceeded') {
+        explanation = "Conversation is too long.";
+        reply = "Our conversation is getting too long for me to remember everything. Please clear the chat.";
+    } else if (error?.status === 503) {
+        explanation = "AI Service unavailable.";
+        reply = "My brain is offline momentarily. Check back soon.";
+    }
+
     return {
-        reply: "Error generating reply.",
-        explanation: "Something went wrong with the AI."
+        reply,
+        explanation
     };
   }
 }
