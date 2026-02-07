@@ -514,8 +514,8 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div className="space-y-2">
-                        <Label>Style</Label>
-                        <RadioGroup defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
+                        <Label id="art-style-label">Style</Label>
+                        <RadioGroup aria-labelledby="art-style-label" defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
                             <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
                                 <RadioGroupItem value="standard" id="mode-standard" />
                                 <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
@@ -529,8 +529,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
                         </RadioGroup>
                     </div>
                     <div className="space-y-2">
-                        <Label>Prompt</Label>
+                        <Label htmlFor="art-prompt">Prompt</Label>
                         <Input
+                            id="art-prompt"
                             value={artPrompt}
                             onChange={(e) => setArtPrompt(e.target.value)}
                             placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
@@ -546,7 +547,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             </DialogContent>
         </Dialog>
 
-        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
+        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label={t('hookupAria')}>
             <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
         </Button>
 
@@ -579,7 +580,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         </DropdownMenu>
 
         <Select onValueChange={setTone} defaultValue="Flirty">
-            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone">
+            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label={t('toneAria')}>
                 <SelectValue placeholder="Tone" />
             </SelectTrigger>
             <SelectContent>
@@ -591,14 +592,14 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         </Select>
 
         <div className="flex-1 flex gap-2 w-full md:w-auto">
-             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label="Message sender">
+             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label={t('senderAria')}>
                 <Button
                     variant={sender === 'user' ? 'secondary' : 'ghost'}
                     size="sm"
                     className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
                     onClick={() => setSender('user')}
                     aria-pressed={sender === 'user'}
-                    aria-label="Set sender to Me"
+                    aria-label={t('senderMeAria')}
                 >
                     Me
                 </Button>
@@ -608,7 +609,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
                     className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
                     onClick={() => setSender('girl')}
                     aria-pressed={sender === 'girl'}
-                    aria-label="Set sender to Her"
+                    aria-label={t('senderHerAria')}
                 >
                     Her
                 </Button>

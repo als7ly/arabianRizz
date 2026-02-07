@@ -45,3 +45,7 @@
 ## 2026-02-06 - Missing Form Labels in Wizards
 **Learning:** The OnboardingWizard used inputs with placeholders but no labels. This is a common anti-pattern that hurts accessibility (screen readers) and usability (context loss when typing).
 **Action:** When creating forms, always wrap inputs in a container with a visible `<Label>` component linked via `htmlFor`/`id`, or use `aria-label` if a visible label is visually impossible.
+
+## 2024-05-25 - Orphaned Labels in Dialogs
+**Learning:** Found `<Label>` components in dialogs that were visually positioned above inputs but programmatically unassociated (missing `htmlFor`/`id` pairs). This breaks accessibility for screen readers and click-to-focus behavior.
+**Action:** Always ensure `<Label htmlFor="x">` matches `<Input id="x">`. For groups like RadioGroups, use `aria-labelledby` on the group container pointing to the label's ID.
