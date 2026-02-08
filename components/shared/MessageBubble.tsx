@@ -62,12 +62,12 @@ const MessageBubble = memo(({
     >
       <div
         className={cn(
-          "max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm md:text-base leading-relaxed relative shadow-md transition-all",
+          "max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm md:text-base leading-relaxed relative shadow-sm transition-all",
           isUser
-            ? "bg-purple-gradient text-white rounded-br-none shadow-purple-500/20"
+            ? "bg-primary text-primary-foreground rounded-br-sm"
             : isWingman
-            ? "glass-card text-foreground rounded-bl-none border-primary/20"
-            : "bg-muted text-foreground rounded-bl-none" // Girl/Screenshot
+            ? "bg-secondary text-secondary-foreground rounded-bl-sm border border-border"
+            : "bg-muted text-muted-foreground rounded-bl-sm italic" // Girl/Screenshot
         )}
       >
         {isWingman && (
@@ -105,7 +105,7 @@ const MessageBubble = memo(({
                 <div className="whitespace-pre-wrap">{msg.content}</div>
 
                 <div className="flex items-center justify-between mt-1 min-h-[24px]">
-                    <span className={cn("text-[10px] font-medium", isUser ? "text-white/70" : "text-muted-foreground")}>
+                    <span className={cn("text-[10px] font-medium", isUser ? "text-primary-foreground/70" : "text-muted-foreground")}>
                       {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}
                     </span>
 

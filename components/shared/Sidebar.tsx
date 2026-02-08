@@ -20,11 +20,11 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-72 border-r border-white/10 bg-background/95 backdrop-blur-xl transition-transform lg:translate-x-0 hidden lg:flex flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-72 border-r border-border bg-background transition-transform lg:translate-x-0 hidden lg:flex flex-col">
       <div className="flex h-full flex-col px-6 py-8">
         <Link href="/dashboard" className="flex items-center gap-2 mb-10 pl-2">
-            <Icons.zap className="h-8 w-8 text-primary animate-pulse-glow" />
-            <span className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+            <Icons.zap className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold tracking-tight text-foreground">
               ArabianRizz
             </span>
         </Link>
@@ -41,11 +41,11 @@ const Sidebar = () => {
                     <Link
                       href={link.route}
                       className={cn(
-                        "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all hover:bg-white/5",
-                        isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-white border border-transparent"
+                        "group flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all hover:bg-secondary",
+                        isActive ? "bg-secondary text-primary" : "text-muted-foreground hover:text-foreground"
                       )}
                     >
-                      <IconComponent className={cn("h-5 w-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-white")} />
+                      <IconComponent className={cn("h-5 w-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                       {t(link.key)}
                     </Link>
                   </li>
@@ -62,27 +62,27 @@ const Sidebar = () => {
         </nav>
 
         <div className="mt-auto space-y-4">
-            <div className="rounded-xl bg-gradient-to-br from-purple-900/50 to-indigo-900/50 p-4 border border-white/5 shadow-lg relative overflow-hidden group">
-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            <div className="rounded-xl bg-card border border-border p-4 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <div className="flex items-center gap-3 mb-3 relative z-10">
-                    <div className="p-2 bg-primary/20 rounded-lg">
-                        <Icons.sparkles className="h-5 w-5 text-primary" />
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <Icons.sparkles className="h-4 w-4" />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-white">Pro Plan</p>
+                        <p className="text-sm font-bold text-foreground">Pro Plan</p>
                         <p className="text-xs text-muted-foreground">Get unlimited Rizz</p>
                     </div>
                 </div>
-                <Button size="sm" className="w-full bg-white text-purple-900 hover:bg-gray-100 font-bold shadow-md transition-transform hover:scale-105 relative z-10" asChild>
+                <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold shadow-sm" asChild>
                     <Link href="/dashboard/credits">Upgrade Now</Link>
                 </Button>
             </div>
 
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-white/5">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors cursor-pointer border border-transparent hover:border-border">
                 <UserButton afterSignOutUrl="/" showName appearance={{
                     elements: {
                         userButtonBox: "flex flex-row-reverse",
-                        userButtonOuterIdentifier: "text-white font-medium text-sm ml-0 mr-2",
+                        userButtonOuterIdentifier: "text-foreground font-medium text-sm ml-0 mr-2",
                     }
                 }} />
             </div>

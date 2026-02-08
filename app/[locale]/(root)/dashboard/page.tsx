@@ -29,14 +29,14 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
     <>
       {showOnboarding && <OnboardingWizard userId={user._id} open={true} />}
 
-      <section className="mb-12 space-y-8">
+      <section className="mb-12 space-y-10">
         {/* Welcome Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-border pb-8">
             <div>
-                <h1 className="h2-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
                     {t('welcomeBack')}, {user.username || "King"}
                 </h1>
-                <p className="text-muted-foreground mt-2">Ready to level up your game today?</p>
+                <p className="text-muted-foreground text-lg">Ready to level up your game today?</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -44,9 +44,9 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                     <CreditBalance userId={userId} />
                  </div>
                  <Link href="/dashboard/credits">
-                    <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                    <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
                         <Icons.billing className="mr-2 h-4 w-4" />
-                        Top Up
+                        Top Up Credits
                     </Button>
                  </Link>
             </div>
@@ -56,16 +56,13 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
              <Dialog>
                 <DialogTrigger asChild>
-                    <div className="group p-6 rounded-2xl glass-card cursor-pointer hover:bg-white/10 transition-all border-l-4 border-l-primary relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Icons.add className="h-24 w-24" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="h-12 w-12 rounded-full bg-primary/20 flex-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <div className="group p-6 rounded-2xl bg-card border border-border cursor-pointer hover:border-primary/50 transition-all relative overflow-hidden shadow-sm hover:shadow-md">
+                        <div className="relative z-10 flex flex-col items-start h-full">
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                 <Icons.add className="h-6 w-6" />
                             </div>
-                            <h3 className="h3-bold mb-2">New Persona</h3>
-                            <p className="text-sm text-muted-foreground">Create a new girl profile to start chatting.</p>
+                            <h3 className="text-xl font-bold mb-2">New Persona</h3>
+                            <p className="text-sm text-muted-foreground mt-auto">Create a new girl profile to start chatting.</p>
                         </div>
                     </div>
                 </DialogTrigger>
@@ -78,43 +75,37 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                 </DialogContent>
             </Dialog>
 
-            <Link href="/saved" className="block">
-                <div className="group p-6 rounded-2xl glass-card cursor-pointer hover:bg-white/10 transition-all border-l-4 border-l-secondary relative overflow-hidden h-full">
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Icons.bookmark className="h-24 w-24" />
-                        </div>
-                    <div className="relative z-10">
-                         <div className="h-12 w-12 rounded-full bg-secondary/20 flex-center mb-4 text-secondary-foreground group-hover:bg-secondary group-hover:text-secondary-foreground transition-colors">
+            <Link href="/saved" className="block h-full">
+                <div className="group p-6 rounded-2xl bg-card border border-border cursor-pointer hover:border-blue-500/50 transition-all relative overflow-hidden shadow-sm hover:shadow-md h-full">
+                    <div className="relative z-10 flex flex-col items-start h-full">
+                         <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex-center mb-4 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                             <Icons.bookmark className="h-6 w-6" />
                         </div>
-                        <h3 className="h3-bold mb-2">Saved Lines</h3>
-                        <p className="text-sm text-muted-foreground">Access your best pickup lines and replies.</p>
+                        <h3 className="text-xl font-bold mb-2">Saved Lines</h3>
+                        <p className="text-sm text-muted-foreground mt-auto">Access your best pickup lines and replies.</p>
                     </div>
                 </div>
             </Link>
 
-             <Link href="/profile" className="block">
-                <div className="group p-6 rounded-2xl glass-card cursor-pointer hover:bg-white/10 transition-all border-l-4 border-l-gold-500 relative overflow-hidden h-full">
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Icons.settings className="h-24 w-24" />
-                        </div>
-                    <div className="relative z-10">
-                         <div className="h-12 w-12 rounded-full bg-gold-500/20 flex-center mb-4 text-gold-500 group-hover:bg-gold-500 group-hover:text-white transition-colors">
+             <Link href="/profile" className="block h-full">
+                <div className="group p-6 rounded-2xl bg-card border border-border cursor-pointer hover:border-orange-500/50 transition-all relative overflow-hidden shadow-sm hover:shadow-md h-full">
+                    <div className="relative z-10 flex flex-col items-start h-full">
+                         <div className="h-12 w-12 rounded-xl bg-orange-500/10 flex-center mb-4 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                             <Icons.settings className="h-6 w-6" />
                         </div>
-                        <h3 className="h3-bold mb-2">My Profile</h3>
-                        <p className="text-sm text-muted-foreground">Update your bio to get better advice.</p>
+                        <h3 className="text-xl font-bold mb-2">My Profile</h3>
+                        <p className="text-sm text-muted-foreground mt-auto">Update your bio to get better advice.</p>
                     </div>
                 </div>
             </Link>
         </div>
 
         {/* Recent Girls / My Girls */}
-        <div>
-            <div className="flex-between mb-6">
-                <h2 className="h2-bold">Recent Personas</h2>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold tracking-tight">Recent Personas</h2>
                 {girls.length > 3 && (
-                     <Link href="/dashboard/girls" className="text-primary hover:underline flex items-center gap-1">
+                     <Link href="/dashboard/girls" className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
                         View All <Icons.arrowRight className="h-4 w-4" />
                     </Link>
                 )}
@@ -127,15 +118,15 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                     ))}
                 </div>
             ) : (
-                <div className="p-12 text-center border border-dashed border-white/20 rounded-2xl bg-white/5">
-                    <div className="w-16 h-16 bg-white/10 rounded-full flex-center mx-auto mb-4 text-muted-foreground">
+                <div className="p-12 text-center border border-dashed border-border rounded-2xl bg-secondary/50">
+                    <div className="w-16 h-16 bg-secondary rounded-full flex-center mx-auto mb-4 text-muted-foreground">
                         <Icons.user className="h-8 w-8" />
                     </div>
-                    <h3 className="h3-bold mb-2">No personas yet</h3>
-                    <p className="text-muted-foreground mb-6">Create your first AI persona to start getting tailored advice.</p>
+                    <h3 className="text-xl font-bold mb-2">No personas yet</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">Create your first AI persona to start getting tailored advice.</p>
                     <Dialog>
                         <DialogTrigger asChild>
-                             <Button className="bg-primary hover:bg-primary/90">Create Persona</Button>
+                             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white">Create Persona</Button>
                         </DialogTrigger>
                         <DialogContent>
                              <DialogHeader>

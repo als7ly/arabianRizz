@@ -19,7 +19,7 @@ const config = {
     },
     extend: {
       fontFamily: {
-        "IBMPlex": ["var(--font-ibm-plex)"],
+        "sans": ["var(--font-plus-jakarta)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -59,13 +59,13 @@ const config = {
           100: "#F4F1FF",
           200: "#E2D9FD",
           300: "#D0C1FB",
-          400: "#BFA9F9",
-          500: "#8B5CF6", // Updated to Violet-500
-          600: "#7C3AED",
+          400: "#A78BFA",
+          500: "#8B5CF6",
+          600: "#7C3AED", // Electric Violet
           700: "#6D28D9",
           800: "#5B21B6",
           900: "#4C1D95",
-          950: "#2E1065", // Deep Night
+          950: "#2E1065",
         },
         gold: {
             100: "#FEF3C7",
@@ -77,12 +77,13 @@ const config = {
             700: "#B45309",
         },
         dark: {
-          400: "#7986AC",
-          500: "#606C80",
-          600: "#2B3674",
-          700: "#384262",
-          800: "#1E1435", // Surface
-          900: "#0F0720", // Background
+          400: "#A1A1AA", // Zinc 400
+          500: "#71717A", // Zinc 500
+          600: "#52525B", // Zinc 600
+          700: "#3F3F46", // Zinc 700
+          800: "#27272A", // Zinc 800 (Secondary)
+          900: "#18181B", // Zinc 900 (Surface)
+          950: "#09090B", // Zinc 950 (Background)
         }
       },
       borderRadius: {

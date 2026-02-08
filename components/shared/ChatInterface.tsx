@@ -391,7 +391,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-background border border-border rounded-2xl overflow-hidden relative shadow-sm">
 
       <div className="absolute top-2 right-2 z-10 flex gap-2">
           {messages.length > 0 && (
@@ -399,10 +399,11 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
           )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef}>
         {messages.length === 0 && (
-            <div className="flex-center h-full text-gray-400">
-                {t('startPrompt')}
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+                <Sparkles className="h-10 w-10 text-muted-foreground/50" />
+                <p>{t('startPrompt')}</p>
             </div>
         )}
         {messages.map((msg, idx) => (
@@ -420,9 +421,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         ))}
         {isLoading && (
             <div className="flex justify-start w-full animate-pulse" role="status" aria-live="polite">
-                <div className="bg-white border border-purple-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
-                    <Sparkles className="animate-spin text-purple-500" size={16} />
-                    <span className="text-xs text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 font-semibold">
+                <div className="bg-secondary p-4 rounded-2xl rounded-bl-none flex items-center gap-2">
+                    <Sparkles className="animate-spin text-primary" size={16} />
+                    <span className="text-sm text-muted-foreground font-medium">
                         {t('wingmanThinking')}...
                     </span>
                 </div>
@@ -431,149 +432,12 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
       </div>
 
       {creditBalance !== undefined && creditBalance < 5 && (
-        <Link href="/credits" className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-200 text-red-600 px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-red-200 transition-colors">
+        <Link href="/credits" className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-destructive/20 transition-colors">
             <AlertCircle size={12} />
             {creditBalance === 0 ? "No Credits Left" : `Low Credits: ${creditBalance}`}
         </Link>
       )}
 
-      <div className="bg-white border-t p-4 flex items-end gap-2">
-        <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
-        
-        <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading} title={t('generateArtTitle')} aria-label={t('generateArtAria')}>
-                    <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Generate Art</DialogTitle>
-                    <DialogDescription>
-                        Create an image of her. <span className="text-purple-600 font-semibold">Cost: 3 Credits</span>
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <div className="space-y-2">
-                        <Label id="art-style-label">Style</Label>
-                        <RadioGroup aria-labelledby="art-style-label" defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
-                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
-                                <RadioGroupItem value="standard" id="mode-standard" />
-                                <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
-                            </div>
-                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
-                                <RadioGroupItem value="selfie" id="mode-selfie" />
-                                <Label htmlFor="mode-selfie" className="cursor-pointer flex items-center gap-1">
-                                    <Camera size={14} /> Selfie Mode
-                                </Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="art-prompt">Prompt</Label>
-                        <Input
-                            id="art-prompt"
-                            value={artPrompt}
-                            onChange={(e) => setArtPrompt(e.target.value)}
-                            placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
-                            onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
-                        />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600 w-full">
-                        Generate Image
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-
-        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label={t('hookupAria')}>
-            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={isLoading} title={t('QuickActions.title')} aria-label={t('QuickActions.title')}>
-                <Sparkles size={24} className="text-dark-400 hover:text-purple-500"/>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>{t('QuickActions.title')}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleQuickAction('date')} className="cursor-pointer">
-                <Coffee className="mr-2 h-4 w-4 text-orange-500" />
-                <span>{t('QuickActions.date')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleQuickAction('roast')} className="cursor-pointer">
-                <Flame className="mr-2 h-4 w-4 text-red-500" />
-                <span>{t('QuickActions.roast')}</span>
-            </DropdownMenuItem>
-             <DropdownMenuItem onClick={() => handleQuickAction('comfort')} className="cursor-pointer">
-                <Heart className="mr-2 h-4 w-4 text-pink-500" />
-                <span>{t('QuickActions.comfort')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleQuickAction('topic')} className="cursor-pointer">
-                <MessageCircle className="mr-2 h-4 w-4 text-blue-500" />
-                <span>{t('QuickActions.topic')}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Select onValueChange={setTone} defaultValue="Flirty">
-            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label={t('toneAria')}>
-                <SelectValue placeholder="Tone" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="Flirty">Flirty</SelectItem>
-                <SelectItem value="Funny">Funny</SelectItem>
-                <SelectItem value="Serious">Serious</SelectItem>
-                <SelectItem value="Mysterious">Mysterious</SelectItem>
-            </SelectContent>
-        </Select>
-
-        <div className="flex-1 flex gap-2 w-full md:w-auto">
-             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label={t('senderAria')}>
-                <Button
-                    variant={sender === 'user' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
-                    onClick={() => setSender('user')}
-                    aria-pressed={sender === 'user'}
-                    aria-label={t('senderMeAria')}
-                >
-                    Me
-                </Button>
-                <Button
-                    variant={sender === 'girl' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
-                    onClick={() => setSender('girl')}
-                    aria-pressed={sender === 'girl'}
-                    aria-label={t('senderHerAria')}
-                >
-                    Her
-                </Button>
-            </div>
-             <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                placeholder={sender === 'girl' ? t('inputPlaceholderGirl') : t('inputPlaceholder')}
-                className="flex-1"
-                disabled={isLoading}
-                aria-label={t('inputAria')}
-            />
-             <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading}
-                className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
-                aria-label={t('sendAria')}
-            >
-                {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
-            </Button>
-        </div>
-      </div>
       <ChatInputArea
           inputValue={inputValue}
           setInputValue={setInputValue}
