@@ -151,6 +151,11 @@
     "thumbsUpAria": "Rate as helpful",
     "thumbsDownTitle": "Not Helpful",
     "thumbsDownAria": "Rate as not helpful",
+    "toneAria": "Select tone",
+    "senderAria": "Message sender",
+    "senderMeAria": "Set sender to Me",
+    "senderHerAria": "Set sender to Her",
+    "hookupAria": "Generate hookup line",
     "QuickActions": {
         "title": "Quick Actions",
         "date": "Date Idea",

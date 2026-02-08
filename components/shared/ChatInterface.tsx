@@ -437,6 +437,143 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         </Link>
       )}
 
+      <div className="bg-white border-t p-4 flex items-end gap-2">
+        <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
+        
+        <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" disabled={isLoading} title={t('generateArtTitle')} aria-label={t('generateArtAria')}>
+                    <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Generate Art</DialogTitle>
+                    <DialogDescription>
+                        Create an image of her. <span className="text-purple-600 font-semibold">Cost: 3 Credits</span>
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label id="art-style-label">Style</Label>
+                        <RadioGroup aria-labelledby="art-style-label" defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
+                                <RadioGroupItem value="standard" id="mode-standard" />
+                                <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
+                                <RadioGroupItem value="selfie" id="mode-selfie" />
+                                <Label htmlFor="mode-selfie" className="cursor-pointer flex items-center gap-1">
+                                    <Camera size={14} /> Selfie Mode
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="art-prompt">Prompt</Label>
+                        <Input
+                            id="art-prompt"
+                            value={artPrompt}
+                            onChange={(e) => setArtPrompt(e.target.value)}
+                            placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
+                            onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600 w-full">
+                        Generate Image
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label={t('hookupAria')}>
+            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" disabled={isLoading} title={t('QuickActions.title')} aria-label={t('QuickActions.title')}>
+                <Sparkles size={24} className="text-dark-400 hover:text-purple-500"/>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>{t('QuickActions.title')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleQuickAction('date')} className="cursor-pointer">
+                <Coffee className="mr-2 h-4 w-4 text-orange-500" />
+                <span>{t('QuickActions.date')}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleQuickAction('roast')} className="cursor-pointer">
+                <Flame className="mr-2 h-4 w-4 text-red-500" />
+                <span>{t('QuickActions.roast')}</span>
+            </DropdownMenuItem>
+             <DropdownMenuItem onClick={() => handleQuickAction('comfort')} className="cursor-pointer">
+                <Heart className="mr-2 h-4 w-4 text-pink-500" />
+                <span>{t('QuickActions.comfort')}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleQuickAction('topic')} className="cursor-pointer">
+                <MessageCircle className="mr-2 h-4 w-4 text-blue-500" />
+                <span>{t('QuickActions.topic')}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Select onValueChange={setTone} defaultValue="Flirty">
+            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label={t('toneAria')}>
+                <SelectValue placeholder="Tone" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="Flirty">Flirty</SelectItem>
+                <SelectItem value="Funny">Funny</SelectItem>
+                <SelectItem value="Serious">Serious</SelectItem>
+                <SelectItem value="Mysterious">Mysterious</SelectItem>
+            </SelectContent>
+        </Select>
+
+        <div className="flex-1 flex gap-2 w-full md:w-auto">
+             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label={t('senderAria')}>
+                <Button
+                    variant={sender === 'user' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
+                    onClick={() => setSender('user')}
+                    aria-pressed={sender === 'user'}
+                    aria-label={t('senderMeAria')}
+                >
+                    Me
+                </Button>
+                <Button
+                    variant={sender === 'girl' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
+                    onClick={() => setSender('girl')}
+                    aria-pressed={sender === 'girl'}
+                    aria-label={t('senderHerAria')}
+                >
+                    Her
+                </Button>
+            </div>
+             <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+                placeholder={sender === 'girl' ? t('inputPlaceholderGirl') : t('inputPlaceholder')}
+                className="flex-1"
+                disabled={isLoading}
+                aria-label={t('inputAria')}
+            />
+             <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isLoading}
+                className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
+                aria-label={t('sendAria')}
+            >
+                {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
+            </Button>
+        </div>
+      </div>
       <ChatInputArea
           inputValue={inputValue}
           setInputValue={setInputValue}
