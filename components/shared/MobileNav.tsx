@@ -1,85 +1,83 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { usePathname, Link } from "@/navigation";
-import { navLinks } from "@/constants";
-import { Button } from "@/components/ui/button";
-import { Menu, Home, User, Bookmark } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useTranslations } from "next-intl";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { navLinks } from "@/constants"
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
+import { Link, usePathname } from "@/navigation"
+import { Button } from "../ui/button"
+import { Icons } from "@/components/ui/icons"
+import { useTranslations } from "next-intl"
+import { cn } from "@/lib/utils"
 
 const MobileNav = () => {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
   const t = useTranslations("Sidebar");
 
-  const iconMap: { [key: string]: any } = {
-    home: Home,
-    user: User,
-    bookmark: Bookmark
-  };
+  const getIcon = (iconName: string) => {
+    // @ts-ignore
+    return Icons[iconName] || Icons.help;
+  }
 
   return (
-    <nav className="md:hidden">
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Menu">
-            <Menu className="h-6 w-6" />
-          </Button>
+    <header className="fixed top-0 z-30 flex w-full items-center justify-between border-b border-white/5 bg-background/80 px-6 py-4 backdrop-blur-md lg:hidden">
+      <Link href="/dashboard" className="flex items-center gap-2">
+        <Icons.zap className="h-6 w-6 text-primary" />
+        <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+            ArabianRizz
+        </span>
+      </Link>
+
+      <Sheet>
+        <SheetTrigger>
+          <Icons.menu className="h-6 w-6 text-white" />
         </SheetTrigger>
-        <SheetContent side="right" className="bg-white p-6 flex flex-col w-[80%] max-w-xs">
-            <div className="mb-8">
-                <Image src="/assets/images/logo-text.svg" alt="ArabianRizz" width={128} height={38} />
-            </div>
+        <SheetContent side="left" className="border-r border-white/10 bg-background/95 backdrop-blur-xl sm:w-72">
+            <Link href="/dashboard" className="flex items-center gap-2 mb-8 px-4">
+                <Icons.zap className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold tracking-tight text-white">
+                    ArabianRizz
+                </span>
+            </Link>
 
-            <div className="flex-1 flex flex-col gap-6">
-                <ul className="flex flex-col gap-4">
-                {navLinks.map((link) => {
-                    const isActive = link.route === pathname;
-                    const IconComponent = iconMap[link.icon] || Home;
-
-                    return (
-                    <li
-                        key={link.route}
-                        className={cn(
-                            "p-16-semibold flex whitespace-nowrap text-dark-700",
-                            isActive && "text-purple-600"
-                        )}
-                    >
-                        <Link
-                            className="flex w-full items-center gap-4 p-3"
-                            href={link.route}
-                            onClick={() => setIsOpen(false)}
-                        >
-                            <IconComponent className={cn("w-6 h-6", isActive ? "text-purple-600" : "text-gray-500")} />
-                            {t(link.key)}
-                        </Link>
-                    </li>
-                    );
-                })}
-                </ul>
-            </div>
-
-            <div className="border-t pt-6">
+            <nav className="flex flex-col gap-4">
                 <SignedIn>
-                    <div className="flex items-center gap-4 p-3">
-                        <UserButton afterSignOutUrl="/" />
-                        <p className="p-14-medium">{t('profile')}</p>
-                    </div>
+                    <ul className="flex flex-col gap-2">
+                    {navLinks.map((link) => {
+                        const isActive = link.route === pathname || (link.route !== '/dashboard' && pathname.startsWith(link.route));
+                        const IconComponent = getIcon(link.icon);
+
+                        return (
+                        <li key={link.route}>
+                            <Link
+                                href={link.route}
+                                className={cn(
+                                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all hover:bg-white/5",
+                                    isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-white border border-transparent"
+                                )}
+                            >
+                                <IconComponent className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />
+                                {t(link.key)}
+                            </Link>
+                        </li>
+                        )
+                    })}
+                    </ul>
                 </SignedIn>
+
                 <SignedOut>
-                    <Button asChild className="button bg-purple-gradient bg-cover w-full">
-                        <Link href="/sign-in">{t('login')}</Link>
+                    <Button asChild className="w-full bg-primary text-white">
+                        <Link href="/sign-in">Login</Link>
                     </Button>
                 </SignedOut>
-            </div>
+            </nav>
         </SheetContent>
       </Sheet>
-    </nav>
-  );
-};
+    </header>
+  )
+}
 
-export default MobileNav;
+export default MobileNav

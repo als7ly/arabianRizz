@@ -4,48 +4,67 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Premium Light Mode */
+    --background: 260 30% 98%; /* Very light purple tint #FAF9FE */
+    --foreground: 260 20% 10%; /* Dark purple-black #14111F */
+
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 260 20% 10%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%; /* Purple */
+    --popover-foreground: 260 20% 10%;
+
+    --primary: 262 83% 58%; /* #9F7AEA - Soft Purple */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+
+    --secondary: 260 20% 96%; /* #F1EFF5 */
+    --secondary-foreground: 260 30% 20%;
+
+    --muted: 260 20% 96%;
+    --muted-foreground: 260 10% 45%;
+
+    --accent: 260 20% 96%;
+    --accent-foreground: 260 30% 20%;
+
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
+
+    --border: 260 20% 92%;
+    --input: 260 20% 92%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.75rem; /* More rounded 12px */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Premium Night Mode (Default Vibe) */
+    --background: 265 46% 8%; /* Deep Purple Night #0F0720 */
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+
+    --card: 265 40% 12%; /* Slightly lighter #1E1435 */
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+
+    --popover: 265 40% 12%;
     --popover-foreground: 210 40% 98%;
-    --primary: 263.4 70% 50.4%;
+
+    --primary: 263 70% 60%; /* Vibrant Purple #8B5CF6 */
     --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
+
+    --secondary: 265 30% 20%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+
+    --muted: 265 30% 20%;
+    --muted-foreground: 265 20% 65%;
+
+    --accent: 265 30% 20%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+
+    --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 263.4 70% 50.4%;
+
+    --border: 265 30% 20%;
+    --input: 265 30% 20%;
+    --ring: 263 70% 60%;
   }
 }
 
@@ -54,7 +73,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground selection:bg-primary/30;
   }
 }
 
@@ -63,30 +82,64 @@
   @apply flex justify-center items-center;
 }
 
+.flex-between {
+  @apply flex justify-between items-center;
+}
+
+/* Typography Scale */
+.h1-bold {
+  @apply text-[40px] md:text-[56px] font-bold leading-[110%] tracking-tight;
+}
+
+.h2-bold {
+  @apply text-[32px] md:text-[40px] font-bold leading-[120%] tracking-tight;
+}
+
 .h3-bold {
-    @apply text-[30px] font-bold leading-[140%];
+  @apply text-[24px] md:text-[32px] font-bold leading-[120%];
 }
 
 .h4-medium {
-    @apply text-[24px] font-medium leading-[140%];
+    @apply text-[20px] md:text-[24px] font-medium leading-[140%];
 }
 
-.p-16-regular {
-    @apply text-[16px] font-normal leading-[140%];
+.p-24-bold {
+    @apply text-[24px] font-bold leading-[140%];
+}
+
+.p-20-semibold {
+    @apply text-[20px] font-semibold leading-[140%];
+}
+
+.p-18-medium {
+    @apply text-[18px] font-medium leading-[140%];
 }
 
 .p-16-semibold {
     @apply text-[16px] font-semibold leading-[140%];
 }
 
+.p-16-regular {
+    @apply text-[16px] font-normal leading-[150%];
+}
+
+.p-14-medium {
+    @apply text-[14px] font-medium leading-[140%];
+}
+
 .p-14-regular {
     @apply text-[14px] font-normal leading-[140%];
 }
 
+.p-12-regular {
+    @apply text-[12px] font-normal leading-[140%];
+}
+
+/* Components */
 .success-toast {
-    background-color: #F4F1FF !important;
-    border-color: #E2D9FD !important;
-    color: #6B46C1 !important;
+    background-color: hsl(var(--background)) !important;
+    border-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary)) !important;
 }
 
 /* Sexy Scrollbar */
@@ -100,19 +153,41 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #E2D9FD;
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #BFA9F9;
+  background: hsl(var(--primary));
+}
+
+/* Glassmorphism */
+.glass-card {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl;
+}
+
+.glass-morphism {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg;
+}
+
+/* Gradients */
+.text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-purple-600 to-indigo-600;
+}
+
+.text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500;
+}
+
+.bg-purple-gradient {
+    @apply bg-gradient-to-r from-purple-600 to-indigo-600;
 }
 
 /* Animations */
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
@@ -121,15 +196,18 @@
 }
 
 .animate-fade-in-up {
-    animation: fadeInUp 0.4s ease-out forwards;
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Glassmorphism */
-.glass-card {
-    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 30px 5px rgba(139, 92, 246, 0.7);
+    }
 }
 
-/* Gradient Text */
-.text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600;
+.animate-pulse-glow {
+    animation: pulse-glow 3s infinite;
 }

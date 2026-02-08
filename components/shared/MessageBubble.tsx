@@ -55,113 +55,90 @@ const MessageBubble = memo(({
   return (
     <div
       className={cn(
-        "flex w-full group animate-fade-in-up",
+        "flex w-full group animate-fade-in-up mb-4",
         isUser ? "justify-end" : "justify-start"
       )}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap relative",
+          "max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm md:text-base leading-relaxed relative shadow-md transition-all",
           isUser
-            ? "bg-purple-600 text-white rounded-br-none"
+            ? "bg-purple-gradient text-white rounded-br-none shadow-purple-500/20"
             : isWingman
-            ? "bg-white border border-purple-100 text-dark-600 rounded-bl-none shadow-sm"
-            : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
+            ? "glass-card text-foreground rounded-bl-none border-primary/20"
+            : "bg-muted text-foreground rounded-bl-none" // Girl/Screenshot
         )}
       >
         {isWingman && (
-          <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1">
-            <Sparkles size={12}/> {t('wingman')}
+          <div className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5 uppercase tracking-wide">
+            <Sparkles size={14} className="animate-pulse" /> {t('wingman')}
           </div>
         )}
         {isGirl && (
-          <div className="text-xs font-bold text-gray-500 mb-1">{t('sheSaid')}</div>
+          <div className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">{t('sheSaid')}</div>
         )}
 
         {msg.content.startsWith("[IMAGE]:") ? (
-            <div className="relative">
+            <div className="relative group/image overflow-hidden rounded-lg">
               <Image
                   src={msg.content.replace("[IMAGE]: ", "")}
                   alt="Generated"
                   width={500}
                   height={500}
-                  className="rounded-lg max-w-full h-auto"
+                  className="rounded-lg max-w-full h-auto transition-transform duration-500 group-hover/image:scale-105"
               />
-              <Button
-                  variant="secondary"
-                  size="icon"
-                  className="absolute bottom-2 right-2 bg-white/80 hover:bg-white text-gray-700"
-                  onClick={() => onShare(msg.content.replace("[IMAGE]: ", ""), true)}
-                  title={t('shareImageTitle')}
-                  aria-label={t('shareImageAria')}
-              >
-                  <Share2 size={16} />
-              </Button>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex-center">
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/90 hover:bg-white text-gray-900 font-bold"
+                      onClick={() => onShare(msg.content.replace("[IMAGE]: ", ""), true)}
+                  >
+                      <Share2 size={16} className="mr-2" />
+                      Share
+                  </Button>
+              </div>
             </div>
         ) : (
-            <div className="flex flex-col gap-1">
-                <div className="flex items-start gap-2">
-                    <span className="flex-1">{msg.content}</span>
+            <div className="flex flex-col gap-2">
+                <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                <div className="flex items-center justify-between mt-1 min-h-[24px]">
+                    <span className={cn("text-[10px] font-medium", isUser ? "text-white/70" : "text-muted-foreground")}>
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}
+                    </span>
+
                     {isWingman && (
-                        <div className="flex flex-col gap-1">
-                      <div className="flex gap-1" role="toolbar" aria-label="Message actions">
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-purple-400 hover:text-purple-600"
-                              onClick={() => onPlayAudio(msg, index)}
-                              disabled={playingAudioId !== null}
-                              title={t('playAudioTitle')}
-                              aria-label={t('playAudioAria')}
-                          >
-                              {isPlaying ? <Loader2 size={16} className="animate-spin"/> : <Volume2 size={16} />}
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-blue-400 hover:text-blue-600"
-                              onClick={() => onRegenerate(index)}
-                              disabled={isLoading}
-                              title={t('regenerateTitle')}
-                              aria-label={t('regenerateAria')}
-                          >
-                              <RotateCw size={16} className={isLoading ? "animate-spin" : ""} />
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-gray-600"
-                              onClick={handleCopyClick}
-                              title={isCopied ? "Copied" : t('copyTitle')}
-                              aria-label={t('copyAria')}
-                          >
-                              {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-gray-400 hover:text-green-600"
-                              onClick={() => onShare(msg.content)}
-                              title={t('shareTitle')}
-                              aria-label={t('shareAria')}
-                          >
-                              <Share2 size={16} />
-                          </Button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200" role="toolbar" aria-label="Message actions">
+                          <ActionButton icon={isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />} onClick={() => onPlayAudio(msg, index)} label={t('playAudioTitle')} disabled={playingAudioId !== null} />
+                          <ActionButton icon={<RotateCw size={14} className={isLoading ? "animate-spin" : ""} />} onClick={() => onRegenerate(index)} label={t('regenerateTitle')} disabled={isLoading} />
+                          <ActionButton icon={isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} onClick={handleCopyClick} label={t('copyTitle')} />
+                          <ActionButton icon={<Share2 size={14} />} onClick={() => onShare(msg.content)} label={t('shareTitle')} />
+                          {msg._id && <Feedback messageId={msg._id} />}
                       </div>
-                      {msg._id && <Feedback messageId={msg._id} />}
-                    </div>
                     )}
                 </div>
-                <span className="text-[10px] text-gray-400 self-end">
-                  {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
             </div>
         )}
       </div>
     </div>
   );
 });
+
+const ActionButton = ({ icon, onClick, label, disabled }: { icon: React.ReactNode, onClick: () => void, label: string, disabled?: boolean }) => (
+    <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+        onClick={onClick}
+        disabled={disabled}
+        title={label}
+        aria-label={label}
+    >
+        {icon}
+    </Button>
+)
 
 MessageBubble.displayName = "MessageBubble";
 
