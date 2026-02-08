@@ -13,7 +13,7 @@ export default authMiddleware({
   },
  
   // Ensure that the intl routes are public
-  publicRoutes: ['/:locale/sign-in', '/:locale/sign-up', '/api/webhooks(.*)', '/api/uploadthing(.*)']
+  publicRoutes: ['/', '/:locale', '/:locale/sign-in', '/:locale/sign-up', '/api/webhooks(.*)', '/api/uploadthing(.*)']
 });
  
 export const config = {
