@@ -2,7 +2,8 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { retrieveContext } from "../services/rag.service";
+import { generateEmbedding } from "../services/rag.service";
+import { getContext } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -169,9 +170,12 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
+    // Optimization: Generate embedding once and reuse for all RAG retrievals
+    const embedding = await generateEmbedding(userMessage);
+
     const [contextMessages, userContext] = await Promise.all([
-      getContext(girlId, userMessage),
-      getUserContext(girl.author.toString(), userMessage)
+      getContext(girlId, userMessage, embedding),
+      getUserContext(girl.author.toString(), userMessage, embedding)
     ]);
     const contextString = JSON.stringify(contextMessages);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
@@ -281,11 +285,26 @@ ${contextString}
       explanation: "Something went wrong."
     };
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Wingman Error:", error);
+
+    let explanation = "Something went wrong with the AI.";
+    let reply = "I'm having trouble thinking right now. Please try again.";
+
+    if (error?.status === 429 || error?.message?.includes("rate limit") || error?.code === 'rate_limit_exceeded') {
+        explanation = "High traffic. Please wait a moment.";
+        reply = "Too many requests! Give me a second to catch my breath.";
+    } else if (error?.status === 400 || error?.message?.includes("context length") || error?.code === 'context_length_exceeded') {
+        explanation = "Conversation is too long.";
+        reply = "Our conversation is getting too long for me to remember everything. Please clear the chat.";
+    } else if (error?.status === 503) {
+        explanation = "AI Service unavailable.";
+        reply = "My brain is offline momentarily. Check back soon.";
+    }
+
     return {
-        reply: "Error generating reply.",
-        explanation: "Something went wrong with the AI."
+        reply,
+        explanation
     };
   }
 }

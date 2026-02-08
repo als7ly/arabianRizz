@@ -2,42 +2,19 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Heart, Coffee, Flame, MessageCircle, Camera, AlertCircle } from "lucide-react";
-import ChatUploader from "./ChatUploader";
+import { Sparkles, AlertCircle } from "lucide-react";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
 import { generateArt } from "@/lib/actions/image.actions";
 import { toggleSaveMessage, getSavedMessages } from "@/lib/actions/saved-message.actions";
 import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MessageBubble, { Message } from "./MessageBubble";
 import { ChatHeaderActions } from "./ChatHeaderActions";
+import { ChatInputArea } from "./ChatInputArea";
 import { Link } from "@/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 
 export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girlId: string, initialMessages: Message[], creditBalance?: number }) => {
   const pathname = usePathname();
@@ -52,7 +29,6 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
   const { toast } = useToast();
   const t = useTranslations('Chat');
 
-  // Bolt Optimization: Use ref to track messages for stable callbacks
   const messagesRef = useRef(messages);
   useEffect(() => {
     messagesRef.current = messages;
@@ -97,7 +73,6 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     if (!msg._id) return;
     const isSaved = savedMessageIds.has(msg._id);
 
-    // Optimistic Update
     const newSet = new Set(savedMessageIds);
     if (isSaved) newSet.delete(msg._id);
     else newSet.add(msg._id);
@@ -111,7 +86,6 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
              toast({ title: "Removed", description: "Message removed from bookmarks." });
         }
     } catch (e) {
-        // Revert
         setSavedMessageIds(prev => {
              const reverted = new Set(prev);
              if (isSaved) reverted.add(msg._id!);
@@ -172,16 +146,13 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
       toast({ title: t('errorTitle'), description: error.message || t('errorReply'), variant: "destructive" });
     } finally {
       setIsLoading(false);
-      setSender('user'); // Reset to user default
+      setSender('user');
     }
   };
 
-  // Bolt Optimization: Stabilized callback using messagesRef and functional state updates
-  // This allows React.memo on MessageBubble to work correctly by keeping the onRegenerate prop stable
   const handleRegenerate = useCallback(async (index: number) => {
     if (index <= 0) return;
 
-    // Use ref to get current messages without adding to dependency array
     const currentMessages = messagesRef.current;
     const userMsg = currentMessages[index - 1];
     if (userMsg.role !== "user" && userMsg.role !== "girl") return;
@@ -214,7 +185,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     } finally {
         setIsLoading(false);
     }
-  }, [girlId, tone, t, toast]); // Dependency on 'messages' removed!
+  }, [girlId, tone, t, toast]);
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
@@ -239,7 +210,6 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
               console.error(err);
           }
       } else {
-          // Fallback: Copy to clipboard
           handleCopy(text);
           toast({ title: "Copied Link", description: "Sharing not supported, link copied." });
       }
@@ -250,11 +220,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         setPlayingAudioId(idx.toString());
         let audioUrl = message.audioUrl;
 
-        // If no persistent URL, generate and upload (which returns a URL)
         if (!audioUrl) {
             audioUrl = await generateSpeech(message.content, voiceId, message._id);
 
-            // Update local state with new URL to avoid re-generating next time
             if (audioUrl && message._id) {
                 setMessages(prev => {
                     const updated = [...prev];
@@ -279,7 +247,6 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     }
   }, [voiceId, t, toast]);
 
-  // Bolt Optimization: Stabilized callback
   const handleImageUpload = useCallback(async (url: string) => {
     setIsLoading(true);
     toast({ title: t('readingScreenshot'), description: t('readingScreenshotDesc') });
@@ -322,25 +289,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     }
   }, [girlId, tone, t, toast]);
 
-  const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
-  const [artPrompt, setArtPrompt] = useState("");
-  const [artMode, setArtMode] = useState<'standard' | 'selfie'>('standard');
-
-  const handleGenerateArt = async () => {
-    if (!artPrompt.trim()) return;
-
-    setIsArtDialogOpen(false);
+  const handleGenerateArt = async (prompt: string, mode: 'standard' | 'selfie') => {
     setIsLoading(true);
     toast({ title: "Generating Art", description: "This may take a few seconds..." });
 
     try {
-        const { imageUrl, error } = await generateArt(artPrompt, girlId, artMode);
+        const { imageUrl, error } = await generateArt(prompt, girlId, mode);
 
         if (imageUrl) {
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
             setMessages((prev) => [...prev, imgMsg]);
             await addMessage({ girlId, role: "wingman", content: `[IMAGE]: ${imageUrl}` });
-            setArtPrompt("");
         } else {
              toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
         }
@@ -389,26 +348,8 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     }
   };
 
-  const handleQuickAction = async (action: string) => {
+  const handleScenarioSelect = async (instruction: string) => {
     setIsLoading(true);
-    let instruction = "";
-
-    switch (action) {
-        case "date":
-            instruction = "Suggest a creative and fun date idea based on our conversation.";
-            break;
-        case "roast":
-            instruction = "Give me a playful, flirty roast to tease her.";
-            break;
-        case "comfort":
-            instruction = "She seems upset. Suggest a comforting and supportive message.";
-            break;
-        case "topic":
-            instruction = "Change the subject to something interesting and engaging.";
-            break;
-        default:
-            instruction = "What should I say next?";
-    }
 
     try {
         const { reply, explanation, newBadges } = await generateWingmanReply(girlId, instruction, tone, "instruction");
@@ -633,6 +574,20 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             </Button>
         </div>
       </div>
+      <ChatInputArea
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          onSendMessage={handleSendMessage}
+          onUploadComplete={handleImageUpload}
+          onGenerateArt={handleGenerateArt}
+          onGenerateHookup={handleGenerateHookupLine}
+          onScenarioSelect={handleScenarioSelect}
+          isLoading={isLoading}
+          tone={tone}
+          setTone={setTone}
+          sender={sender}
+          setSender={setSender}
+       />
     </div>
   );
 };

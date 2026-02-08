@@ -27,3 +27,8 @@
 **Vulnerability:** The `toggleSaveMessage` action allowed saving any message by ID without verifying if the user was part of the conversation (owned the associated Girl).
 **Learning:** Relational ownership checks (e.g., Message -> Girl -> User) are crucial when the resource itself (Message) doesn't store the owner directly. Populate necessary fields to traverse the ownership graph.
 **Prevention:** In actions acting on child resources, always populate and verify the parent resource's ownership.
+
+## 2024-05-26 - [CRITICAL] IDOR in Stripe Checkout Metadata
+**Vulnerability:** The `checkoutCredits` Server Action trusted the `buyerId` passed from the client in the transaction parameters, allowing an attacker to initiate a purchase that would credit another user's account and potentially link the attacker's payment method to the victim's account.
+**Learning:** Never trust client-provided IDs for sensitive operations like payments. Always derive the user identity from the trusted authentication context (`auth()`) on the server.
+**Prevention:** In payment flows, retrieve the `userId` from the session and use it to populate metadata, ignoring any client-provided user identifiers.

@@ -26,12 +26,12 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 }
 
 // Retrieve Context (RAG) - Internal Service Function (No Ownership Verification)
-export async function retrieveContext(girlId: string, query: string) {
+export async function retrieveContext(girlId: string, query: string, embedding?: number[]) {
   try {
     // Ensure DB is connected
     await connectToDatabase();
 
-    const queryEmbedding = await generateEmbedding(query);
+    const queryEmbedding = embedding || await generateEmbedding(query);
 
     // MongoDB Atlas Vector Search Aggregation
     const results = await Message.aggregate([
