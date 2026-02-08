@@ -72,6 +72,26 @@ export async function getSavedMessages() {
   }
 }
 
+export async function getSavedMessageIds() {
+  try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    const savedMessages = await SavedMessage.find({ user: user._id })
+      .select("message")
+      .lean();
+
+    return savedMessages.map((msg: any) => msg.message.toString());
+  } catch (error) {
+    console.error("Get Saved Message IDs Error:", error);
+    return [];
+  }
+}
+
 export async function isMessageSaved(messageId: string) {
   try {
     const { userId: clerkId } = auth();

@@ -136,6 +136,8 @@
     "regenerateAria": "Regenerate response",
     "copyTitle": "Copy to Clipboard",
     "copyAria": "Copy to clipboard",
+    "saveTitle": "Save to Library",
+    "unsaveTitle": "Remove from Library",
     "shareTitle": "Share",
     "shareAria": "Share message",
     "shareImageTitle": "Share Image",
