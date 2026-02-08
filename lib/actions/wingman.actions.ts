@@ -2,7 +2,8 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { retrieveContext } from "../services/rag.service";
+import { generateEmbedding } from "../services/rag.service";
+import { getContext } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { getGirlById } from "./girl.actions";
@@ -169,9 +170,12 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
+    // Optimization: Generate embedding once and reuse for all RAG retrievals
+    const embedding = await generateEmbedding(userMessage);
+
     const [contextMessages, userContext] = await Promise.all([
-      getContext(girlId, userMessage),
-      getUserContext(girl.author.toString(), userMessage)
+      getContext(girlId, userMessage, embedding),
+      getUserContext(girl.author.toString(), userMessage, embedding)
     ]);
     const contextString = JSON.stringify(contextMessages);
     const userContextString = userContext.map((k: any) => k.content).join("\n");
