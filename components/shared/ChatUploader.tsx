@@ -32,7 +32,7 @@ const ChatUploader = ({ onUploadComplete, disabled }: ChatUploaderProps) => {
             size="icon" 
             onClick={() => open()} 
             disabled={disabled}
-            className="text-dark-400 hover:text-purple-500"
+            className="text-muted-foreground hover:text-purple-500"
             aria-label={t('uploadScreenshotAria')}
             title={t('uploadScreenshotTitle')}
         >

@@ -23,22 +23,22 @@ const MobileNav = () => {
   }
 
   return (
-    <header className="fixed top-0 z-30 flex w-full items-center justify-between border-b border-white/5 bg-background/80 px-6 py-4 backdrop-blur-md lg:hidden">
+    <header className="fixed top-0 z-30 flex w-full items-center justify-between border-b border-border bg-background px-6 py-4 lg:hidden">
       <Link href="/dashboard" className="flex items-center gap-2">
         <Icons.zap className="h-6 w-6 text-primary" />
-        <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+        <span className="text-xl font-bold tracking-tight text-foreground">
             ArabianRizz
         </span>
       </Link>
 
       <Sheet>
         <SheetTrigger>
-          <Icons.menu className="h-6 w-6 text-white" />
+          <Icons.menu className="h-6 w-6 text-foreground" />
         </SheetTrigger>
-        <SheetContent side="left" className="border-r border-white/10 bg-background/95 backdrop-blur-xl sm:w-72">
+        <SheetContent side="left" className="border-r border-border bg-background sm:w-72">
             <Link href="/dashboard" className="flex items-center gap-2 mb-8 px-4">
                 <Icons.zap className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold tracking-tight text-white">
+                <span className="text-xl font-bold tracking-tight text-foreground">
                     ArabianRizz
                 </span>
             </Link>
@@ -55,8 +55,8 @@ const MobileNav = () => {
                             <Link
                                 href={link.route}
                                 className={cn(
-                                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all hover:bg-white/5",
-                                    isActive ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:text-white border border-transparent"
+                                    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all hover:bg-secondary",
+                                    isActive ? "bg-secondary text-primary" : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
                                 <IconComponent className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />

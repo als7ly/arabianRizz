@@ -76,13 +76,13 @@ export const ChatInputArea = ({
     };
 
     return (
-        <div className="bg-white border-t p-4 flex items-end gap-2">
+        <div className="bg-background border-t border-border p-4 flex items-end gap-2">
             <ChatUploader onUploadComplete={onUploadComplete} disabled={isLoading} />
 
             <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="ghost" size="icon" disabled={isLoading} title={t('generateArtTitle')} aria-label={t('generateArtAria')}>
-                        <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
+                        <ImageIcon size={24} className="text-muted-foreground hover:text-purple-500"/>
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
@@ -127,13 +127,13 @@ export const ChatInputArea = ({
             </Dialog>
 
             <Button variant="ghost" size="icon" onClick={onGenerateHookup} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
-                <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
+                <Zap size={24} className="text-muted-foreground hover:text-yellow-500"/>
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" disabled={isLoading} title="Scenario Mode" aria-label="Scenario Mode">
-                    <Sparkles size={24} className="text-dark-400 hover:text-purple-500"/>
+                    <Sparkles size={24} className="text-muted-foreground hover:text-purple-500"/>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 max-h-[400px] overflow-y-auto">
