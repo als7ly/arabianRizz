@@ -1,6 +1,5 @@
 import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback } from '@/lib/actions/wingman.actions';
 import { openrouter } from '@/lib/openrouter';
-import { getGirlById } from '@/lib/actions/girl.actions';
 import { getContext } from '@/lib/actions/rag.actions';
 import { generateEmbedding } from '@/lib/services/rag.service';
 import { getUserContext } from '@/lib/actions/user-knowledge.actions';
@@ -8,6 +7,7 @@ import { extractTextFromImage } from '@/lib/actions/ocr.actions';
 import { updateGamification } from '@/lib/services/gamification.service';
 import Message from '@/lib/database/models/message.model';
 import User from '@/lib/database/models/user.model';
+import Girl from '@/lib/database/models/girl.model';
 import { connectToDatabase } from '@/lib/database/mongoose';
 import { auth } from "@clerk/nextjs";
 
@@ -29,10 +29,6 @@ jest.mock('@/lib/openai', () => ({
     audio: { speech: { create: jest.fn() } },
     embeddings: { create: jest.fn() },
   },
-}));
-
-jest.mock('@/lib/actions/girl.actions', () => ({
-  getGirlById: jest.fn(),
 }));
 
 jest.mock('@/lib/actions/rag.actions', () => ({
@@ -69,6 +65,10 @@ jest.mock('@/lib/database/models/user.model', () => ({
   findByIdAndUpdate: jest.fn(),
 }));
 
+jest.mock('@/lib/database/models/girl.model', () => ({
+  findById: jest.fn(),
+}));
+
 jest.mock("@clerk/nextjs", () => ({
   auth: jest.fn(),
 }));
@@ -97,7 +97,7 @@ describe('Wingman Actions', () => {
     const mockEmbedding = [0.1, 0.2, 0.3];
 
     it('should generate a reply successfully with valid JSON response', async () => {
-      (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+      (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
       (getContext as jest.Mock).mockResolvedValue(mockContext);
       (getUserContext as jest.Mock).mockResolvedValue(mockUserContext);
       (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
@@ -113,7 +113,7 @@ describe('Wingman Actions', () => {
 
       const result = await generateWingmanReply('girl123', 'I want to go hiking', 'Flirty');
 
-      expect(getGirlById).toHaveBeenCalledWith('girl123');
+      expect(Girl.findById).toHaveBeenCalledWith('girl123');
       expect(generateEmbedding).toHaveBeenCalledWith('I want to go hiking');
       expect(getContext).toHaveBeenCalledWith('girl123', 'I want to go hiking', mockEmbedding);
       expect(getUserContext).toHaveBeenCalledWith('user123', 'I want to go hiking', mockEmbedding);
@@ -129,7 +129,7 @@ describe('Wingman Actions', () => {
     });
 
     it('should handle invalid JSON from AI gracefully', async () => {
-      (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+      (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
       (getContext as jest.Mock).mockResolvedValue([]);
       (getUserContext as jest.Mock).mockResolvedValue([]);
       (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
@@ -148,7 +148,7 @@ describe('Wingman Actions', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      (getGirlById as jest.Mock).mockRejectedValue(new Error('DB Error'));
+      (Girl.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const result = await generateWingmanReply('girl123', 'Hi');
 
@@ -159,7 +159,7 @@ describe('Wingman Actions', () => {
     });
 
     it('should handle instruction sender role correctly', async () => {
-        (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+        (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
         (getContext as jest.Mock).mockResolvedValue([]);
         (getUserContext as jest.Mock).mockResolvedValue([]);
         (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
@@ -236,7 +236,7 @@ describe('Wingman Actions', () => {
       };
 
       it('should generate hookup line successfully', async () => {
-        (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+        (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
         (getUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
         (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
 
@@ -251,7 +251,7 @@ describe('Wingman Actions', () => {
 
         const result = await generateHookupLine('girl123');
 
-        expect(getGirlById).toHaveBeenCalledWith('girl123');
+        expect(Girl.findById).toHaveBeenCalledWith('girl123');
         expect(openrouter.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
             messages: expect.arrayContaining([
                 expect.objectContaining({ role: 'system', content: expect.stringContaining('Levantine') })
@@ -269,14 +269,14 @@ describe('Wingman Actions', () => {
           const mockUser = { _id: 'user123' };
 
           (Message.findById as jest.Mock).mockResolvedValue(mockMsg);
-          (getGirlById as jest.Mock).mockResolvedValue(mockGirl);
+          (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
           (User.findOne as jest.Mock).mockResolvedValue(mockUser);
           (Message.findByIdAndUpdate as jest.Mock).mockResolvedValue({ ...mockMsg, feedback: 'positive' });
 
           const result = await submitFeedback('msg123', 'positive');
 
           expect(Message.findById).toHaveBeenCalledWith('msg123');
-          expect(getGirlById).toHaveBeenCalledWith('girl123');
+          expect(Girl.findById).toHaveBeenCalledWith('girl123');
           expect(Message.findByIdAndUpdate).toHaveBeenCalledWith('msg123', { feedback: 'positive' }, { new: true });
           expect(result).toEqual({ success: true });
       });

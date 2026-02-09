@@ -6,9 +6,9 @@ import { generateEmbedding } from "../services/rag.service";
 import { getContext } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
-import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
+import Girl from "../database/models/girl.model";
 import { connectToDatabase } from "../database/mongoose";
 import { auth } from "@clerk/nextjs";
 import User from "../database/models/user.model";
@@ -55,18 +55,25 @@ async function checkContentSafety(text: string): Promise<boolean> {
     return true;
 }
 
-async function verifyOwnership(girlAuthorId: any) {
+async function getUserAndGirl(girlId: string) {
     const { userId: clerkId } = auth();
     if (!clerkId) throw new Error("Unauthorized");
 
     await connectToDatabase();
-    const user = await User.findOne({ clerkId });
-    if (!user) throw new Error("User not found");
 
-    if (girlAuthorId.toString() !== user._id.toString()) {
+    const [user, girl] = await Promise.all([
+        User.findOne({ clerkId }),
+        Girl.findById(girlId)
+    ]);
+
+    if (!user) throw new Error("User not found");
+    if (!girl) throw new Error("Girl not found");
+
+    if (girl.author.toString() !== user._id.toString()) {
         throw new Error("Unauthorized Access");
     }
-    return user;
+
+    return { user, girl };
 }
 
 // Low Balance Check Utility
@@ -111,8 +118,8 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
     if (!originalMessage) {
         return { success: false };
     }
-    const girl = await getGirlById(originalMessage.girl.toString());
-    await verifyOwnership(girl.author);
+    // Verify ownership via helper (fetches both to check author match)
+    await getUserAndGirl(originalMessage.girl.toString());
 
     // 1. Update the message
     const message = await Message.findByIdAndUpdate(messageId, { feedback }, { new: true });
@@ -160,8 +167,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const ALLOWED_TONES = ['Flirty', 'Funny', 'Serious', 'Mysterious'];
     const safeTone = ALLOWED_TONES.includes(tone) ? tone : 'Flirty';
 
-    const girl = await getGirlById(girlId);
-    const user = await verifyOwnership(girl.author);
+    const { user, girl } = await getUserAndGirl(girlId);
 
     if (user.creditBalance < 1) {
         return {
@@ -455,9 +461,7 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
 
 export async function generateHookupLine(girlId: string) {
   try {
-    const girl = await getGirlById(girlId);
-
-    const user = await verifyOwnership(girl.author);
+    const { user, girl } = await getUserAndGirl(girlId);
 
     if (user.creditBalance < 1) {
          return {
