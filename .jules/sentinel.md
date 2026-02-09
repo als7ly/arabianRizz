@@ -32,3 +32,8 @@
 **Vulnerability:** The `checkoutCredits` Server Action trusted the `buyerId` passed from the client in the transaction parameters, allowing an attacker to initiate a purchase that would credit another user's account and potentially link the attacker's payment method to the victim's account.
 **Learning:** Never trust client-provided IDs for sensitive operations like payments. Always derive the user identity from the trusted authentication context (`auth()`) on the server.
 **Prevention:** In payment flows, retrieve the `userId` from the session and use it to populate metadata, ignoring any client-provided user identifiers.
+
+## 2026-02-09 - [HIGH] Missing Authentication on Expensive APIs
+**Vulnerability:** `analyzeProfile`, `generateResponseImage`, and `generateSpeech` server actions were exposed without authentication, allowing unauthenticated users to consume expensive APIs (OCR, LLM, Image Gen, TTS).
+**Learning:** Any function exported from a file with `"use server"` is a public API endpoint. Even if it's "just a helper" used by client components, it MUST enforce authentication if it accesses sensitive data or consumes resources.
+**Prevention:** Apply `auth()` checks at the beginning of every exported Server Action. If the action is for internal use only, do not export it from the server file or move it to a service file.

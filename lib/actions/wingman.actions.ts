@@ -311,6 +311,9 @@ ${contextString}
 
 export async function analyzeProfile(imageUrl: string) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
     const text = await extractTextFromImage(imageUrl);
     if (!text) return null;
 
@@ -362,6 +365,9 @@ export async function analyzeProfile(imageUrl: string) {
 
 export async function generateResponseImage(prompt: string) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return "https://via.placeholder.com/1024x1024.png?text=Mock+AI+Image";
     }
@@ -392,8 +398,25 @@ export async function generateResponseImage(prompt: string) {
 
 export async function generateSpeech(text: string, voiceId: string = "nova", messageId?: string) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) return null;
+
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return null;
+    }
+
+    // Security Check: If associating with a message, ensure user owns the girl.
+    if (messageId) {
+        await connectToDatabase();
+        const message = await Message.findById(messageId);
+        if (message) {
+             // This will throw Unauthorized if user is not author
+             await getGirlById(message.girl.toString());
+        } else {
+             // If messageId provided but not found, maybe stop?
+             // Or proceed without linking? Safer to stop or return null to prevent confusion.
+             return null;
+        }
     }
 
     // 1. Generate Speech via OpenAI
