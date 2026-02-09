@@ -2,7 +2,7 @@
 
 import React, { memo, useState } from "react";
 import Image from "next/image";
-import { Sparkles, Share2, Volume2, Loader2, RotateCw, Copy, Check } from "lucide-react";
+import { Sparkles, Share2, Volume2, Loader2, RotateCw, Copy, Check, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Feedback from "./Feedback";
@@ -27,6 +27,8 @@ interface MessageBubbleProps {
   onRegenerate: (idx: number) => void;
   onCopy: (text: string) => void;
   onShare: (text: string, isImage?: boolean) => void;
+  onToggleSave: (msg: Message) => void;
+  isSaved: boolean;
 }
 
 const MessageBubble = memo(({
@@ -37,7 +39,9 @@ const MessageBubble = memo(({
   onPlayAudio,
   onRegenerate,
   onCopy,
-  onShare
+  onShare,
+  onToggleSave,
+  isSaved
 }: MessageBubbleProps) => {
   const t = useTranslations('Chat');
   const [isCopied, setIsCopied] = useState(false);
@@ -114,6 +118,12 @@ const MessageBubble = memo(({
                           <ActionButton icon={isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />} onClick={() => onPlayAudio(msg, index)} label={t('playAudioTitle')} disabled={playingAudioId !== null} />
                           <ActionButton icon={<RotateCw size={14} className={isLoading ? "animate-spin" : ""} />} onClick={() => onRegenerate(index)} label={t('regenerateTitle')} disabled={isLoading} />
                           <ActionButton icon={isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} onClick={handleCopyClick} label={t('copyTitle')} />
+                          <ActionButton
+                            icon={<Bookmark size={14} className={cn("transition-colors", isSaved ? "fill-current text-purple-500" : "")} />}
+                            onClick={() => onToggleSave(msg)}
+                            label={isSaved ? t('unsaveTitle') : t('saveTitle')}
+                            aria-pressed={isSaved}
+                          />
                           <ActionButton icon={<Share2 size={14} />} onClick={() => onShare(msg.content)} label={t('shareTitle')} />
                           {msg._id && <Feedback messageId={msg._id} />}
                       </div>
@@ -126,7 +136,7 @@ const MessageBubble = memo(({
   );
 });
 
-const ActionButton = ({ icon, onClick, label, disabled }: { icon: React.ReactNode, onClick: () => void, label: string, disabled?: boolean }) => (
+const ActionButton = ({ icon, onClick, label, disabled, ...props }: { icon: React.ReactNode, onClick: () => void, label: string, disabled?: boolean } & React.ComponentProps<typeof Button>) => (
     <Button
         variant="ghost"
         size="icon"
@@ -135,6 +145,7 @@ const ActionButton = ({ icon, onClick, label, disabled }: { icon: React.ReactNod
         disabled={disabled}
         title={label}
         aria-label={label}
+        {...props}
     >
         {icon}
     </Button>

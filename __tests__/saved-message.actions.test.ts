@@ -1,4 +1,4 @@
-import { toggleSaveMessage, getSavedMessages, deleteSavedMessage } from '@/lib/actions/saved-message.actions';
+import { toggleSaveMessage, getSavedMessages, getSavedMessageIds, deleteSavedMessage } from '@/lib/actions/saved-message.actions';
 import { connectToDatabase } from '@/lib/database/mongoose';
 import SavedMessage from '@/lib/database/models/saved-message.model';
 import Message from '@/lib/database/models/message.model';
@@ -117,6 +117,24 @@ describe('Saved Message Actions', () => {
 
             expect(SavedMessage.find).toHaveBeenCalledWith({ user: mockUserId });
             expect(result).toEqual(mockSaved);
+        });
+    });
+
+    describe('getSavedMessageIds', () => {
+        it('should return saved message IDs', async () => {
+            const mockSaved = [{ message: 'msg1' }, { message: 'msg2' }];
+            const mockFind = {
+                select: jest.fn().mockReturnThis(),
+                lean: jest.fn().mockReturnValue(mockSaved),
+            };
+            (SavedMessage.find as jest.Mock).mockReturnValue(mockFind);
+
+            const result = await getSavedMessageIds();
+
+            expect(SavedMessage.find).toHaveBeenCalledWith({ user: mockUserId });
+            expect(mockFind.select).toHaveBeenCalledWith('message');
+            expect(mockFind.lean).toHaveBeenCalled();
+            expect(result).toEqual(['msg1', 'msg2']);
         });
     });
 

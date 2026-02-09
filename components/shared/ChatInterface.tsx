@@ -7,7 +7,7 @@ import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
 import { generateArt } from "@/lib/actions/image.actions";
-import { toggleSaveMessage, getSavedMessages } from "@/lib/actions/saved-message.actions";
+import { toggleSaveMessage, getSavedMessageIds } from "@/lib/actions/saved-message.actions";
 import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
@@ -56,12 +56,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
 
   const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set());
 
+  // Ref to keep track of savedMessageIds for callbacks without dependency
+  const savedMessageIdsRef = useRef(savedMessageIds);
+  useEffect(() => {
+    savedMessageIdsRef.current = savedMessageIds;
+  }, [savedMessageIds]);
+
   useEffect(() => {
     const fetchSaved = async () => {
         try {
-            const saved = await getSavedMessages();
-            const ids = new Set(saved.map((s: any) => s.message?._id).filter(Boolean));
-            setSavedMessageIds(ids);
+            const ids = await getSavedMessageIds();
+            setSavedMessageIds(new Set(ids));
         } catch (e) {
             console.error("Failed to fetch saved messages", e);
         }
@@ -69,14 +74,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     fetchSaved();
   }, []);
 
-  const handleToggleSave = async (msg: Message) => {
+  const handleToggleSave = useCallback(async (msg: Message) => {
     if (!msg._id) return;
-    const isSaved = savedMessageIds.has(msg._id);
 
-    const newSet = new Set(savedMessageIds);
-    if (isSaved) newSet.delete(msg._id);
-    else newSet.add(msg._id);
-    setSavedMessageIds(newSet);
+    const wasSaved = savedMessageIdsRef.current.has(msg._id);
+
+    setSavedMessageIds((prev) => {
+        const newSet = new Set(prev);
+        if (wasSaved) newSet.delete(msg._id!);
+        else newSet.add(msg._id!);
+        return newSet;
+    });
 
     try {
         const result = await toggleSaveMessage(msg._id, pathname);
@@ -86,15 +94,16 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
              toast({ title: "Removed", description: "Message removed from bookmarks." });
         }
     } catch (e) {
+        // Rollback
         setSavedMessageIds(prev => {
              const reverted = new Set(prev);
-             if (isSaved) reverted.add(msg._id!);
+             if (wasSaved) reverted.add(msg._id!);
              else reverted.delete(msg._id!);
              return reverted;
         });
         toast({ title: "Error", description: "Failed to save message.", variant: "destructive" });
     }
-  };
+  }, [pathname, toast]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -141,9 +150,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
           });
       }
 
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
-      toast({ title: t('errorTitle'), description: error.message || t('errorReply'), variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : t('errorReply');
+      toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
       setSender('user');
@@ -179,9 +189,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             duration: 6000,
         });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: e.message || "Failed to regenerate.", variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : "Failed to regenerate.";
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -281,9 +292,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             duration: 6000,
         });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error(error);
-        toast({ title: t('errorTitle'), description: error.message || t('errorProcessImage'), variant: "destructive" });
+        const errorMessage = error instanceof Error ? error.message : t('errorProcessImage');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -303,9 +315,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         } else {
              toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
         }
-    } catch(e: any) {
+    } catch(e) {
         console.error(e);
-        toast({ title: "Error", description: e.message || "Something went wrong.", variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : "Something went wrong.";
+        toast({ title: "Error", description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -323,9 +336,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
                 duration: 6000,
             });
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: e.message || t('errorHookup'), variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : t('errorHookup');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -382,9 +396,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
           });
       }
 
-    } catch (error: any) {
+    } catch (error) {
         console.error(error);
-        toast({ title: t('errorTitle'), description: error.message || "Failed to generate action.", variant: "destructive" });
+        const errorMessage = error instanceof Error ? error.message : "Failed to generate action.";
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -417,6 +432,8 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             onRegenerate={handleRegenerate}
             onCopy={handleCopy}
             onShare={handleShare}
+            onToggleSave={handleToggleSave}
+            isSaved={msg._id ? savedMessageIds.has(msg._id) : false}
           />
         ))}
         {isLoading && (
