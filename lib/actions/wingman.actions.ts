@@ -19,6 +19,8 @@ import { updateGamification } from "@/lib/services/gamification.service";
 import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
 import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
+import { deductCredits } from "./user.actions";
+import { logUsage } from "./usage-log.actions";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -260,7 +262,8 @@ ${contextString}
 
     if (aiContent) {
         // Deduct Credit on Success
-        const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
+        const updatedUser = await deductCredits(user._id, 1);
+        await logUsage({ userId: user._id, action: "message_generation", cost: 1, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
@@ -541,7 +544,8 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
+        const updatedUser = await deductCredits(user._id, 1);
+        await logUsage({ userId: user._id, action: "hookup_line", cost: 1, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
