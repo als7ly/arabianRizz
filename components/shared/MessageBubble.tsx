@@ -88,7 +88,7 @@ const MessageBubble = memo(({
                   height={500}
                   className="rounded-lg max-w-full h-auto transition-transform duration-500 group-hover/image:scale-105"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex-center">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 focus-within:opacity-100 transition-opacity flex-center">
                   <Button
                       variant="secondary"
                       size="sm"
@@ -110,7 +110,7 @@ const MessageBubble = memo(({
                     </span>
 
                     {isWingman && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200" role="toolbar" aria-label="Message actions">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200" role="toolbar" aria-label="Message actions">
                           <ActionButton icon={isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />} onClick={() => onPlayAudio(msg, index)} label={t('playAudioTitle')} disabled={playingAudioId !== null} />
                           <ActionButton icon={<RotateCw size={14} className={isLoading ? "animate-spin" : ""} />} onClick={() => onRegenerate(index)} label={t('regenerateTitle')} disabled={isLoading} />
                           <ActionButton icon={isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} onClick={handleCopyClick} label={t('copyTitle')} />

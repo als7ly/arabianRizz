@@ -49,3 +49,7 @@
 ## 2024-05-25 - Orphaned Labels in Dialogs
 **Learning:** Found `<Label>` components in dialogs that were visually positioned above inputs but programmatically unassociated (missing `htmlFor`/`id` pairs). This breaks accessibility for screen readers and click-to-focus behavior.
 **Action:** Always ensure `<Label htmlFor="x">` matches `<Input id="x">`. For groups like RadioGroups, use `aria-labelledby` on the group container pointing to the label's ID.
+
+## 2026-02-09 - Invisible Focus Controls
+**Learning:** Found a pattern where action buttons (like Copy/Share in chat bubbles) were hidden using `opacity-0 group-hover:opacity-100`. This creates a major accessibility issue for keyboard users who can focus the invisible buttons but can't see them.
+**Action:** Always pair `group-hover:opacity-100` with `focus-within:opacity-100` on the container. This ensures the controls become visible as soon as any element inside them receives focus.
