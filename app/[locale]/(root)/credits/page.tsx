@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
 import { Icons } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import { Link } from "@/navigation";
 
 const Credits = async () => {
   const { userId } = auth();
@@ -21,7 +22,14 @@ const Credits = async () => {
     <>
       <div className="text-center max-w-2xl mx-auto mb-16 animate-fade-in-up">
         <h1 className="h1-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 mb-4">{t('title')}</h1>
-        <p className="text-muted-foreground text-lg">{t('subtitle')}</p>
+        <p className="text-muted-foreground text-lg mb-6">{t('subtitle')}</p>
+
+        <Link href="/credits/history">
+            <Button variant="outline" className="gap-2 rounded-full border-white/20 hover:bg-white/10 text-white hover:text-white">
+                <Icons.post className="h-4 w-4" />
+                View Transaction History
+            </Button>
+        </Link>
       </div>
 
       <section className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
