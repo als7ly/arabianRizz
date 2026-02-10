@@ -4,6 +4,7 @@
     "subtitle": "رفيقك الذكي في انتظارك."
   },
   "Dashboard": {
+    "welcomeBack": "مرحبًا بعودتك",
     "myGirls": "فتياتي",
     "addGirl": "إضافة فتاة جديدة",
     "noGirls": "لم يتم إضافة أي فتيات بعد. ابدأ بإضافة ملف تعريف!",
@@ -14,11 +15,20 @@
     "step3": "ابدأ الدردشة واطلب <b>عبارات غزل</b>!",
     "balance": "رصيدي",
     "createProfileDesc": "أنشئ ملفًا للفتاة التي تريد التحدث معها.",
-    "searchPlaceholder": "ابحث عن الفتيات بالاسم..."
+    "searchPlaceholder": "ابحث عن الفتيات بالاسم...",
+    "deleteProfileTitle": "حذف الملف الشخصي",
+    "deleteProfileAria": "حذف الملف الشخصي",
+    "deleteDialogTitle": "حذف الملف الشخصي؟",
+    "deleteDialogDesc": "هل أنت متأكد من أنك تريد حذف هذا الملف الشخصي؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleteDialogCancel": "إلغاء",
+    "deleteDialogConfirm": "حذف",
+    "chatBtn": "دردشة",
+    "noNotes": "لا توجد ملاحظات بعد."
   },
   "Sidebar": {
     "home": "الرئيسية",
     "profile": "الملف الشخصي",
+    "saved": "العبارات المحفوظة",
     "login": "تسجيل الدخول",
     "signOut": "تسجيل الخروج",
     "language": "اللغة"
@@ -79,6 +89,22 @@
       "failDesc": "تعذر استخراج التفاصيل.",
       "errorTitle": "خطأ",
       "errorDesc": "حدث خطأ ما."
+    },
+    "VoiceOptions": {
+      "nova": "نوفا (أنثى، حيوية)",
+      "shimmer": "شيمر (أنثى، واضحة)",
+      "alloy": "ألوي (محايد، متوازن)",
+      "echo": "إيكو (ذكر، عميق)",
+      "fable": "فيبل (ذكر، بريطاني)",
+      "onyx": "أونيكس (ذكر، موثوق)"
+    },
+    "DialectOptions": {
+        "msa": "الفصحى الحديثة (MSA)",
+        "egyptian": "المصرية (مصري)",
+        "levantine": "الشامية (شامي)",
+        "gulf": "الخليجية (خليجي)",
+        "maghrebi": "المغاربية (دارجة)",
+        "iraqi": "العراقية"
     }
   },
   "Chat": {
@@ -99,6 +125,64 @@
     "sheSaid": "هي قالت",
     "wingman": "الرفيق",
     "inputPlaceholder": "اكتب ما تريد قوله...",
-    "wingmanTip": "نصيحة"
+    "wingmanTip": "نصيحة",
+    "clearChatTitle": "مسح المحادثة",
+    "clearChatAria": "مسح سجل المحادثة",
+    "clearChatDialogTitle": "مسح سجل المحادثة؟",
+    "clearChatDialogDesc": "سيتم حذف جميع الرسائل مع هذه الفتاة نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+    "playAudioTitle": "تشغيل الصوت",
+    "playAudioAria": "تشغيل الصوت",
+    "regenerateTitle": "إعادة توليد الرد",
+    "regenerateAria": "إعادة توليد الرد",
+    "copyTitle": "نسخ إلى الحافظة",
+    "copyAria": "نسخ إلى الحافظة",
+    "saveTitle": "حفظ في المكتبة",
+    "unsaveTitle": "إزالة من المكتبة",
+    "shareTitle": "مشاركة",
+    "shareAria": "مشاركة الرسالة",
+    "shareImageTitle": "مشاركة الصورة",
+    "shareImageAria": "مشاركة الصورة",
+    "generateArtTitle": "توليد فن",
+    "generateArtAria": "فتح توليد الفن",
+    "inputAria": "إدخال الرسالة",
+    "sendAria": "إرسال الرسالة",
+    "inputPlaceholderGirl": "ماذا قالت؟",
+    "uploadScreenshotTitle": "تحميل لقطة شاشة",
+    "uploadScreenshotAria": "تحميل لقطة شاشة",
+    "thumbsUpTitle": "مفيد",
+    "thumbsUpAria": "تقييم كمفيد",
+    "thumbsDownTitle": "غير مفيد",
+    "thumbsDownAria": "تقييم كغير مفيد",
+    "toneAria": "تحديد النبرة",
+    "senderAria": "مرسل الرسالة",
+    "senderMeAria": "تعيين المرسل أنا",
+    "senderHerAria": "تعيين المرسل هي",
+    "hookupAria": "توليد عبارة غزل",
+    "QuickActions": {
+        "title": "إجراءات سريعة",
+        "date": "فكرة موعد",
+        "roast": "مزاح مرح",
+        "comfort": "مواساة",
+        "topic": "تغيير الموضوع"
+    }
+  },
+  "Saved": {
+    "title": "العبارات المحفوظة",
+    "subtitle": "مجموعتك من أفضل الردود",
+    "empty": "لا توجد عبارات محفوظة بعد. ابدأ الدردشة للحفظ!",
+    "copy": "نسخ",
+    "remove": "إزالة"
+  },
+  "Languages": {
+    "en": "الإنجليزية",
+    "ar": "العربية",
+    "fr": "الفرنسية",
+    "zh": "الصينية",
+    "ja": "اليابانية",
+    "es": "الإسبانية",
+    "hi": "الهندية",
+    "pt": "البرتغالية",
+    "ru": "الروسية",
+    "de": "الألمانية"
   }
 }
