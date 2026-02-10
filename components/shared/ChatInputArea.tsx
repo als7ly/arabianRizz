@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Camera } from "lucide-react";
+import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Camera, Gift } from "lucide-react";
 import ChatUploader from "./ChatUploader";
 import { useTranslations } from "next-intl";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,6 +36,7 @@ interface ChatInputAreaProps {
     onUploadComplete: (url: string) => void;
     onGenerateArt: (prompt: string, mode: 'standard' | 'selfie') => void;
     onGenerateHookup: () => void;
+    onGetRecommendations: () => void;
     onScenarioSelect: (instruction: string) => void;
     isLoading: boolean;
     tone: string;
@@ -51,6 +52,7 @@ export const ChatInputArea = ({
     onUploadComplete,
     onGenerateArt,
     onGenerateHookup,
+    onGetRecommendations,
     onScenarioSelect,
     isLoading,
     tone,
@@ -129,6 +131,10 @@ export const ChatInputArea = ({
 
             <Button variant="ghost" size="icon" onClick={onGenerateHookup} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
                 <Zap size={24} className="text-muted-foreground hover:text-yellow-500"/>
+            </Button>
+
+            <Button variant="ghost" size="icon" onClick={onGetRecommendations} disabled={isLoading} title="Gift & Date Ideas" aria-label="Get Recommendations">
+                <Gift size={24} className="text-muted-foreground hover:text-pink-500"/>
             </Button>
 
             <DropdownMenu>

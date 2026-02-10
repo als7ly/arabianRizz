@@ -15,6 +15,7 @@ import MessageBubble, { Message } from "./MessageBubble";
 import { ChatHeaderActions } from "./ChatHeaderActions";
 import { ChatInputArea } from "./ChatInputArea";
 import { Link } from "@/navigation";
+import { RecommendationsDialog } from "./RecommendationsDialog";
 
 export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girlId: string, initialMessages: Message[], creditBalance?: number }) => {
   const pathname = usePathname();
@@ -28,6 +29,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
+  const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
 
   const messagesRef = useRef(messages);
   useEffect(() => {
@@ -362,6 +364,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     }
   };
 
+  const handleGetRecommendations = () => {
+    setIsRecommendationsOpen(true);
+  };
+
   const handleScenarioSelect = async (instruction: string) => {
     setIsLoading(true);
 
@@ -455,6 +461,12 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         </Link>
       )}
 
+      <RecommendationsDialog
+          girlId={girlId}
+          open={isRecommendationsOpen}
+          onOpenChange={setIsRecommendationsOpen}
+      />
+
       <ChatInputArea
           inputValue={inputValue}
           setInputValue={setInputValue}
@@ -462,6 +474,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
           onUploadComplete={handleImageUpload}
           onGenerateArt={handleGenerateArt}
           onGenerateHookup={handleGenerateHookupLine}
+          onGetRecommendations={handleGetRecommendations}
           onScenarioSelect={handleScenarioSelect}
           isLoading={isLoading}
           tone={tone}
