@@ -8,7 +8,7 @@ import User from "../database/models/user.model";
 import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
 import { deductCredits, refundCredits } from "./user.actions";
-import { logUsage } from "./usage-log.actions";
+import { logUsage } from "../services/usage.service";
 
 async function getCurrentUser() {
     const { userId: clerkId } = auth();

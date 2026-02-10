@@ -1,4 +1,5 @@
-import { logUsage, getUserUsage } from '@/lib/actions/usage-log.actions';
+import { getUserUsage } from '@/lib/actions/usage-log.actions';
+import { logUsage } from '@/lib/services/usage.service';
 import { deductCredits } from '@/lib/actions/user.actions';
 import UsageLog from '@/lib/database/models/usage-log.model';
 import User from '@/lib/database/models/user.model';
@@ -16,6 +17,7 @@ jest.mock('@/lib/database/models/usage-log.model', () => ({
 jest.mock('@/lib/database/models/user.model', () => ({
   findOneAndUpdate: jest.fn(),
   findById: jest.fn(),
+  findOne: jest.fn(),
 }));
 
 // Mock Clerk auth if needed, though mostly used in user.actions functions we aren't testing or mocking
@@ -52,16 +54,31 @@ describe('Usage Log Actions', () => {
   });
 
   describe('getUserUsage', () => {
-    it('should return usage logs for a user', async () => {
+    it('should return usage logs for a user when authorized', async () => {
+      // Mock User.findOne to return a user whose _id matches the requested userId
+      (User.findOne as jest.Mock).mockResolvedValue({ _id: 'user1' });
+
       const mockLogs = [{ action: 'test', cost: 1 }];
       const mockSort = jest.fn().mockReturnValue(mockLogs);
       (UsageLog.find as jest.Mock).mockReturnValue({ sort: mockSort });
 
       const result = await getUserUsage('user1');
 
+      expect(User.findOne).toHaveBeenCalledWith({ clerkId: 'clerk_user_123' });
       expect(UsageLog.find).toHaveBeenCalledWith({ user: 'user1' });
       expect(mockSort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(result).toEqual(mockLogs);
+    });
+
+    it('should throw Unauthorized if user ID does not match', async () => {
+        // Mock User.findOne to return a DIFFERENT user
+        (User.findOne as jest.Mock).mockResolvedValue({ _id: 'other_user' });
+
+        await expect(getUserUsage('user1')).rejects.toThrow();
+
+        expect(User.findOne).toHaveBeenCalledWith({ clerkId: 'clerk_user_123' });
+        // UsageLog.find should NOT be called
+        expect(UsageLog.find).not.toHaveBeenCalled();
     });
   });
 });

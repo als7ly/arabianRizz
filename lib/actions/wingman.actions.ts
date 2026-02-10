@@ -20,7 +20,7 @@ import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
 import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
 import { deductCredits } from "./user.actions";
-import { logUsage } from "./usage-log.actions";
+import { logUsage } from "../services/usage.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
