@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Trash2, Download, Search } from "lucide-react";
+import { MoreVertical, Trash2, Download, Search, Loader2 } from "lucide-react";
 import { SearchChatDialog } from "./SearchChatDialog";
 import {
   DropdownMenu,
@@ -80,7 +80,7 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
             <span>Search Chat</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleExport} disabled={isExporting} className="cursor-pointer">
-            <Download className="mr-2 h-4 w-4" />
+            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
             <span>{isExporting ? "Exporting..." : "Export Chat"}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
