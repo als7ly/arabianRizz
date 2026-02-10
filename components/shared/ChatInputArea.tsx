@@ -109,8 +109,9 @@ export const ChatInputArea = ({
                             </RadioGroup>
                         </div>
                         <div className="space-y-2">
-                            <Label>Prompt</Label>
+                            <Label htmlFor="art-prompt">Prompt</Label>
                             <Input
+                                id="art-prompt"
                                 value={artPrompt}
                                 onChange={(e) => setArtPrompt(e.target.value)}
                                 placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
@@ -158,7 +159,7 @@ export const ChatInputArea = ({
             </DropdownMenu>
 
             <Select onValueChange={setTone} defaultValue="Flirty" value={tone}>
-                <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone">
+                <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone" title={t('toneAria')}>
                     <SelectValue placeholder="Tone" />
                 </SelectTrigger>
                 <SelectContent>

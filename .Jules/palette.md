@@ -53,3 +53,7 @@
 ## 2026-02-09 - Invisible Focus Controls
 **Learning:** Found a pattern where action buttons (like Copy/Share in chat bubbles) were hidden using `opacity-0 group-hover:opacity-100`. This creates a major accessibility issue for keyboard users who can focus the invisible buttons but can't see them.
 **Action:** Always pair `group-hover:opacity-100` with `focus-within:opacity-100` on the container. This ensures the controls become visible as soon as any element inside them receives focus.
+
+## 2026-02-17 - Async Action Feedback in Menus
+**Learning:** Dropdown menu actions (like "Export Chat") often rely only on text changes ("Exporting...") for feedback, which is too subtle for users expecting immediate confirmation.
+**Action:** Replace the static action icon with a spinning `Loader2` during the loading state to provide clear visual confirmation of the background process.
