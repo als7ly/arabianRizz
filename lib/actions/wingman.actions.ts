@@ -178,16 +178,6 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
         };
     }
 
-    // Optimization: Generate embedding once and reuse for all RAG retrievals
-    const embedding = await generateEmbedding(userMessage);
-
-    const [contextMessages, userContext] = await Promise.all([
-      getContext(girlId, userMessage, embedding),
-      getUserContext(girl.author.toString(), userMessage, embedding)
-    ]);
-    const contextString = JSON.stringify(contextMessages);
-    const userContextString = userContext.map((k: any) => k.content).join("\n");
-
     // Language Handling
     const languageCode = girl.language || 'en';
     const languageMap: { [key: string]: string } = {
@@ -197,8 +187,17 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     };
     const fullLanguage = languageMap[languageCode] || 'English';
 
-    // RAG Knowledge: Attempt to find relevant info in that language
-    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode, embedding);
+    // Optimization: Generate embedding once and reuse for all RAG retrievals
+    const embedding = await generateEmbedding(userMessage);
+
+    const [contextMessages, userContext, globalKnowledge] = await Promise.all([
+      getContext(girlId, userMessage, embedding),
+      getUserContext(girl.author.toString(), userMessage, embedding),
+      getGlobalKnowledge(userMessage, languageCode, embedding)
+    ]);
+
+    const contextString = JSON.stringify(contextMessages);
+    const userContextString = userContext.map((k: any) => k.content).join("\n");
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     // Dialect Handling (Only for Arabic)
@@ -496,16 +495,19 @@ export async function generateHookupLine(girlId: string) {
         };
     }
 
-    const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
+    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
+
+    const [userContext, globalKnowledge] = await Promise.all([
+      getUserContext(girl.author.toString(), "hookup line flirting"),
+      getGlobalKnowledge("best hookup lines dating advice", language)
+    ]);
+
     const userContextString = userContext.map((k: any) => k.content).join("\n");
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     const dialectInstruction = girl.dialect
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions.`
         : "Support Arabic dialects if appropriate.";
-
-    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
-    const globalKnowledge = await getGlobalKnowledge("best hookup lines dating advice", language);
-    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     const systemPrompt = `
 You are "The Wingman", an expert dating coach.
