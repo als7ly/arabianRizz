@@ -8,13 +8,6 @@ import { Button } from "@/components/ui/button";
 import { searchMessages } from "@/lib/actions/girl.actions";
 import { cn } from "@/lib/utils";
 
-interface SearchResult {
-    _id: string;
-    role: string;
-    content: string;
-    createdAt: string;
-}
-
 interface SearchChatDialogProps {
   girlId: string;
   trigger?: React.ReactNode;
@@ -24,7 +17,7 @@ interface SearchChatDialogProps {
 
 export function SearchChatDialog({ girlId, trigger, open, onOpenChange }: SearchChatDialogProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -36,7 +29,7 @@ export function SearchChatDialog({ girlId, trigger, open, onOpenChange }: Search
         const response = await searchMessages(girlId, query);
         if (response.success) {
             // response.data is plain JSON from server action
-            setResults(response.data as unknown as SearchResult[]);
+            setResults(response.data);
         } else {
             console.error(response.error);
             setResults([]);
@@ -106,7 +99,7 @@ export function SearchChatDialog({ girlId, trigger, open, onOpenChange }: Search
                             {msg.role === 'user' ? "Me" : "Her"}
                         </span>
                         <span className="text-xs text-gray-400">
-                             {new Date(msg.createdAt).toLocaleDateString()}
+                             {msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : ""}
                         </span>
                     </div>
                     <p className="text-gray-700 whitespace-pre-wrap">{msg.content}</p>

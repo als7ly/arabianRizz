@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,8 +23,22 @@ export const SettingsForm = ({ initialSettings }: SettingsFormProps) => {
 
   const [defaultTone, setDefaultTone] = useState(initialSettings?.defaultTone || "Flirty");
   const [lowBalanceAlerts, setLowBalanceAlerts] = useState(initialSettings?.lowBalanceAlerts ?? true);
-  // Theme is not fully implemented yet, but we store the preference
-  // const [theme, setTheme] = useState(initialSettings?.theme || "system");
+  const [theme, setTheme] = useState(initialSettings?.theme || "system");
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    root.classList.add(theme);
+  }, [theme]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -32,7 +46,7 @@ export const SettingsForm = ({ initialSettings }: SettingsFormProps) => {
       await updateUserSettings({
         defaultTone,
         lowBalanceAlerts,
-        // theme
+        theme
       });
       toast({
         title: "Settings Saved",
@@ -69,6 +83,22 @@ export const SettingsForm = ({ initialSettings }: SettingsFormProps) => {
                 </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">The default tone used when starting a new chat.</p>
+        </div>
+
+        {/* Theme */}
+        <div className="space-y-2">
+            <Label htmlFor="theme">Theme</Label>
+            <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger id="theme" className="w-full md:w-[300px]">
+                    <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Choose your preferred appearance.</p>
         </div>
 
         {/* Low Balance Alerts */}

@@ -7,6 +7,23 @@ import UserKnowledge from "../database/models/user-knowledge.model";
 import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "../utils";
 import { auth } from "@clerk/nextjs";
+import { updateUser } from "../services/user.service";
+import { revalidatePath } from "next/cache";
+
+// UPDATE PROFILE
+export async function updateUserProfile(data: UpdateUserParams) {
+  try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    const user = await updateUser(clerkId, data);
+
+    revalidatePath("/profile");
+    return JSON.parse(JSON.stringify(user));
+  } catch (error) {
+    handleError(error);
+  }
+}
 
 // EXPORT ALL DATA
 export async function exportAllUserData() {
