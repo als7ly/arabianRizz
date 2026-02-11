@@ -7,7 +7,7 @@ import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
 import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
-import { deductCredits, refundCredits } from "./user.actions";
+import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
 
 async function getCurrentUser() {
