@@ -80,6 +80,11 @@ async function getUserAndGirl(girlId: string) {
 
 // Low Balance Check Utility
 async function checkAndNotifyLowBalance(user: any) {
+    // Check if user disabled alerts
+    if (user.settings?.lowBalanceAlerts === false) {
+        return;
+    }
+
     // Threshold: 10 credits
     if (user.creditBalance < LOW_BALANCE_THRESHOLD) {
         // Rate Limiting: Check last email sent timestamp

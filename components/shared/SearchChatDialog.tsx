@@ -35,7 +35,8 @@ export function SearchChatDialog({ girlId, trigger, open, onOpenChange }: Search
     try {
         const response = await searchMessages(girlId, query);
         if (response.success) {
-            setResults(response.data as any);
+            // response.data is plain JSON from server action
+            setResults(response.data as unknown as SearchResult[]);
         } else {
             console.error(response.error);
             setResults([]);

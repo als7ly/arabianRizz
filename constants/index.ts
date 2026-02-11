@@ -17,6 +17,12 @@ export const navLinks = [
     route: "/profile",
     icon: "user",
   },
+  {
+    label: "Settings",
+    key: "settings",
+    route: "/settings",
+    icon: "settings",
+  },
 ];
 
 export const VOICE_OPTIONS = [

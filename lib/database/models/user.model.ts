@@ -24,6 +24,12 @@ const UserSchema = new Schema({
   stripeCurrentPeriodEnd: { type: Date },
   subscriptionStatus: { type: String },
   subscriptionPeriodEnd: { type: Date },
+
+  settings: {
+    defaultTone: { type: String, default: 'Flirty' },
+    lowBalanceAlerts: { type: Boolean, default: true },
+    theme: { type: String, default: 'system' }
+  },
 });
 
 // Optimize queries for Analytics (Active Users) and Leaderboard (Top Users)

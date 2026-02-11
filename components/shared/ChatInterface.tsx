@@ -17,12 +17,12 @@ import { ChatInputArea } from "./ChatInputArea";
 import { Link } from "@/navigation";
 import { RecommendationsDialog } from "./RecommendationsDialog";
 
-export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girlId: string, initialMessages: Message[], creditBalance?: number }) => {
+export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultTone }: { girlId: string, initialMessages: Message[], creditBalance?: number, defaultTone?: string }) => {
   const pathname = usePathname();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [sender, setSender] = useState<'user' | 'girl'>('user');
-  const [tone, setTone] = useState("Flirty");
+  const [tone, setTone] = useState(defaultTone || "Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string>("nova");
