@@ -9,3 +9,7 @@
 ## 2024-05-25 - Redundant Embeddings in Parallel Requests
 **Learning:** `generateWingmanReply` was calling `getContext`, `getUserContext`, and `getGlobalKnowledge` in parallel. Each function independently generated an embedding for the same user message, resulting in 3x OpenAI API calls and latency.
 **Action:** When making multiple RAG calls for the same query, generate the embedding once and pass it as an optional argument to retrieval functions.
+
+## 2024-05-26 - Unified Embedding for Similar Contexts
+**Learning:** In `generateHookupLine`, `getUserContext` and `getGlobalKnowledge` were called with slightly different but semantically similar queries ("hookup line flirting" vs "best hookup lines dating advice"). This forced two separate embedding API calls. By combining them into a single query "best hookup lines flirting dating advice", we can reuse one embedding for both retrievals without significant loss of accuracy, saving 50% of embedding costs and API calls.
+**Action:** Identify parallel RAG retrievals with similar intents and unify their query strings to share a single embedding vector.
