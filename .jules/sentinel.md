@@ -37,3 +37,8 @@
 **Vulnerability:** `analyzeProfile`, `generateResponseImage`, and `generateSpeech` server actions were exposed without authentication, allowing unauthenticated users to consume expensive APIs (OCR, LLM, Image Gen, TTS).
 **Learning:** Any function exported from a file with `"use server"` is a public API endpoint. Even if it's "just a helper" used by client components, it MUST enforce authentication if it accesses sensitive data or consumes resources.
 **Prevention:** Apply `auth()` checks at the beginning of every exported Server Action. If the action is for internal use only, do not export it from the server file or move it to a service file.
+
+## 2026-05-22 - [CRITICAL] Exposed Credit Modification Logic
+**Vulnerability:** `deductCredits` and `refundCredits` were exported from `lib/actions/user.actions.ts` (a `"use server"` file), allowing any user to arbitrarily modify any user's credit balance via a public endpoint.
+**Learning:** Functions exported from Server Action files are public APIs. Internal business logic that bypasses authorization checks (like credit deduction) must never be exported from these files.
+**Prevention:** Move sensitive internal logic to service files (e.g., `lib/services/`) which do not carry the `"use server"` directive, ensuring they can only be called by trusted server-side code.

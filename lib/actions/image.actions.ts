@@ -7,7 +7,7 @@ import User from "../database/models/user.model";
 import Girl from "../database/models/girl.model";
 import { openai } from "../openai";
 import { v2 as cloudinary } from 'cloudinary';
-import { deductCredits, refundCredits } from "./user.actions";
+import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "./usage-log.actions";
 
 cloudinary.config({

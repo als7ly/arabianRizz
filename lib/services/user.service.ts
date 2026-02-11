@@ -74,3 +74,57 @@ export async function updateCredits(userId: string, creditFee: number) {
     handleError(error);
   }
 }
+
+// CREDIT MANAGEMENT
+
+/**
+ * Deducts credits from the user's balance.
+ * Uses atomic findOneAndUpdate to ensure thread safety and sufficient funds.
+ * @param userId MongoDB User ID
+ * @param amount Number of credits to deduct (positive integer)
+ * @returns The updated User object
+ * @throws Error if insufficient credits or user not found
+ */
+export async function deductCredits(userId: string, amount: number) {
+  if (amount < 0) throw new Error("Amount must be positive");
+
+  await connectToDatabase();
+
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, creditBalance: { $gte: amount } },
+    { $inc: { creditBalance: -amount } },
+    { new: true }
+  );
+
+  if (!updatedUser) {
+    // Check if user exists but just has low balance
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+    throw new Error("Insufficient credits");
+  }
+
+  return JSON.parse(JSON.stringify(updatedUser));
+}
+
+/**
+ * Refunds credits to the user's balance.
+ * Used for rolling back failed operations.
+ * @param userId MongoDB User ID
+ * @param amount Number of credits to refund
+ * @returns The updated User object
+ */
+export async function refundCredits(userId: string, amount: number) {
+  if (amount < 0) throw new Error("Amount must be positive");
+
+  await connectToDatabase();
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $inc: { creditBalance: amount } },
+    { new: true }
+  );
+
+  if (!updatedUser) throw new Error("User not found during refund");
+
+  return JSON.parse(JSON.stringify(updatedUser));
+}
