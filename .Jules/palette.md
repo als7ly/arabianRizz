@@ -57,3 +57,7 @@
 ## 2026-02-17 - Async Action Feedback in Menus
 **Learning:** Dropdown menu actions (like "Export Chat") often rely only on text changes ("Exporting...") for feedback, which is too subtle for users expecting immediate confirmation.
 **Action:** Replace the static action icon with a spinning `Loader2` during the loading state to provide clear visual confirmation of the background process.
+
+## 2026-02-17 - Keeping Dropdown Menus Open for Async Actions
+**Learning:** By default, clicking a `DropdownMenuItem` closes the menu immediately. For async actions like "Export Chat", this prevents users from seeing the loading state/feedback within the item itself.
+**Action:** Use `onSelect={(e) => e.preventDefault()}` on the `DropdownMenuItem` to prevent immediate closing. Then, manually close the menu (by controlling its open state) once the async action completes.
