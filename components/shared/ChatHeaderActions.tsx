@@ -34,6 +34,7 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
   const [isExporting, setIsExporting] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
   const handleExport = async () => {
@@ -58,12 +59,13 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
       toast({ title: "Error", description: "Failed to export chat.", variant: "destructive" });
     } finally {
       setIsExporting(false);
+      setIsOpen(false);
     }
   };
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -79,7 +81,14 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
             <Search className="mr-2 h-4 w-4" />
             <span>Search Chat</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExport} disabled={isExporting} className="cursor-pointer">
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              handleExport();
+            }}
+            disabled={isExporting}
+            className="cursor-pointer"
+          >
             {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
             <span>{isExporting ? "Exporting..." : "Export Chat"}</span>
           </DropdownMenuItem>
