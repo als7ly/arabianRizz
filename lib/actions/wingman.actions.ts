@@ -497,9 +497,13 @@ export async function generateHookupLine(girlId: string) {
 
     const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
 
+    // Optimization: Generate embedding once and reuse
+    const combinedQuery = "best hookup lines flirting dating advice";
+    const embedding = await generateEmbedding(combinedQuery);
+
     const [userContext, globalKnowledge] = await Promise.all([
-      getUserContext(girl.author.toString(), "hookup line flirting"),
-      getGlobalKnowledge("best hookup lines dating advice", language)
+      getUserContext(girl.author.toString(), combinedQuery, embedding),
+      getGlobalKnowledge(combinedQuery, language, embedding)
     ]);
 
     const userContextString = userContext.map((k: any) => k.content).join("\n");
