@@ -1,17 +1,18 @@
 {
   "Index": {
     "title": "ArabianRizz",
-    "subtitle": "您的 AI 僚机正在等待。"
+    "subtitle": "您的AI僚机已就位。"
   },
   "Dashboard": {
+    "welcomeBack": "欢迎回来",
     "myGirls": "我的女孩",
     "addGirl": "添加新女孩",
-    "noGirls": "尚未添加女孩。从添加个人资料开始！",
+    "noGirls": "暂无女孩。开始添加一个档案吧！",
     "welcomeTitle": "欢迎来到 ArabianRizz! 🧞‍♂️",
-    "welcomeDesc": "你的AI僚机已准备就绪。按照以下步骤操作：",
-    "step1": "为你喜欢的女孩创建档案。",
-    "step2": "使用 <b>Magic Fill</b> 从截图提取详情。",
-    "step3": "开始聊天并获取 <b>搭讪台词</b>！",
+    "welcomeDesc": "您的个人AI僚机已准备就绪。请按照以下步骤操作：",
+    "step1": "为您喜欢的女孩创建一个档案。",
+    "step2": "使用<b>魔法填充</b>从截图中提取详细信息。",
+    "step3": "开始聊天并请求<b>搭讪语</b>！",
     "balance": "我的余额",
     "createProfileDesc": "为女孩创建档案。",
     "searchPlaceholder": "按姓名搜索...",
@@ -39,8 +40,9 @@
     "createPersonaBtn": "Create Persona"
   },
   "Sidebar": {
-    "home": "首页",
+    "home": "主页",
     "profile": "个人资料",
+    "saved": "已保存的语录",
     "login": "登录",
     "signOut": "退出",
     "language": "语言",
@@ -52,39 +54,39 @@
   },
   "Credits": {
     "title": "购买积分",
-    "subtitle": "选择套餐！",
-    "freeConsumable": "免费",
+    "subtitle": "选择适合您的积分套餐！",
+    "freeConsumable": "免费消耗品",
     "credits": "积分",
-    "upgrade": "升级"
+    "upgrade": "升级计划"
   },
   "Profile": {
     "title": "个人资料",
-    "subtitle": "管理账户",
+    "subtitle": "管理您的账户设置",
     "subscription": "订阅与积分",
     "currentPlan": "当前计划：",
     "upgrade": "升级计划",
-    "signOut": "退出"
+    "signOut": "登出"
   },
   "Plans": {
     "names": {
       "free": "免费",
       "starter": "入门包",
       "playboy": "花花公子包",
-      "rizz_god": "撩妹之神包"
+      "rizz_god": "Rizz神包"
     },
     "inclusions": {
       "credits_20": "20 免费积分",
-      "basic_rizz": "基础功能",
+      "basic_rizz": "基础 Rizz 访问",
       "uncensored_ai": "无审查 AI",
       "art_generation": "艺术生成",
       "credits_100": "100 积分",
       "uncensored_wingman": "无审查僚机",
-      "art_access": "艺术生成权限",
+      "art_access": "艺术生成访问",
       "priority_support": "优先支持",
       "credits_250": "250 积分",
       "priority_updates": "优先更新",
       "credits_1000": "1000 积分",
-      "ultimate_uncensored": "终极无审查权限",
+      "ultimate_uncensored": "终极无审查访问",
       "unlimited_art": "无限艺术生成*",
       "vip_status": "VIP 身份"
     }
@@ -96,14 +98,14 @@
   },
   "Forms": {
     "MagicFill": {
-      "button": "Magic Fill",
+      "button": "从截图魔法填充",
       "analyzing": "分析中...",
       "analyzingToastTitle": "正在分析截图...",
-      "analyzingToastDesc": "提取详情。",
-      "successTitle": "完成！",
-      "successDesc": "保存。",
-      "failTitle": "失败",
-      "failDesc": "无法提取。",
+      "analyzingToastDesc": "正在提取档案详情。",
+      "successTitle": "魔法填充完成！",
+      "successDesc": "请查看详细信息并保存。",
+      "failTitle": "分析失败",
+      "failDesc": "无法提取详细信息。",
       "errorTitle": "错误",
       "errorDesc": "出错了。"
     },
@@ -125,20 +127,20 @@
     }
   },
   "Chat": {
-    "wingmanThinking": "思考中...",
-    "hookupButtonTitle": "生成搭讪",
-    "imageButtonTitle": "生成图片",
-    "hookupToastTitle": "生成完毕",
+    "wingmanThinking": "僚机正在思考...",
+    "hookupButtonTitle": "生成搭讪语",
+    "imageButtonTitle": "生成图片回复",
+    "hookupToastTitle": "搭讪语已生成",
     "errorTitle": "错误",
-    "errorHookup": "生成失败。",
-    "errorImage": "图片失败。",
-    "errorContext": "无上下文。",
-    "errorReply": "回复失败",
-    "errorProcessImage": "处理失败",
-    "readingScreenshot": "读取中...",
-    "readingScreenshotDesc": "分析对话。",
-    "noTextInImage": "未找到文字。",
-    "startPrompt": "发送消息或截图！",
+    "errorHookup": "生成搭讪语失败。",
+    "errorImage": "生成图片失败。",
+    "errorContext": "没有生成图片的上下文。",
+    "errorReply": "获取回复失败",
+    "errorProcessImage": "处理图片失败",
+    "readingScreenshot": "正在读取截图...",
+    "readingScreenshotDesc": "正在分析对话。",
+    "noTextInImage": "无法从图片中读取文字。",
+    "startPrompt": "发送消息或上传截图开始！",
     "sheSaid": "她说",
     "wingman": "僚机",
     "inputPlaceholder": "输入...",

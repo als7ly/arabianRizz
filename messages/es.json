@@ -4,13 +4,14 @@
     "subtitle": "Tu Wingman de IA te espera."
   },
   "Dashboard": {
+    "welcomeBack": "Bienvenido de nuevo",
     "myGirls": "Mis Chicas",
-    "addGirl": "Añadir Chica",
-    "noGirls": "No hay chicas añadidas. ¡Empieza añadiendo un perfil!",
+    "addGirl": "Añadir Nueva Chica",
+    "noGirls": "Aún no has añadido chicas. ¡Comienza añadiendo un perfil!",
     "welcomeTitle": "¡Bienvenido a ArabianRizz! 🧞‍♂️",
-    "welcomeDesc": "Tu Wingman de IA personal está listo. Sigue estos pasos:",
+    "welcomeDesc": "Tu Wingman personal de IA está listo. Sigue estos pasos:",
     "step1": "Crea un perfil para la chica que te gusta.",
-    "step2": "Usa <b>Magic Fill</b> para extraer detalles de una captura.",
+    "step2": "Usa <b>Relleno Mágico</b> para extraer detalles de una captura de pantalla.",
     "step3": "¡Empieza a chatear y pide <b>Frases para Ligar</b>!",
     "balance": "Mi Saldo",
     "createProfileDesc": "Crea un perfil para la chica con la que quieres ligar.",
@@ -52,14 +53,14 @@
   },
   "Credits": {
     "title": "Comprar Créditos",
-    "subtitle": "¡Elige el paquete que mejor se adapte a ti!",
-    "freeConsumable": "Consumible Gratis",
+    "subtitle": "¡Elige un paquete de créditos que se adapte a tus necesidades!",
+    "freeConsumable": "Consumible Gratuito",
     "credits": "Créditos",
     "upgrade": "Mejorar Plan"
   },
   "Profile": {
     "title": "Perfil",
-    "subtitle": "Gestiona tu cuenta",
+    "subtitle": "Gestiona la configuración de tu cuenta",
     "subscription": "Suscripción y Créditos",
     "currentPlan": "Plan Actual:",
     "upgrade": "Mejorar Plan",
@@ -68,13 +69,13 @@
   "Plans": {
     "names": {
       "free": "Gratis",
-      "starter": "Pack Inicial",
-      "playboy": "Pack Playboy",
-      "rizz_god": "Pack Dios del Rizz"
+      "starter": "Paquete Inicial",
+      "playboy": "Paquete Playboy",
+      "rizz_god": "Paquete Dios del Rizz"
     },
     "inclusions": {
       "credits_20": "20 Créditos Gratis",
-      "basic_rizz": "Acceso Rizz Básico",
+      "basic_rizz": "Acceso Básico a Rizz",
       "uncensored_ai": "IA Sin Censura",
       "art_generation": "Generación de Arte",
       "credits_100": "100 Créditos",
@@ -91,14 +92,14 @@
   },
   "Wingman": {
     "chat": "Chat",
-    "upload": "Subir Captura",
+    "upload": "Subir Captura de Pantalla",
     "generate": "Generar Rizz"
   },
   "Forms": {
     "MagicFill": {
       "button": "Relleno Mágico desde Captura",
       "analyzing": "Analizando...",
-      "analyzingToastTitle": "Analizando Captura...",
+      "analyzingToastTitle": "Analizando Captura de Pantalla...",
       "analyzingToastDesc": "Extrayendo detalles del perfil.",
       "successTitle": "¡Relleno Mágico Completo!",
       "successDesc": "Revisa los detalles y guarda.",
@@ -128,17 +129,17 @@
     "wingmanThinking": "Wingman está pensando...",
     "hookupButtonTitle": "Generar Frase para Ligar",
     "imageButtonTitle": "Generar Respuesta con Imagen",
-    "hookupToastTitle": "Frase Generada",
+    "hookupToastTitle": "Frase para Ligar Generada",
     "errorTitle": "Error",
-    "errorHookup": "Fallo al generar frase.",
-    "errorImage": "Fallo al generar imagen.",
-    "errorContext": "Sin contexto para generar imagen.",
-    "errorReply": "Fallo al obtener respuesta",
-    "errorProcessImage": "Fallo al procesar imagen",
-    "readingScreenshot": "Leyendo Captura...",
+    "errorHookup": "Error al generar la frase para ligar.",
+    "errorImage": "Error al generar la imagen.",
+    "errorContext": "No hay contexto para generar imagen.",
+    "errorReply": "Error al obtener respuesta",
+    "errorProcessImage": "Error al procesar la imagen",
+    "readingScreenshot": "Leyendo Captura de Pantalla...",
     "readingScreenshotDesc": "Analizando la conversación.",
     "noTextInImage": "No se pudo leer texto de la imagen.",
-    "startPrompt": "¡Empieza enviando un mensaje o subiendo una captura!",
+    "startPrompt": "¡Empieza enviando un mensaje o subiendo una captura de pantalla!",
     "sheSaid": "Ella dijo",
     "wingman": "Wingman",
     "inputPlaceholder": "Escribe lo que quieres decir...",

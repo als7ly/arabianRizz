@@ -1,17 +1,18 @@
 {
   "Index": {
     "title": "ArabianRizz",
-    "subtitle": "あなたのAIウィングマンが待っています。"
+    "subtitle": "あなたのAIウィングマンがお待ちしています。"
   },
   "Dashboard": {
-    "myGirls": "私のガールズ",
+    "welcomeBack": "おかえりなさい",
+    "myGirls": "マイガールズ",
     "addGirl": "新しいガールを追加",
-    "noGirls": "まだガールが追加されていません。プロフィールを追加して始めましょう！",
+    "noGirls": "まだガールが追加されていません。プロフィールを追加することから始めましょう！",
     "welcomeTitle": "ArabianRizzへようこそ！ 🧞‍♂️",
-    "welcomeDesc": "AIウィングマンの準備ができました。手順に従ってください：",
-    "step1": "気になる相手のプロフィールを作成。",
-    "step2": "<b>Magic Fill</b>を使ってスクショから詳細を抽出。",
-    "step3": "チャットを始めて<b>口説き文句</b>をゲット！",
+    "welcomeDesc": "あなたの専属AIウィングマンの準備ができました。以下のステップに従ってください：",
+    "step1": "気になるガールのプロフィールを作成します。",
+    "step2": "<b>マジックフィル</b>を使ってスクリーンショットから詳細を抽出します。",
+    "step3": "チャットを始めて、<b>口説き文句</b>をリクエストしましょう！",
     "balance": "残高",
     "createProfileDesc": "プロフィールを作成。",
     "searchPlaceholder": "検索...",
@@ -41,6 +42,7 @@
   "Sidebar": {
     "home": "ホーム",
     "profile": "プロフィール",
+    "saved": "保存されたフレーズ",
     "login": "ログイン",
     "signOut": "ログアウト",
     "language": "言語",
@@ -51,41 +53,41 @@
     "appName": "ArabianRizz"
   },
   "Credits": {
-    "title": "クレジット購入",
-    "subtitle": "プランを選択！",
-    "freeConsumable": "無料",
+    "title": "クレジットを購入",
+    "subtitle": "ニーズに合ったクレジットパッケージを選んでください！",
+    "freeConsumable": "無料消費分",
     "credits": "クレジット",
-    "upgrade": "アップグレード"
+    "upgrade": "プランをアップグレード"
   },
   "Profile": {
     "title": "プロフィール",
-    "subtitle": "アカウント管理",
-    "subscription": "サブスクとクレジット",
+    "subtitle": "アカウント設定の管理",
+    "subscription": "サブスクリプションとクレジット",
     "currentPlan": "現在のプラン：",
-    "upgrade": "アップグレード",
-    "signOut": "ログアウト"
+    "upgrade": "プランをアップグレード",
+    "signOut": "サインアウト"
   },
   "Plans": {
     "names": {
       "free": "無料",
       "starter": "スターターパック",
       "playboy": "プレイボーイパック",
-      "rizz_god": "リズゴッドパック"
+      "rizz_god": "Rizzゴッドパック"
     },
     "inclusions": {
       "credits_20": "20 無料クレジット",
-      "basic_rizz": "基本アクセス",
+      "basic_rizz": "基本Rizzアクセス",
       "uncensored_ai": "無修正AI",
-      "art_generation": "画像生成",
+      "art_generation": "アート生成",
       "credits_100": "100 クレジット",
       "uncensored_wingman": "無修正ウィングマン",
-      "art_access": "画像生成アクセス",
+      "art_access": "アート生成アクセス",
       "priority_support": "優先サポート",
       "credits_250": "250 クレジット",
       "priority_updates": "優先アップデート",
       "credits_1000": "1000 クレジット",
       "ultimate_uncensored": "究極の無修正アクセス",
-      "unlimited_art": "無制限画像生成*",
+      "unlimited_art": "無制限アート生成*",
       "vip_status": "VIPステータス"
     }
   },
@@ -96,14 +98,14 @@
   },
   "Forms": {
     "MagicFill": {
-      "button": "Magic Fill",
+      "button": "スクショからマジックフィル",
       "analyzing": "分析中...",
-      "analyzingToastTitle": "分析中...",
-      "analyzingToastDesc": "詳細を抽出。",
-      "successTitle": "完了！",
-      "successDesc": "保存。",
-      "failTitle": "失敗",
-      "failDesc": "抽出できませんでした。",
+      "analyzingToastTitle": "スクリーンショットを分析中...",
+      "analyzingToastDesc": "プロフィールの詳細を抽出しています。",
+      "successTitle": "マジックフィル完了！",
+      "successDesc": "詳細を確認して保存してください。",
+      "failTitle": "分析失敗",
+      "failDesc": "詳細を抽出できませんでした。",
       "errorTitle": "エラー",
       "errorDesc": "問題が発生しました。"
     },
@@ -125,20 +127,20 @@
     }
   },
   "Chat": {
-    "wingmanThinking": "考え中...",
+    "wingmanThinking": "ウィングマンが考え中...",
     "hookupButtonTitle": "口説き文句を生成",
-    "imageButtonTitle": "画像を生成",
-    "hookupToastTitle": "生成完了",
+    "imageButtonTitle": "画像で返信を生成",
+    "hookupToastTitle": "口説き文句を生成しました",
     "errorTitle": "エラー",
-    "errorHookup": "生成失敗。",
-    "errorImage": "画像失敗。",
-    "errorContext": "コンテキストなし。",
-    "errorReply": "返信失敗",
-    "errorProcessImage": "処理失敗",
-    "readingScreenshot": "読み込み中...",
-    "readingScreenshotDesc": "会話を分析。",
-    "noTextInImage": "文字が見つかりません。",
-    "startPrompt": "メッセージを送るかスクショをアップロード！",
+    "errorHookup": "口説き文句の生成に失敗しました。",
+    "errorImage": "画像の生成に失敗しました。",
+    "errorContext": "画像を生成するための文脈がありません。",
+    "errorReply": "返信の取得に失敗しました",
+    "errorProcessImage": "画像の処理に失敗しました",
+    "readingScreenshot": "スクリーンショットを読み込み中...",
+    "readingScreenshotDesc": "会話を分析しています。",
+    "noTextInImage": "画像からテキストを読み取れませんでした。",
+    "startPrompt": "メッセージを送信するか、スクリーンショットをアップロードして始めましょう！",
     "sheSaid": "彼女",
     "wingman": "Wingman",
     "inputPlaceholder": "入力...",

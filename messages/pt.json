@@ -1,17 +1,18 @@
 {
   "Index": {
     "title": "ArabianRizz",
-    "subtitle": "Seu Wingman IA aguarda."
+    "subtitle": "Seu Wingman de IA o aguarda."
   },
   "Dashboard": {
+    "welcomeBack": "Bem-vindo de volta",
     "myGirls": "Minhas Garotas",
-    "addGirl": "Adicionar Garota",
-    "noGirls": "Nenhuma garota adicionada ainda.",
+    "addGirl": "Adicionar Nova Garota",
+    "noGirls": "Nenhuma garota adicionada ainda. Comece adicionando um perfil!",
     "welcomeTitle": "Bem-vindo ao ArabianRizz! 🧞‍♂️",
-    "welcomeDesc": "Seu Wingman IA pessoal está pronto. Siga estes passos:",
+    "welcomeDesc": "Seu Wingman pessoal de IA está pronto. Siga estas etapas:",
     "step1": "Crie um perfil para a garota que você gosta.",
-    "step2": "Use <b>Magic Fill</b> para extrair detalhes de um print.",
-    "step3": "Comece a conversar e peça <b>Frases de Engate</b>!",
+    "step2": "Use o <b>Preenchimento Mágico</b> para extrair detalhes de uma captura de tela.",
+    "step3": "Comece a conversar e peça <b>Cantadas</b>!",
     "balance": "Meu Saldo",
     "createProfileDesc": "Crie um perfil para a garota.",
     "searchPlaceholder": "Buscar por nome ou vibe...",
@@ -41,6 +42,7 @@
   "Sidebar": {
     "home": "Início",
     "profile": "Perfil",
+    "saved": "Frases Salvas",
     "login": "Entrar",
     "signOut": "Sair",
     "language": "Idioma",
@@ -52,57 +54,57 @@
   },
   "Credits": {
     "title": "Comprar Créditos",
-    "subtitle": "Escolha um pacote!",
-    "freeConsumable": "Consumível Grátis",
+    "subtitle": "Escolha um pacote de créditos que atenda às suas necessidades!",
+    "freeConsumable": "Consumível Gratuito",
     "credits": "Créditos",
-    "upgrade": "Melhorar Plano"
+    "upgrade": "Fazer Upgrade"
   },
   "Profile": {
     "title": "Perfil",
-    "subtitle": "Gerenciar conta",
+    "subtitle": "Gerencie as configurações da sua conta",
     "subscription": "Assinatura e Créditos",
     "currentPlan": "Plano Atual:",
-    "upgrade": "Melhorar Plano",
+    "upgrade": "Fazer Upgrade",
     "signOut": "Sair"
   },
   "Plans": {
     "names": {
       "free": "Grátis",
-      "starter": "Pack Inicial",
-      "playboy": "Pack Playboy",
-      "rizz_god": "Pack Deus do Rizz"
+      "starter": "Pacote Inicial",
+      "playboy": "Pacote Playboy",
+      "rizz_god": "Pacote Deus do Rizz"
     },
     "inclusions": {
       "credits_20": "20 Créditos Grátis",
-      "basic_rizz": "Acesso Rizz Básico",
+      "basic_rizz": "Acesso Básico ao Rizz",
       "uncensored_ai": "IA Sem Censura",
       "art_generation": "Geração de Arte",
       "credits_100": "100 Créditos",
       "uncensored_wingman": "Wingman Sem Censura",
-      "art_access": "Acesso Geração de Arte",
+      "art_access": "Acesso à Geração de Arte",
       "priority_support": "Suporte Prioritário",
       "credits_250": "250 Créditos",
       "priority_updates": "Atualizações Prioritárias",
       "credits_1000": "1000 Créditos",
       "ultimate_uncensored": "Acesso Total Sem Censura",
-      "unlimited_art": "Arte Ilimitada*",
+      "unlimited_art": "Geração de Arte Ilimitada*",
       "vip_status": "Status VIP"
     }
   },
   "Wingman": {
-    "chat": "Chat",
-    "upload": "Enviar Print",
+    "chat": "Conversar",
+    "upload": "Enviar Captura de Tela",
     "generate": "Gerar Rizz"
   },
   "Forms": {
     "MagicFill": {
-      "button": "Magic Fill do Print",
+      "button": "Preenchimento Mágico da Captura",
       "analyzing": "Analisando...",
-      "analyzingToastTitle": "Analisando Print...",
-      "analyzingToastDesc": "Extraindo detalhes.",
-      "successTitle": "Magic Fill Completo!",
-      "successDesc": "Revise e salve.",
-      "failTitle": "Falha",
+      "analyzingToastTitle": "Analisando Captura de Tela...",
+      "analyzingToastDesc": "Extraindo detalhes do perfil.",
+      "successTitle": "Preenchimento Mágico Concluído!",
+      "successDesc": "Revise os detalhes e salve.",
+      "failTitle": "Falha na Análise",
       "failDesc": "Não foi possível extrair detalhes.",
       "errorTitle": "Erro",
       "errorDesc": "Algo deu errado."
@@ -125,20 +127,20 @@
     }
   },
   "Chat": {
-    "wingmanThinking": "Wingman pensando...",
+    "wingmanThinking": "Wingman está pensando...",
     "hookupButtonTitle": "Gerar Cantada",
-    "imageButtonTitle": "Gerar Imagem",
+    "imageButtonTitle": "Gerar Resposta com Imagem",
     "hookupToastTitle": "Cantada Gerada",
     "errorTitle": "Erro",
-    "errorHookup": "Falha ao gerar.",
+    "errorHookup": "Falha ao gerar cantada.",
     "errorImage": "Falha ao gerar imagem.",
-    "errorContext": "Sem contexto.",
-    "errorReply": "Falha na resposta",
+    "errorContext": "Sem contexto para gerar imagem.",
+    "errorReply": "Falha ao obter resposta",
     "errorProcessImage": "Falha ao processar imagem",
-    "readingScreenshot": "Lendo Print...",
-    "readingScreenshotDesc": "Analisando conversa.",
-    "noTextInImage": "Texto não encontrado.",
-    "startPrompt": "Envie uma mensagem ou um print!",
+    "readingScreenshot": "Lendo Captura de Tela...",
+    "readingScreenshotDesc": "Analisando a conversa.",
+    "noTextInImage": "Não foi possível ler texto da imagem.",
+    "startPrompt": "Comece enviando uma mensagem ou enviando uma captura de tela!",
     "sheSaid": "Ela disse",
     "wingman": "Wingman",
     "inputPlaceholder": "Digite algo...",
