@@ -61,3 +61,7 @@
 ## 2026-02-17 - Keeping Dropdown Menus Open for Async Actions
 **Learning:** By default, clicking a `DropdownMenuItem` closes the menu immediately. For async actions like "Export Chat", this prevents users from seeing the loading state/feedback within the item itself.
 **Action:** Use `onSelect={(e) => e.preventDefault()}` on the `DropdownMenuItem` to prevent immediate closing. Then, manually close the menu (by controlling its open state) once the async action completes.
+
+## 2026-03-20 - Skeleton Loading for Recommendations
+**Learning:** Replacing a generic loading spinner with a skeleton loading state significantly improves perceived performance and provides a smoother visual transition by mimicking the content layout.
+**Action:** Use skeleton loading states for list views and cards where possible, ensuring they match the structure of the loaded content.
