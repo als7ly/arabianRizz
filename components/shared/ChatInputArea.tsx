@@ -89,66 +89,66 @@ export const ChatInputArea = ({
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Generate Art</DialogTitle>
+                        <DialogTitle>{t('generateArtTitle')}</DialogTitle>
                         <DialogDescription>
-                            Create an image of her. <span className="text-purple-600 font-semibold">Cost: 3 Credits</span>
+                            {t('generateArtDialogDesc')} <span className="text-purple-600 font-semibold">{t('cost', { amount: 3 })}</span>
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         <div className="space-y-2">
-                            <Label>Style</Label>
+                            <Label>{t('style')}</Label>
                             <RadioGroup defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
                                 <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
                                     <RadioGroupItem value="standard" id="mode-standard" />
-                                    <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
+                                    <Label htmlFor="mode-standard" className="cursor-pointer">{t('standardArt')}</Label>
                                 </div>
                                 <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
                                     <RadioGroupItem value="selfie" id="mode-selfie" />
                                     <Label htmlFor="mode-selfie" className="cursor-pointer flex items-center gap-1">
-                                        <Camera size={14} /> Selfie Mode
+                                        <Camera size={14} /> {t('selfieMode')}
                                     </Label>
                                 </div>
                             </RadioGroup>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="art-prompt">Prompt</Label>
+                            <Label htmlFor="art-prompt">{t('prompt')}</Label>
                             <Input
                                 id="art-prompt"
                                 value={artPrompt}
                                 onChange={(e) => setArtPrompt(e.target.value)}
-                                placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
+                                placeholder={artMode === 'selfie' ? t('placeholderSelfie') : t('placeholderStandard')}
                                 onKeyDown={(e) => e.key === "Enter" && handleArtSubmit()}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button onClick={handleArtSubmit} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600 w-full">
-                            Generate Image
+                            {t('generateImageBtn')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Button variant="ghost" size="icon" onClick={onGenerateHookup} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
+            <Button variant="ghost" size="icon" onClick={onGenerateHookup} disabled={isLoading} title={t('hookupButtonTitle')} aria-label={t('hookupAria')}>
                 <Zap size={24} className="text-muted-foreground hover:text-yellow-500"/>
             </Button>
 
-            <Button variant="ghost" size="icon" onClick={onGetRecommendations} disabled={isLoading} title="Gift & Date Ideas" aria-label="Get Recommendations">
+            <Button variant="ghost" size="icon" onClick={onGetRecommendations} disabled={isLoading} title={t('giftDateIdeas')} aria-label={t('giftDateIdeas')}>
                 <Gift size={24} className="text-muted-foreground hover:text-pink-500"/>
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading} title="Scenario Mode" aria-label="Scenario Mode">
+                <Button variant="ghost" size="icon" disabled={isLoading} title={t('scenarioMode')} aria-label={t('scenarioMode')}>
                     <Sparkles size={24} className="text-muted-foreground hover:text-purple-500"/>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 max-h-[400px] overflow-y-auto">
-                <DropdownMenuLabel>Scenario Mode</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('scenarioMode')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {SCENARIO_CATEGORIES.map((category) => (
                     <div key={category.id}>
-                        <DropdownMenuLabel className="text-xs text-gray-400 font-normal uppercase mt-2 px-2">{category.label}</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-xs text-gray-400 font-normal uppercase mt-2 px-2">{t(`Scenarios.${category.id}`)}</DropdownMenuLabel>
                         {category.scenarios.map((scenario) => (
                             <DropdownMenuItem
                                 key={scenario.id}
@@ -156,7 +156,7 @@ export const ChatInputArea = ({
                                 className="cursor-pointer flex items-center gap-2 py-2"
                             >
                                 <scenario.icon size={16} className={scenario.color || "text-gray-500"} />
-                                <span>{scenario.label}</span>
+                                <span>{t(`Scenarios.${scenario.id}`)}</span>
                             </DropdownMenuItem>
                         ))}
                     </div>
@@ -165,28 +165,28 @@ export const ChatInputArea = ({
             </DropdownMenu>
 
             <Select onValueChange={setTone} defaultValue="Flirty" value={tone}>
-                <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone" title={t('toneAria')}>
-                    <SelectValue placeholder="Tone" />
+                <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label={t('toneAria')} title={t('toneAria')}>
+                    <SelectValue placeholder={t('tone')} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="Flirty">Flirty</SelectItem>
-                    <SelectItem value="Funny">Funny</SelectItem>
-                    <SelectItem value="Serious">Serious</SelectItem>
-                    <SelectItem value="Mysterious">Mysterious</SelectItem>
+                    <SelectItem value="Flirty">{t('toneFlirty')}</SelectItem>
+                    <SelectItem value="Funny">{t('toneFunny')}</SelectItem>
+                    <SelectItem value="Serious">{t('toneSerious')}</SelectItem>
+                    <SelectItem value="Mysterious">{t('toneMysterious')}</SelectItem>
                 </SelectContent>
             </Select>
 
             <div className="flex-1 flex gap-2 w-full md:w-auto">
-                 <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label="Message sender">
+                 <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label={t('senderAria')}>
                     <Button
                         variant={sender === 'user' ? 'secondary' : 'ghost'}
                         size="sm"
                         className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
                         onClick={() => setSender('user')}
                         aria-pressed={sender === 'user'}
-                        aria-label="Set sender to Me"
+                        aria-label={t('senderMeAria')}
                     >
-                        Me
+                        {t('me')}
                     </Button>
                     <Button
                         variant={sender === 'girl' ? 'secondary' : 'ghost'}
@@ -194,9 +194,9 @@ export const ChatInputArea = ({
                         className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
                         onClick={() => setSender('girl')}
                         aria-pressed={sender === 'girl'}
-                        aria-label="Set sender to Her"
+                        aria-label={t('senderHerAria')}
                     >
-                        Her
+                        {t('her')}
                     </Button>
                 </div>
                  <Input
@@ -214,7 +214,7 @@ export const ChatInputArea = ({
                     className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
                     aria-label={t('sendAria')}
                 >
-                    {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
+                    {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ms-0.5" />}
                 </Button>
             </div>
         </div>

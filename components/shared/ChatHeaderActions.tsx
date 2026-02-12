@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getChatHistory } from "@/lib/actions/girl.actions";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslations } from "next-intl";
 
 interface ChatHeaderActionsProps {
   girlId: string;
@@ -36,13 +37,14 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations('Chat');
 
   const handleExport = async () => {
     setIsExporting(true);
     try {
       const messages = await getChatHistory(girlId);
       if (!messages || messages.length === 0) {
-        toast({ title: "No Messages", description: "There is nothing to export." });
+        toast({ title: t('noMessages'), description: t('noMessagesDesc') });
         return;
       }
 
@@ -53,10 +55,10 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
       document.body.appendChild(downloadAnchorNode); // required for firefox
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
-      toast({ title: "Success", description: "Chat history exported." });
+      toast({ title: t('exportSuccess'), description: t('exportSuccessDesc') });
     } catch (e) {
       console.error(e);
-      toast({ title: "Error", description: "Failed to export chat.", variant: "destructive" });
+      toast({ title: t('exportError'), description: t('exportErrorDesc'), variant: "destructive" });
     } finally {
       setIsExporting(false);
       setIsOpen(false);
@@ -78,8 +80,8 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setShowSearchDialog(true)} className="cursor-pointer">
-            <Search className="mr-2 h-4 w-4" />
-            <span>Search Chat</span>
+            <Search className="me-2 h-4 w-4" />
+            <span>{t('searchChat')}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
@@ -89,16 +91,16 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
             disabled={isExporting}
             className="cursor-pointer"
           >
-            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-            <span>{isExporting ? "Exporting..." : "Export Chat"}</span>
+            {isExporting ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <Download className="me-2 h-4 w-4" />}
+            <span>{isExporting ? t('exporting') : t('exportChat')}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setShowClearDialog(true)}
             className="text-red-600 focus:text-red-600 cursor-pointer"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span>Clear Chat</span>
+            <Trash2 className="me-2 h-4 w-4" />
+            <span>{t('clearChatTitle')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -106,13 +108,13 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('clearChatDialogTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete all messages with this persona. This action cannot be undone.
+              {t('clearChatDialogDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 onClearChat();
@@ -120,7 +122,7 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
               }}
               className="bg-red-500 hover:bg-red-600"
             >
-              Delete
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
