@@ -54,7 +54,7 @@ export const GirlCard = ({ girl }: { girl: any }) => {
         </p>
 
         <div className="flex justify-between items-center mt-2">
-            <Button variant="ghost" size="sm" className="text-purple-500 gap-2 pl-0 hover:bg-transparent hover:text-purple-600">
+            <Button variant="ghost" size="sm" className="text-purple-500 gap-2 ps-0 hover:bg-transparent hover:text-purple-600">
                 <MessageCircle size={18} />
                 {t('chatBtn')}
             </Button>

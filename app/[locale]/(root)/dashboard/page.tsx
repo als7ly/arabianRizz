@@ -36,7 +36,7 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
                     {t('welcomeBack')}, {user.username || "King"}
                 </h1>
-                <p className="text-muted-foreground text-lg">Ready to level up your game today?</p>
+                <p className="text-muted-foreground text-lg">{t('welcomeSubtitle')}</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -45,8 +45,8 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                  </div>
                  <Link href="/dashboard/credits">
                     <Button className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-                        <Icons.billing className="mr-2 h-4 w-4" />
-                        Top Up Credits
+                        <Icons.billing className="me-2 h-4 w-4" />
+                        {t('topUpCredits')}
                     </Button>
                  </Link>
             </div>
@@ -61,8 +61,8 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                             <div className="h-12 w-12 rounded-xl bg-primary/10 flex-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                 <Icons.add className="h-6 w-6" />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">New Persona</h3>
-                            <p className="text-sm text-muted-foreground mt-auto">Create a new girl profile to start chatting.</p>
+                            <h3 className="text-xl font-bold mb-2">{t('newPersonaTitle')}</h3>
+                            <p className="text-sm text-muted-foreground mt-auto">{t('newPersonaDesc')}</p>
                         </div>
                     </div>
                 </DialogTrigger>
@@ -81,8 +81,8 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                          <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex-center mb-4 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                             <Icons.bookmark className="h-6 w-6" />
                         </div>
-                        <h3 className="text-xl font-bold mb-2">Saved Lines</h3>
-                        <p className="text-sm text-muted-foreground mt-auto">Access your best pickup lines and replies.</p>
+                        <h3 className="text-xl font-bold mb-2">{t('savedLinesTitle')}</h3>
+                        <p className="text-sm text-muted-foreground mt-auto">{t('savedLinesDesc')}</p>
                     </div>
                 </div>
             </Link>
@@ -93,8 +93,8 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                          <div className="h-12 w-12 rounded-xl bg-orange-500/10 flex-center mb-4 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                             <Icons.settings className="h-6 w-6" />
                         </div>
-                        <h3 className="text-xl font-bold mb-2">My Profile</h3>
-                        <p className="text-sm text-muted-foreground mt-auto">Update your bio to get better advice.</p>
+                        <h3 className="text-xl font-bold mb-2">{t('myProfileTitle')}</h3>
+                        <p className="text-sm text-muted-foreground mt-auto">{t('myProfileDesc')}</p>
                     </div>
                 </div>
             </Link>
@@ -103,10 +103,10 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
         {/* Recent Girls / My Girls */}
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold tracking-tight">Recent Personas</h2>
+                <h2 className="text-2xl font-bold tracking-tight">{t('recentPersonas')}</h2>
                 {girls.length > 3 && (
                      <Link href="/dashboard/girls" className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                        View All <Icons.arrowRight className="h-4 w-4" />
+                        {t('viewAll')} <Icons.arrowRight className="h-4 w-4 rtl:rotate-180" />
                     </Link>
                 )}
             </div>
@@ -122,11 +122,11 @@ const Dashboard = async ({ params: { locale }, searchParams }: { params: { local
                     <div className="w-16 h-16 bg-secondary rounded-full flex-center mx-auto mb-4 text-muted-foreground">
                         <Icons.user className="h-8 w-8" />
                     </div>
-                    <h3 className="text-xl font-bold mb-2">No personas yet</h3>
-                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">Create your first AI persona to start getting tailored advice.</p>
+                    <h3 className="text-xl font-bold mb-2">{t('noPersonasTitle')}</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm mx-auto">{t('noPersonasDesc')}</p>
                     <Dialog>
                         <DialogTrigger asChild>
-                             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white">Create Persona</Button>
+                             <Button size="lg" className="bg-primary hover:bg-primary/90 text-white">{t('createPersonaBtn')}</Button>
                         </DialogTrigger>
                         <DialogContent>
                              <DialogHeader>

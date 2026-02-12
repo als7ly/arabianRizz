@@ -23,7 +23,20 @@
     "deleteDialogCancel": "إلغاء",
     "deleteDialogConfirm": "حذف",
     "chatBtn": "محادثة",
-    "noNotes": "لا توجد ملاحظات."
+    "noNotes": "لا توجد ملاحظات.",
+    "welcomeSubtitle": "جاهز للارتقاء بأسلوبك اليوم؟",
+    "topUpCredits": "شحن الرصيد",
+    "newPersonaTitle": "شخصية جديدة",
+    "newPersonaDesc": "أنشئ ملف تعريف لفتاة جديدة وابدأ الدردشة.",
+    "savedLinesTitle": "العبارات المحفوظة",
+    "savedLinesDesc": "الوصول إلى أفضل عباراتك وردودك.",
+    "myProfileTitle": "ملفي الشخصي",
+    "myProfileDesc": "حدث سيرتك الذاتية للحصول على نصائح أفضل.",
+    "recentPersonas": "أحدث الشخصيات",
+    "viewAll": "عرض الكل",
+    "noPersonasTitle": "لا توجد شخصيات بعد",
+    "noPersonasDesc": "أنشئ أول شخصية ذكاء اصطناعي لك لتبدأ في الحصول على نصائح مخصصة.",
+    "createPersonaBtn": "إنشاء شخصية"
   },
   "Sidebar": {
     "home": "الرئيسية",
