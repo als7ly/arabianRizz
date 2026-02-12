@@ -14,6 +14,7 @@ import CreditBalance from "@/components/shared/CreditBalance";
 import PersonaManager from "@/components/shared/PersonaManager";
 import BillingHistory from "@/components/shared/BillingHistory";
 import ManageSubscriptionButton from "@/components/shared/ManageSubscriptionButton";
+import { ProfileForm } from "@/components/shared/ProfileForm";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -74,6 +75,12 @@ const Profile = async () => {
                 <div className="bg-background border border-border rounded-2xl overflow-hidden">
                     <BillingHistory transactions={transactions} />
                 </div>
+            </div>
+
+            {/* Core Identity */}
+            <div className="pb-8 border-b border-border">
+                <h3 className="text-xl font-semibold text-foreground mb-6">Core Identity</h3>
+                <ProfileForm user={user} />
             </div>
 
             {/* Persona Section */}

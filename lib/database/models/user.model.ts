@@ -18,6 +18,13 @@ const UserSchema = new Schema({
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
 
+  // Core Identity Profile
+  bio: { type: String },
+  age: { type: Number },
+  gender: { type: String },
+  occupation: { type: String },
+  relationshipGoal: { type: String },
+
   stripeCustomerId: { type: String, unique: true, sparse: true },
   stripeSubscriptionId: { type: String, unique: true, sparse: true },
   stripePriceId: { type: String },

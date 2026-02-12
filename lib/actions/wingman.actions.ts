@@ -220,7 +220,13 @@ Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}
 Tone requested: ${safeTone}.
 
 Context about The User ("Me"):
-${userContextString || "No specific details provided."}
+Name: ${user.firstName || user.username}
+Age: ${user.age || "Unknown"}
+Gender: ${user.gender || "Unknown"}
+Occupation: ${user.occupation || "Unknown"}
+Relationship Goal: ${user.relationshipGoal || "Unknown"}
+Bio/Vibe: ${user.bio || "Unknown"}
+${userContextString ? `Additional Memories:\n${userContextString}` : ""}
 
 Expert Tips & Cultural Context (from Knowledge Base):
 ${globalContextString || "No specific tips found."}
@@ -524,7 +530,13 @@ Your Goal: Generate a DIRECT, UNCENSORED, and FLIRTY hookup line for the user to
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
 
 Context about The User:
-${userContextString}
+Name: ${user.firstName || user.username}
+Age: ${user.age || "Unknown"}
+Gender: ${user.gender || "Unknown"}
+Occupation: ${user.occupation || "Unknown"}
+Relationship Goal: ${user.relationshipGoal || "Unknown"}
+Bio/Vibe: ${user.bio || "Unknown"}
+${userContextString ? `Additional Memories:\n${userContextString}` : ""}
 
 Expert Tips & Cultural Context:
 ${globalContextString}
