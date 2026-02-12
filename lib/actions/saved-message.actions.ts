@@ -5,6 +5,7 @@ import { connectToDatabase } from "../database/mongoose";
 import SavedMessage from "../database/models/saved-message.model";
 import Message from "../database/models/message.model";
 import User from "../database/models/user.model";
+import "../database/models/girl.model"; // Ensure Girl model is registered for population
 import { auth } from "@clerk/nextjs";
 
 export async function toggleSaveMessage(messageId: string, path: string) {
@@ -23,8 +24,13 @@ export async function toggleSaveMessage(messageId: string, path: string) {
       revalidatePath(path);
       return { isSaved: false, message: "Removed from saved lines." };
     } else {
-      const msg = await Message.findById(messageId);
+      const msg = await Message.findById(messageId).populate("girl");
       if (!msg) throw new Error("Message not found");
+
+      // Security: Ensure the user owns the girl associated with the message
+      if (!msg.girl || msg.girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+      }
 
       await SavedMessage.create({
         user: user._id,
@@ -62,6 +68,26 @@ export async function getSavedMessages() {
     return JSON.parse(JSON.stringify(savedMessages));
   } catch (error) {
     console.error("Get Saved Messages Error:", error);
+    return [];
+  }
+}
+
+export async function getSavedMessageIds() {
+  try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    const savedMessages = await SavedMessage.find({ user: user._id })
+      .select("message")
+      .lean();
+
+    return savedMessages.map((msg: any) => msg.message.toString());
+  } catch (error) {
+    console.error("Get Saved Message IDs Error:", error);
     return [];
   }
 }

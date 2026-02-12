@@ -9,6 +9,13 @@ import User from "../database/models/user.model";
 import { auth } from "@clerk/nextjs";
 
 export async function checkoutCredits(transaction: CheckoutTransactionParams & { mode?: 'payment' | 'subscription' }) {
+  const { userId: clerkId } = auth();
+  if (!clerkId) throw new Error("Unauthorized");
+
+  await connectToDatabase();
+  const user = await User.findOne({ clerkId });
+  if (!user) throw new Error("User not found");
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   // Validate plan
@@ -38,7 +45,7 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
       metadata: {
         plan: transaction.plan,
         credits: credits,
-        buyerId: transaction.buyerId,
+        buyerId: user._id.toString(), // Securely use the authenticated user's ID
       },
       mode: mode,
       success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile?success=true`,

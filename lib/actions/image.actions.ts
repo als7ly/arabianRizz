@@ -7,6 +7,8 @@ import User from "../database/models/user.model";
 import Girl from "../database/models/girl.model";
 import { openai } from "../openai";
 import { v2 as cloudinary } from 'cloudinary';
+import { deductCredits, refundCredits } from "../services/user.service";
+import { logUsage } from "./usage-log.actions";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -27,19 +29,7 @@ export async function generateArt(prompt: string, girlId: string, mode: 'standar
     if (!user) throw new Error("User not found");
 
     // 1. Check & Deduct Credits
-    if (user.creditBalance < IMAGE_COST) {
-        throw new Error(`Insufficient credits. You need ${IMAGE_COST} credits.`);
-    }
-
-    const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id, creditBalance: { $gte: IMAGE_COST } },
-        { $inc: { creditBalance: -IMAGE_COST } },
-        { new: true }
-    );
-
-    if (!updatedUser) {
-        throw new Error("Insufficient credits");
-    }
+    const updatedUser = await deductCredits(user._id, IMAGE_COST);
 
     try {
         // 2. Fetch Girl Details
@@ -105,11 +95,13 @@ export async function generateArt(prompt: string, girlId: string, mode: 'standar
             // Fallback to DALL-E URL (will expire)
         }
 
+        await logUsage({ userId: user._id, action: "image_generation", cost: IMAGE_COST, metadata: { girlId } });
+
         return { imageUrl: finalUrl, remainingCredits: updatedUser.creditBalance };
 
     } catch (error) {
         // Rollback credits on failure
-        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: IMAGE_COST } });
+        await refundCredits(user._id, IMAGE_COST);
         throw error;
     }
 

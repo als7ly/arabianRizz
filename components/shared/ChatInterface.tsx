@@ -2,57 +2,35 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send, Image as ImageIcon, Sparkles, Loader2, Zap, Heart, Coffee, Flame, MessageCircle, Camera, AlertCircle } from "lucide-react";
-import ChatUploader from "./ChatUploader";
+import { Sparkles, AlertCircle } from "lucide-react";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
 import { generateArt } from "@/lib/actions/image.actions";
-import { toggleSaveMessage, getSavedMessages } from "@/lib/actions/saved-message.actions";
+import { toggleSaveMessage, getSavedMessageIds } from "@/lib/actions/saved-message.actions";
 import { clearChat as clearChatAction, getGirlById } from "@/lib/actions/girl.actions";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslations } from "next-intl";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MessageBubble, { Message } from "./MessageBubble";
 import { ChatHeaderActions } from "./ChatHeaderActions";
+import { ChatInputArea } from "./ChatInputArea";
 import { Link } from "@/navigation";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { RecommendationsDialog } from "./RecommendationsDialog";
 
-export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girlId: string, initialMessages: Message[], creditBalance?: number }) => {
+export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultTone }: { girlId: string, initialMessages: Message[], creditBalance?: number, defaultTone?: string }) => {
   const pathname = usePathname();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [sender, setSender] = useState<'user' | 'girl'>('user');
-  const [tone, setTone] = useState("Flirty");
+  const [tone, setTone] = useState(defaultTone || "Flirty");
   const [isLoading, setIsLoading] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string>("nova");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const t = useTranslations('Chat');
+  const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
 
-  // Bolt Optimization: Use ref to track messages for stable callbacks
   const messagesRef = useRef(messages);
   useEffect(() => {
     messagesRef.current = messages;
@@ -80,12 +58,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
 
   const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set());
 
+  // Ref to keep track of savedMessageIds for callbacks without dependency
+  const savedMessageIdsRef = useRef(savedMessageIds);
+  useEffect(() => {
+    savedMessageIdsRef.current = savedMessageIds;
+  }, [savedMessageIds]);
+
   useEffect(() => {
     const fetchSaved = async () => {
         try {
-            const saved = await getSavedMessages();
-            const ids = new Set(saved.map((s: any) => s.message?._id).filter(Boolean));
-            setSavedMessageIds(ids);
+            const ids = await getSavedMessageIds();
+            setSavedMessageIds(new Set(ids));
         } catch (e) {
             console.error("Failed to fetch saved messages", e);
         }
@@ -93,34 +76,36 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     fetchSaved();
   }, []);
 
-  const handleToggleSave = async (msg: Message) => {
+  const handleToggleSave = useCallback(async (msg: Message) => {
     if (!msg._id) return;
-    const isSaved = savedMessageIds.has(msg._id);
 
-    // Optimistic Update
-    const newSet = new Set(savedMessageIds);
-    if (isSaved) newSet.delete(msg._id);
-    else newSet.add(msg._id);
-    setSavedMessageIds(newSet);
+    const wasSaved = savedMessageIdsRef.current.has(msg._id);
+
+    setSavedMessageIds((prev) => {
+        const newSet = new Set(prev);
+        if (wasSaved) newSet.delete(msg._id!);
+        else newSet.add(msg._id!);
+        return newSet;
+    });
 
     try {
         const result = await toggleSaveMessage(msg._id, pathname);
         if (result.isSaved) {
-             toast({ title: "Saved", description: "Message saved to bookmarks." });
+             toast({ title: t('saved'), description: t('savedDesc') });
         } else {
-             toast({ title: "Removed", description: "Message removed from bookmarks." });
+             toast({ title: t('removed'), description: t('removedDesc') });
         }
     } catch (e) {
-        // Revert
+        // Rollback
         setSavedMessageIds(prev => {
              const reverted = new Set(prev);
-             if (isSaved) reverted.add(msg._id!);
+             if (wasSaved) reverted.add(msg._id!);
              else reverted.delete(msg._id!);
              return reverted;
         });
-        toast({ title: "Error", description: "Failed to save message.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('saveError'), variant: "destructive" });
     }
-  };
+  }, [pathname, toast, t]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -169,19 +154,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
 
     } catch (error: any) {
       console.error(error);
-      toast({ title: t('errorTitle'), description: error.message || t('errorReply'), variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : t('errorReply');
+      toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
-      setSender('user'); // Reset to user default
+      setSender('user');
     }
   };
 
-  // Bolt Optimization: Stabilized callback using messagesRef and functional state updates
-  // This allows React.memo on MessageBubble to work correctly by keeping the onRegenerate prop stable
   const handleRegenerate = useCallback(async (index: number) => {
     if (index <= 0) return;
 
-    // Use ref to get current messages without adding to dependency array
     const currentMessages = messagesRef.current;
     const userMsg = currentMessages[index - 1];
     if (userMsg.role !== "user" && userMsg.role !== "girl") return;
@@ -190,7 +173,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
     try {
         setMessages(prev => {
             const newMsgs = [...prev];
-            newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
+            newMsgs[index] = { ...newMsgs[index], content: t('regenerating') };
             return newMsgs;
         });
 
@@ -203,32 +186,33 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         });
 
         toast({
-            title: "Regenerated Tip",
+            title: t('wingmanTip'),
             description: explanation,
             duration: 6000,
         });
 
     } catch (e: any) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: e.message || "Failed to regenerate.", variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : "Failed to regenerate.";
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
-  }, [girlId, tone, t, toast]); // Dependency on 'messages' removed!
+  }, [girlId, tone, t, toast]);
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-        title: "Copied!",
-        description: "Message copied to clipboard.",
+        title: t('copied'),
+        description: t('copiedDesc'),
         duration: 3000,
     });
-  }, [toast]);
+  }, [toast, t]);
 
   const handleShare = useCallback(async (text: string, isImage: boolean = false) => {
       const shareData = {
           title: 'ArabianRizz',
-          text: isImage ? 'Check out this generated image!' : text,
+          text: isImage ? t('shareImageText') : text,
           url: isImage ? text : undefined
       };
 
@@ -239,22 +223,19 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
               console.error(err);
           }
       } else {
-          // Fallback: Copy to clipboard
           handleCopy(text);
-          toast({ title: "Copied Link", description: "Sharing not supported, link copied." });
+          toast({ title: t('shareLinkTitle'), description: t('shareLinkText') });
       }
-  }, [handleCopy, toast]);
+  }, [handleCopy, toast, t]);
 
   const handlePlayAudio = useCallback(async (message: Message, idx: number) => {
     try {
         setPlayingAudioId(idx.toString());
         let audioUrl = message.audioUrl;
 
-        // If no persistent URL, generate and upload (which returns a URL)
         if (!audioUrl) {
             audioUrl = await generateSpeech(message.content, voiceId, message._id);
 
-            // Update local state with new URL to avoid re-generating next time
             if (audioUrl && message._id) {
                 setMessages(prev => {
                     const updated = [...prev];
@@ -269,17 +250,16 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             audio.onended = () => setPlayingAudioId(null);
             await audio.play();
         } else {
-             toast({ title: t('errorTitle'), description: "Could not generate audio.", variant: "destructive" });
+             toast({ title: t('errorTitle'), description: t('audioError'), variant: "destructive" });
              setPlayingAudioId(null);
         }
     } catch (e) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: "Audio playback failed.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('audioPlaybackError'), variant: "destructive" });
         setPlayingAudioId(null);
     }
   }, [voiceId, t, toast]);
 
-  // Bolt Optimization: Stabilized callback
   const handleImageUpload = useCallback(async (url: string) => {
     setIsLoading(true);
     toast({ title: t('readingScreenshot'), description: t('readingScreenshotDesc') });
@@ -316,37 +296,31 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
 
     } catch (error: any) {
         console.error(error);
-        toast({ title: t('errorTitle'), description: error.message || t('errorProcessImage'), variant: "destructive" });
+        const errorMessage = error instanceof Error ? error.message : t('errorProcessImage');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
   }, [girlId, tone, t, toast]);
 
-  const [isArtDialogOpen, setIsArtDialogOpen] = useState(false);
-  const [artPrompt, setArtPrompt] = useState("");
-  const [artMode, setArtMode] = useState<'standard' | 'selfie'>('standard');
-
-  const handleGenerateArt = async () => {
-    if (!artPrompt.trim()) return;
-
-    setIsArtDialogOpen(false);
+  const handleGenerateArt = async (prompt: string, mode: 'standard' | 'selfie') => {
     setIsLoading(true);
-    toast({ title: "Generating Art", description: "This may take a few seconds..." });
+    toast({ title: t('generatingArt'), description: t('generatingArtDesc') });
 
     try {
-        const { imageUrl, error } = await generateArt(artPrompt, girlId, artMode);
+        const { imageUrl, error } = await generateArt(prompt, girlId, mode);
 
         if (imageUrl) {
             const imgMsg: Message = { role: "wingman", content: `[IMAGE]: ${imageUrl}` }; 
             setMessages((prev) => [...prev, imgMsg]);
             await addMessage({ girlId, role: "wingman", content: `[IMAGE]: ${imageUrl}` });
-            setArtPrompt("");
         } else {
-             toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
+             toast({ title: t('errorTitle'), description: error || t('artError'), variant: "destructive" });
         }
-    } catch(e: any) {
+    } catch(e) {
         console.error(e);
-        toast({ title: "Error", description: e.message || "Something went wrong.", variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : t('genericError');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -366,7 +340,8 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         }
     } catch (e: any) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: e.message || t('errorHookup'), variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : t('errorHookup');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -378,37 +353,23 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
         await clearChatAction(girlId, pathname);
         setMessages([]);
         toast({
-            title: "Chat Cleared",
-            description: "All messages have been deleted.",
+            title: t('chatCleared'),
+            description: t('chatClearedDesc'),
         });
     } catch (error) {
         console.error(error);
-        toast({ title: "Error", description: "Failed to clear chat.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('clearError'), variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
   };
 
-  const handleQuickAction = async (action: string) => {
-    setIsLoading(true);
-    let instruction = "";
+  const handleGetRecommendations = () => {
+    setIsRecommendationsOpen(true);
+  };
 
-    switch (action) {
-        case "date":
-            instruction = "Suggest a creative and fun date idea based on our conversation.";
-            break;
-        case "roast":
-            instruction = "Give me a playful, flirty roast to tease her.";
-            break;
-        case "comfort":
-            instruction = "She seems upset. Suggest a comforting and supportive message.";
-            break;
-        case "topic":
-            instruction = "Change the subject to something interesting and engaging.";
-            break;
-        default:
-            instruction = "What should I say next?";
-    }
+  const handleScenarioSelect = async (instruction: string) => {
+    setIsLoading(true);
 
     try {
         const { reply, explanation, newBadges } = await generateWingmanReply(girlId, instruction, tone, "instruction");
@@ -443,25 +404,27 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
 
     } catch (error: any) {
         console.error(error);
-        toast({ title: t('errorTitle'), description: error.message || "Failed to generate action.", variant: "destructive" });
+        const errorMessage = error instanceof Error ? error.message : t('actionError');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-slate-50 rounded-xl border overflow-hidden relative shadow-inner">
+    <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-background border border-border rounded-2xl overflow-hidden relative shadow-sm">
 
-      <div className="absolute top-2 right-2 z-10 flex gap-2">
+      <div className="absolute top-2 end-2 z-10 flex gap-2">
           {messages.length > 0 && (
             <ChatHeaderActions girlId={girlId} onClearChat={handleClearChat} />
           )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef}>
         {messages.length === 0 && (
-            <div className="flex-center h-full text-gray-400">
-                {t('startPrompt')}
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+                <Sparkles className="h-10 w-10 text-muted-foreground/50" />
+                <p>{t('startPrompt')}</p>
             </div>
         )}
         {messages.map((msg, idx) => (
@@ -469,19 +432,21 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
             key={msg._id || idx}
             msg={msg}
             index={idx}
-            playingAudioId={playingAudioId}
+            isPlaying={playingAudioId === idx.toString()}
             isLoading={isLoading}
             onPlayAudio={handlePlayAudio}
             onRegenerate={handleRegenerate}
             onCopy={handleCopy}
             onShare={handleShare}
+            onToggleSave={handleToggleSave}
+            isSaved={msg._id ? savedMessageIds.has(msg._id) : false}
           />
         ))}
         {isLoading && (
             <div className="flex justify-start w-full animate-pulse" role="status" aria-live="polite">
-                <div className="bg-white border border-purple-100 p-3 rounded-2xl rounded-bl-none shadow-sm flex items-center gap-2">
-                    <Sparkles className="animate-spin text-purple-500" size={16} />
-                    <span className="text-xs text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 font-semibold">
+                <div className="bg-secondary p-4 rounded-2xl rounded-bl-none flex items-center gap-2">
+                    <Sparkles className="animate-spin text-primary" size={16} />
+                    <span className="text-sm text-muted-foreground font-medium">
                         {t('wingmanThinking')}...
                     </span>
                 </div>
@@ -490,148 +455,33 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance }: { girl
       </div>
 
       {creditBalance !== undefined && creditBalance < 5 && (
-        <Link href="/credits" className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-200 text-red-600 px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-red-200 transition-colors">
+        <Link href="/credits" className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-destructive/20 transition-colors">
             <AlertCircle size={12} />
-            {creditBalance === 0 ? "No Credits Left" : `Low Credits: ${creditBalance}`}
+            {creditBalance === 0 ? t('noCredits') : `${t('lowCredits')} ${creditBalance}`}
         </Link>
       )}
 
-      <div className="bg-white border-t p-4 flex items-end gap-2">
-        <ChatUploader onUploadComplete={handleImageUpload} disabled={isLoading} />
-        
-        <Dialog open={isArtDialogOpen} onOpenChange={setIsArtDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isLoading} title={t('generateArtTitle')} aria-label={t('generateArtAria')}>
-                    <ImageIcon size={24} className="text-dark-400 hover:text-purple-500"/>
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Generate Art</DialogTitle>
-                    <DialogDescription>
-                        Create an image of her. <span className="text-purple-600 font-semibold">Cost: 3 Credits</span>
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <div className="space-y-2">
-                        <Label>Style</Label>
-                        <RadioGroup defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
-                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
-                                <RadioGroupItem value="standard" id="mode-standard" />
-                                <Label htmlFor="mode-standard" className="cursor-pointer">Standard Art</Label>
-                            </div>
-                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
-                                <RadioGroupItem value="selfie" id="mode-selfie" />
-                                <Label htmlFor="mode-selfie" className="cursor-pointer flex items-center gap-1">
-                                    <Camera size={14} /> Selfie Mode
-                                </Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Prompt</Label>
-                        <Input
-                            value={artPrompt}
-                            onChange={(e) => setArtPrompt(e.target.value)}
-                            placeholder={artMode === 'selfie' ? "e.g., At the gym, smiling..." : "e.g., Wearing a red dress at a cafe..."}
-                            onKeyDown={(e) => e.key === "Enter" && handleGenerateArt()}
-                        />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button onClick={handleGenerateArt} disabled={isLoading || !artPrompt.trim()} className="bg-purple-600 w-full">
-                        Generate Image
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+      <RecommendationsDialog
+          girlId={girlId}
+          open={isRecommendationsOpen}
+          onOpenChange={setIsRecommendationsOpen}
+      />
 
-        <Button variant="ghost" size="icon" onClick={handleGenerateHookupLine} disabled={isLoading} title={t('hookupButtonTitle')} aria-label="Generate hookup line">
-            <Zap size={24} className="text-dark-400 hover:text-yellow-500"/>
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" disabled={isLoading} title={t('QuickActions.title')} aria-label={t('QuickActions.title')}>
-                <Sparkles size={24} className="text-dark-400 hover:text-purple-500"/>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>{t('QuickActions.title')}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleQuickAction('date')} className="cursor-pointer">
-                <Coffee className="mr-2 h-4 w-4 text-orange-500" />
-                <span>{t('QuickActions.date')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleQuickAction('roast')} className="cursor-pointer">
-                <Flame className="mr-2 h-4 w-4 text-red-500" />
-                <span>{t('QuickActions.roast')}</span>
-            </DropdownMenuItem>
-             <DropdownMenuItem onClick={() => handleQuickAction('comfort')} className="cursor-pointer">
-                <Heart className="mr-2 h-4 w-4 text-pink-500" />
-                <span>{t('QuickActions.comfort')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleQuickAction('topic')} className="cursor-pointer">
-                <MessageCircle className="mr-2 h-4 w-4 text-blue-500" />
-                <span>{t('QuickActions.topic')}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Select onValueChange={setTone} defaultValue="Flirty">
-            <SelectTrigger className="w-[100px] border-none bg-transparent focus:ring-0" aria-label="Select tone">
-                <SelectValue placeholder="Tone" />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="Flirty">Flirty</SelectItem>
-                <SelectItem value="Funny">Funny</SelectItem>
-                <SelectItem value="Serious">Serious</SelectItem>
-                <SelectItem value="Mysterious">Mysterious</SelectItem>
-            </SelectContent>
-        </Select>
-
-        <div className="flex-1 flex gap-2 w-full md:w-auto">
-             <div className="flex items-center border rounded-lg p-1 bg-gray-50 h-10" role="group" aria-label="Message sender">
-                <Button
-                    variant={sender === 'user' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'user' && "bg-white shadow-sm font-semibold")}
-                    onClick={() => setSender('user')}
-                    aria-pressed={sender === 'user'}
-                    aria-label="Set sender to Me"
-                >
-                    Me
-                </Button>
-                <Button
-                    variant={sender === 'girl' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className={cn("h-full text-xs px-3 rounded-md transition-all", sender === 'girl' && "bg-white shadow-sm text-pink-500 font-semibold")}
-                    onClick={() => setSender('girl')}
-                    aria-pressed={sender === 'girl'}
-                    aria-label="Set sender to Her"
-                >
-                    Her
-                </Button>
-            </div>
-             <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                placeholder={sender === 'girl' ? t('inputPlaceholderGirl') : t('inputPlaceholder')}
-                className="flex-1"
-                disabled={isLoading}
-                aria-label={t('inputAria')}
-            />
-             <Button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading}
-                className="bg-purple-gradient bg-cover rounded-full size-10 p-0 flex-center shrink-0"
-                aria-label={t('sendAria')}
-            >
-                {isLoading ? <Loader2 size={18} className="text-white animate-spin" /> : <Send size={18} className="text-white ml-0.5" />}
-            </Button>
-        </div>
-      </div>
+      <ChatInputArea
+          inputValue={inputValue}
+          setInputValue={setInputValue}
+          onSendMessage={handleSendMessage}
+          onUploadComplete={handleImageUpload}
+          onGenerateArt={handleGenerateArt}
+          onGenerateHookup={handleGenerateHookupLine}
+          onGetRecommendations={handleGetRecommendations}
+          onScenarioSelect={handleScenarioSelect}
+          isLoading={isLoading}
+          tone={tone}
+          setTone={setTone}
+          sender={sender}
+          setSender={setSender}
+       />
     </div>
   );
 };

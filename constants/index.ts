@@ -1,9 +1,9 @@
 export const navLinks = [
   {
-    label: "Home",
-    key: "home",
-    route: "/",
-    icon: "home",
+    label: "Dashboard",
+    key: "dashboard",
+    route: "/dashboard",
+    icon: "dashboard",
   },
   {
     label: "Saved Lines",
@@ -16,6 +16,12 @@ export const navLinks = [
     key: "profile",
     route: "/profile",
     icon: "user",
+  },
+  {
+    label: "Settings",
+    key: "settings",
+    route: "/settings",
+    icon: "settings",
   },
 ];
 

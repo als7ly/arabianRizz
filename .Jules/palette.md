@@ -45,3 +45,23 @@
 ## 2026-02-06 - Missing Form Labels in Wizards
 **Learning:** The OnboardingWizard used inputs with placeholders but no labels. This is a common anti-pattern that hurts accessibility (screen readers) and usability (context loss when typing).
 **Action:** When creating forms, always wrap inputs in a container with a visible `<Label>` component linked via `htmlFor`/`id`, or use `aria-label` if a visible label is visually impossible.
+
+## 2024-05-25 - Orphaned Labels in Dialogs
+**Learning:** Found `<Label>` components in dialogs that were visually positioned above inputs but programmatically unassociated (missing `htmlFor`/`id` pairs). This breaks accessibility for screen readers and click-to-focus behavior.
+**Action:** Always ensure `<Label htmlFor="x">` matches `<Input id="x">`. For groups like RadioGroups, use `aria-labelledby` on the group container pointing to the label's ID.
+
+## 2026-02-09 - Invisible Focus Controls
+**Learning:** Found a pattern where action buttons (like Copy/Share in chat bubbles) were hidden using `opacity-0 group-hover:opacity-100`. This creates a major accessibility issue for keyboard users who can focus the invisible buttons but can't see them.
+**Action:** Always pair `group-hover:opacity-100` with `focus-within:opacity-100` on the container. This ensures the controls become visible as soon as any element inside them receives focus.
+
+## 2026-02-17 - Async Action Feedback in Menus
+**Learning:** Dropdown menu actions (like "Export Chat") often rely only on text changes ("Exporting...") for feedback, which is too subtle for users expecting immediate confirmation.
+**Action:** Replace the static action icon with a spinning `Loader2` during the loading state to provide clear visual confirmation of the background process.
+
+## 2026-02-17 - Keeping Dropdown Menus Open for Async Actions
+**Learning:** By default, clicking a `DropdownMenuItem` closes the menu immediately. For async actions like "Export Chat", this prevents users from seeing the loading state/feedback within the item itself.
+**Action:** Use `onSelect={(e) => e.preventDefault()}` on the `DropdownMenuItem` to prevent immediate closing. Then, manually close the menu (by controlling its open state) once the async action completes.
+
+## 2026-03-20 - Skeleton Loading for Recommendations
+**Learning:** Replacing a generic loading spinner with a skeleton loading state significantly improves perceived performance and provides a smoother visual transition by mimicking the content layout.
+**Action:** Use skeleton loading states for list views and cards where possible, ensuring they match the structure of the loaded content.

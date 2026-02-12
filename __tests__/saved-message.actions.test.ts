@@ -1,4 +1,4 @@
-import { toggleSaveMessage, getSavedMessages, deleteSavedMessage } from '@/lib/actions/saved-message.actions';
+import { toggleSaveMessage, getSavedMessages, getSavedMessageIds, deleteSavedMessage } from '@/lib/actions/saved-message.actions';
 import { connectToDatabase } from '@/lib/database/mongoose';
 import SavedMessage from '@/lib/database/models/saved-message.model';
 import Message from '@/lib/database/models/message.model';
@@ -23,8 +23,12 @@ jest.mock('@/lib/database/models/saved-message.model', () => ({
   findById: jest.fn(),
 }));
 
+// Mock Message.findById to support chaining .populate()
+const mockMessagePopulate = jest.fn();
 jest.mock('@/lib/database/models/message.model', () => ({
-  findById: jest.fn(),
+  findById: jest.fn(() => ({
+    populate: mockMessagePopulate,
+  })),
 }));
 
 jest.mock('@/lib/database/models/user.model', () => ({
@@ -46,12 +50,20 @@ describe('Saved Message Actions', () => {
         (auth as jest.Mock).mockReturnValue({ userId: mockClerkId });
         (connectToDatabase as jest.Mock).mockResolvedValue(true);
         (User.findOne as jest.Mock).mockResolvedValue({ _id: mockUserId });
+        // Reset the mock implementation for populate
+        mockMessagePopulate.mockReset();
     });
 
     describe('toggleSaveMessage', () => {
-        it('should save a message if not already saved', async () => {
+        it('should save a message if not already saved and owned by user', async () => {
             (SavedMessage.findOne as jest.Mock).mockResolvedValue(null);
-            (Message.findById as jest.Mock).mockResolvedValue({ content: 'Hello' });
+
+            // Mock Message to have the correct owner
+            mockMessagePopulate.mockResolvedValue({
+                content: 'Hello',
+                girl: { author: mockUserId }
+            });
+
             (SavedMessage.create as jest.Mock).mockResolvedValue({});
 
             const result = await toggleSaveMessage(mockMessageId, mockPath);
@@ -78,6 +90,18 @@ describe('Saved Message Actions', () => {
              (User.findOne as jest.Mock).mockResolvedValue(null);
              await expect(toggleSaveMessage(mockMessageId, mockPath)).rejects.toThrow('Failed to toggle save message');
         });
+
+        it('should throw unauthorized if user does not own the message\'s girl', async () => {
+            (SavedMessage.findOne as jest.Mock).mockResolvedValue(null);
+
+            // Mock Message to belong to a different user
+            mockMessagePopulate.mockResolvedValue({
+                content: 'Secret',
+                girl: { author: 'other_user_id' }
+            });
+
+            await expect(toggleSaveMessage(mockMessageId, mockPath)).rejects.toThrow('Failed to toggle save message');
+        });
     });
 
     describe('getSavedMessages', () => {
@@ -93,6 +117,24 @@ describe('Saved Message Actions', () => {
 
             expect(SavedMessage.find).toHaveBeenCalledWith({ user: mockUserId });
             expect(result).toEqual(mockSaved);
+        });
+    });
+
+    describe('getSavedMessageIds', () => {
+        it('should return saved message IDs', async () => {
+            const mockSaved = [{ message: 'msg1' }, { message: 'msg2' }];
+            const mockFind = {
+                select: jest.fn().mockReturnThis(),
+                lean: jest.fn().mockReturnValue(mockSaved),
+            };
+            (SavedMessage.find as jest.Mock).mockReturnValue(mockFind);
+
+            const result = await getSavedMessageIds();
+
+            expect(SavedMessage.find).toHaveBeenCalledWith({ user: mockUserId });
+            expect(mockFind.select).toHaveBeenCalledWith('message');
+            expect(mockFind.lean).toHaveBeenCalled();
+            expect(result).toEqual(['msg1', 'msg2']);
         });
     });
 

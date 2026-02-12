@@ -18,12 +18,25 @@ const UserSchema = new Schema({
   badges: { type: [String], default: [] },
   totalInteractions: { type: Number, default: 0 },
 
+  // Core Identity Profile
+  bio: { type: String },
+  age: { type: Number },
+  gender: { type: String },
+  occupation: { type: String },
+  relationshipGoal: { type: String },
+
   stripeCustomerId: { type: String, unique: true, sparse: true },
   stripeSubscriptionId: { type: String, unique: true, sparse: true },
   stripePriceId: { type: String },
   stripeCurrentPeriodEnd: { type: Date },
   subscriptionStatus: { type: String },
   subscriptionPeriodEnd: { type: Date },
+
+  settings: {
+    defaultTone: { type: String, default: 'Flirty' },
+    lowBalanceAlerts: { type: Boolean, default: true },
+    theme: { type: String, default: 'system' }
+  },
 });
 
 // Optimize queries for Analytics (Active Users) and Leaderboard (Top Users)

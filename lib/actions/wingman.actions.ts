@@ -2,12 +2,13 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { retrieveContext } from "../services/rag.service";
+import { generateEmbedding } from "../services/rag.service";
+import { getContext } from "./rag.actions";
 import { getUserContext } from "./user-knowledge.actions";
 import { getGlobalKnowledge } from "./global-rag.actions";
-import { getGirlById } from "./girl.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
+import Girl from "../database/models/girl.model";
 import { connectToDatabase } from "../database/mongoose";
 import { auth } from "@clerk/nextjs";
 import User from "../database/models/user.model";
@@ -18,6 +19,8 @@ import { updateGamification } from "@/lib/services/gamification.service";
 import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
 import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
+import { deductCredits } from "../services/user.service";
+import { logUsage } from "../services/usage.service";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -54,22 +57,34 @@ async function checkContentSafety(text: string): Promise<boolean> {
     return true;
 }
 
-async function verifyOwnership(girlAuthorId: any) {
+async function getUserAndGirl(girlId: string) {
     const { userId: clerkId } = auth();
     if (!clerkId) throw new Error("Unauthorized");
 
     await connectToDatabase();
-    const user = await User.findOne({ clerkId });
-    if (!user) throw new Error("User not found");
 
-    if (girlAuthorId.toString() !== user._id.toString()) {
+    const [user, girl] = await Promise.all([
+        User.findOne({ clerkId }),
+        Girl.findById(girlId)
+    ]);
+
+    if (!user) throw new Error("User not found");
+    if (!girl) throw new Error("Girl not found");
+
+    if (girl.author.toString() !== user._id.toString()) {
         throw new Error("Unauthorized Access");
     }
-    return user;
+
+    return { user, girl };
 }
 
 // Low Balance Check Utility
 async function checkAndNotifyLowBalance(user: any) {
+    // Check if user disabled alerts
+    if (user.settings?.lowBalanceAlerts === false) {
+        return;
+    }
+
     // Threshold: 10 credits
     if (user.creditBalance < LOW_BALANCE_THRESHOLD) {
         // Rate Limiting: Check last email sent timestamp
@@ -110,8 +125,8 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
     if (!originalMessage) {
         return { success: false };
     }
-    const girl = await getGirlById(originalMessage.girl.toString());
-    await verifyOwnership(girl.author);
+    // Verify ownership via helper (fetches both to check author match)
+    await getUserAndGirl(originalMessage.girl.toString());
 
     // 1. Update the message
     const message = await Message.findByIdAndUpdate(messageId, { feedback }, { new: true });
@@ -159,8 +174,7 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const ALLOWED_TONES = ['Flirty', 'Funny', 'Serious', 'Mysterious'];
     const safeTone = ALLOWED_TONES.includes(tone) ? tone : 'Flirty';
 
-    const girl = await getGirlById(girlId);
-    const user = await verifyOwnership(girl.author);
+    const { user, girl } = await getUserAndGirl(girlId);
 
     if (user.creditBalance < 1) {
         return {
@@ -168,13 +182,6 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
             explanation: "Insufficient credits."
         };
     }
-
-    const [contextMessages, userContext] = await Promise.all([
-      getContext(girlId, userMessage),
-      getUserContext(girl.author.toString(), userMessage)
-    ]);
-    const contextString = JSON.stringify(contextMessages);
-    const userContextString = userContext.map((k: any) => k.content).join("\n");
 
     // Language Handling
     const languageCode = girl.language || 'en';
@@ -185,8 +192,17 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     };
     const fullLanguage = languageMap[languageCode] || 'English';
 
-    // RAG Knowledge: Attempt to find relevant info in that language
-    const globalKnowledge = await getGlobalKnowledge(userMessage, languageCode, embedding);
+    // Optimization: Generate embedding once and reuse for all RAG retrievals
+    const embedding = await generateEmbedding(userMessage);
+
+    const [contextMessages, userContext, globalKnowledge] = await Promise.all([
+      getContext(girlId, userMessage, embedding),
+      getUserContext(girl.author.toString(), userMessage, embedding),
+      getGlobalKnowledge(userMessage, languageCode, embedding)
+    ]);
+
+    const contextString = JSON.stringify(contextMessages);
+    const userContextString = userContext.map((k: any) => k.content).join("\n");
     const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     // Dialect Handling (Only for Arabic)
@@ -204,7 +220,13 @@ Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}
 Tone requested: ${safeTone}.
 
 Context about The User ("Me"):
-${userContextString || "No specific details provided."}
+Name: ${user.firstName || user.username}
+Age: ${user.age || "Unknown"}
+Gender: ${user.gender || "Unknown"}
+Occupation: ${user.occupation || "Unknown"}
+Relationship Goal: ${user.relationshipGoal || "Unknown"}
+Bio/Vibe: ${user.bio || "Unknown"}
+${userContextString ? `Additional Memories:\n${userContextString}` : ""}
 
 Expert Tips & Cultural Context (from Knowledge Base):
 ${globalContextString || "No specific tips found."}
@@ -250,7 +272,8 @@ ${contextString}
 
     if (aiContent) {
         // Deduct Credit on Success
-        const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
+        const updatedUser = await deductCredits(user._id, 1);
+        await logUsage({ userId: user._id, action: "message_generation", cost: 1, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
@@ -281,17 +304,35 @@ ${contextString}
       explanation: "Something went wrong."
     };
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error("Wingman Error:", error);
+
+    let explanation = "Something went wrong with the AI.";
+    let reply = "I'm having trouble thinking right now. Please try again.";
+
+    if (error?.status === 429 || error?.message?.includes("rate limit") || error?.code === 'rate_limit_exceeded') {
+        explanation = "High traffic. Please wait a moment.";
+        reply = "Too many requests! Give me a second to catch my breath.";
+    } else if (error?.status === 400 || error?.message?.includes("context length") || error?.code === 'context_length_exceeded') {
+        explanation = "Conversation is too long.";
+        reply = "Our conversation is getting too long for me to remember everything. Please clear the chat.";
+    } else if (error?.status === 503) {
+        explanation = "AI Service unavailable.";
+        reply = "My brain is offline momentarily. Check back soon.";
+    }
+
     return {
-        reply: "Error generating reply.",
-        explanation: "Something went wrong with the AI."
+        reply,
+        explanation
     };
   }
 }
 
 export async function analyzeProfile(imageUrl: string) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
     const text = await extractTextFromImage(imageUrl);
     if (!text) return null;
 
@@ -343,6 +384,9 @@ export async function analyzeProfile(imageUrl: string) {
 
 export async function generateResponseImage(prompt: string) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return "https://via.placeholder.com/1024x1024.png?text=Mock+AI+Image";
     }
@@ -373,8 +417,25 @@ export async function generateResponseImage(prompt: string) {
 
 export async function generateSpeech(text: string, voiceId: string = "nova", messageId?: string) {
   try {
+    const { userId: clerkId } = auth();
+    if (!clerkId) return null;
+
     if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
         return null;
+    }
+
+    // Security Check: If associating with a message, ensure user owns the girl.
+    if (messageId) {
+        await connectToDatabase();
+        const message = await Message.findById(messageId);
+        if (message) {
+             // This will throw Unauthorized if user is not author
+             await getGirlById(message.girl.toString());
+        } else {
+             // If messageId provided but not found, maybe stop?
+             // Or proceed without linking? Safer to stop or return null to prevent confusion.
+             return null;
+        }
     }
 
     // 1. Generate Speech via OpenAI
@@ -436,9 +497,7 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
 
 export async function generateHookupLine(girlId: string) {
   try {
-    const girl = await getGirlById(girlId);
-
-    const user = await verifyOwnership(girl.author);
+    const { user, girl } = await getUserAndGirl(girlId);
 
     if (user.creditBalance < 1) {
          return {
@@ -447,16 +506,23 @@ export async function generateHookupLine(girlId: string) {
         };
     }
 
-    const userContext = await getUserContext(girl.author.toString(), "hookup line flirting");
+    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
+
+    // Optimization: Generate embedding once and reuse
+    const combinedQuery = "best hookup lines flirting dating advice";
+    const embedding = await generateEmbedding(combinedQuery);
+
+    const [userContext, globalKnowledge] = await Promise.all([
+      getUserContext(girl.author.toString(), combinedQuery, embedding),
+      getGlobalKnowledge(combinedQuery, language, embedding)
+    ]);
+
     const userContextString = userContext.map((k: any) => k.content).join("\n");
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     const dialectInstruction = girl.dialect
         ? `She speaks the ${girl.dialect} Arabic dialect. You MUST use ${girl.dialect} slang and expressions.`
         : "Support Arabic dialects if appropriate.";
-
-    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
-    const globalKnowledge = await getGlobalKnowledge("best hookup lines dating advice", language);
-    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
 
     const systemPrompt = `
 You are "The Wingman", an expert dating coach.
@@ -464,7 +530,13 @@ Your Goal: Generate a DIRECT, UNCENSORED, and FLIRTY hookup line for the user to
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
 
 Context about The User:
-${userContextString}
+Name: ${user.firstName || user.username}
+Age: ${user.age || "Unknown"}
+Gender: ${user.gender || "Unknown"}
+Occupation: ${user.occupation || "Unknown"}
+Relationship Goal: ${user.relationshipGoal || "Unknown"}
+Bio/Vibe: ${user.bio || "Unknown"}
+${userContextString ? `Additional Memories:\n${userContextString}` : ""}
 
 Expert Tips & Cultural Context:
 ${globalContextString}
@@ -495,7 +567,8 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        const updatedUser = await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: -1 } }, { new: true });
+        const updatedUser = await deductCredits(user._id, 1);
+        await logUsage({ userId: user._id, action: "hookup_line", cost: 1, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));

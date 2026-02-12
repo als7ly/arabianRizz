@@ -7,6 +7,8 @@ import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
 import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
+import { deductCredits, refundCredits } from "../services/user.service";
+import { logUsage } from "../services/usage.service";
 
 async function getCurrentUser() {
     const { userId: clerkId } = auth();
@@ -28,15 +30,7 @@ export async function createGirl(girl: CreateGirlParams) {
     const user = await getCurrentUser();
     
     // Atomic update to ensure credits are sufficient and deducted
-    const updatedUser = await User.findOneAndUpdate(
-        { _id: user._id, creditBalance: { $gte: 1 } },
-        { $inc: { creditBalance: -1 } },
-        { new: true }
-    );
-
-    if (!updatedUser) {
-        throw new Error("Insufficient credits");
-    }
+    const updatedUser = await deductCredits(user._id, 1);
 
     try {
         const newGirl = await Girl.create({
@@ -45,11 +39,13 @@ export async function createGirl(girl: CreateGirlParams) {
             author: user._id
         });
 
+        await logUsage({ userId: user._id, action: "girl_creation", cost: 1, metadata: { girlId: newGirl._id } });
+
         revalidatePath(girl.path);
         return JSON.parse(JSON.stringify(newGirl));
     } catch (error) {
         // Rollback credits if creation fails
-        await User.findByIdAndUpdate(user._id, { $inc: { creditBalance: 1 } });
+        await refundCredits(user._id, 1);
         throw error;
     }
   } catch (error) {

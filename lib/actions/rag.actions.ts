@@ -48,13 +48,13 @@ export async function addMessage({ girlId, role, content, path }: CreateMessageP
 }
 
 // Retrieve Context (RAG)
-export async function getContext(girlId: string, query: string) {
+export async function getContext(girlId: string, query: string, embedding?: number[]) {
   // Security: Verify ownership first.
   // If this fails, it throws an error and we do NOT proceed to retrieval.
   await verifyGirlOwnership(girlId);
 
   // Delegate to service which handles embedding generation, vector search, and fallback
-  return await retrieveContext(girlId, query);
+  return await retrieveContext(girlId, query, embedding);
 }
 
 // Clear Chat

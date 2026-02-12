@@ -15,6 +15,7 @@ import PersonaManager from "@/components/shared/PersonaManager";
 import BillingHistory from "@/components/shared/BillingHistory";
 import ManageSubscriptionButton from "@/components/shared/ManageSubscriptionButton";
 import ExportDataButton from "@/components/shared/ExportDataButton";
+import { ProfileForm } from "@/components/shared/ProfileForm";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -34,34 +35,34 @@ const Profile = async () => {
     <>
       <Header title={t('title')} subtitle={t('subtitle')} />
 
-      <section className="profile mt-10">
-        <div className="profile-card p-5 bg-white rounded-xl border border-purple-200/20 shadow-lg space-y-6">
+      <section className="profile mt-10 max-w-4xl mx-auto">
+        <div className="space-y-10">
             {/* User Info */}
-            <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-purple-100 flex-center text-purple-600 text-2xl font-bold">
+            <div className="flex items-center gap-6 pb-8 border-b border-border">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex-center text-primary text-3xl font-bold border border-primary/20">
                     {user.firstName?.[0] || user.username?.[0]}
                 </div>
                 <div>
-                    <h2 className="h3-bold text-dark-600">{user.firstName} {user.lastName}</h2>
-                    <p className="p-16-regular text-dark-400">@{user.username}</p>
-                    <p className="p-14-regular text-gray-400">{user.email}</p>
+                    <h2 className="text-2xl font-bold text-foreground">{user.firstName} {user.lastName}</h2>
+                    <p className="text-lg font-medium text-muted-foreground">@{user.username}</p>
+                    <p className="text-sm text-muted-foreground/80">{user.email}</p>
                 </div>
             </div>
 
             {/* Credits Section */}
-            <div className="border-t border-gray-100 pt-6">
-                <h3 className="h4-medium text-dark-600 mb-4">{t('subscription')}</h3>
-                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg flex-wrap gap-4">
+            <div className="pb-8 border-b border-border">
+                <h3 className="text-xl font-semibold text-foreground mb-6">{t('subscription')}</h3>
+                <div className="flex justify-between items-center bg-secondary/50 border border-border p-6 rounded-2xl flex-wrap gap-6">
                     <div>
-                        <p className="p-16-semibold text-dark-600">{t('currentPlan')} <span className="text-purple-600">{tPlans('names.free')}</span></p>
+                        <p className="text-lg font-medium text-foreground">{t('currentPlan')} <span className="text-primary font-bold">{tPlans('names.free')}</span></p>
                         <div className="mt-2">
                             <CreditBalance userId={user.clerkId} />
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                          <ManageSubscriptionButton />
                          <Link href="/credits">
-                            <Button variant="outline" className="text-purple-600 border-purple-200 hover:bg-purple-50">
+                            <Button variant="default" className="bg-primary text-white hover:bg-primary/90 shadow-md">
                                 {t('upgrade')}
                             </Button>
                         </Link>
@@ -70,13 +71,22 @@ const Profile = async () => {
             </div>
 
             {/* Billing History */}
-            <div className="border-t border-gray-100 pt-6">
-                <h3 className="h4-medium text-dark-600 mb-4">Billing History</h3>
-                <BillingHistory transactions={transactions} />
+            <div className="pb-8 border-b border-border">
+                <h3 className="text-xl font-semibold text-foreground mb-6">Billing History</h3>
+                <div className="bg-background border border-border rounded-2xl overflow-hidden">
+                    <BillingHistory transactions={transactions} />
+                </div>
+            </div>
+
+            {/* Core Identity */}
+            <div className="pb-8 border-b border-border">
+                <h3 className="text-xl font-semibold text-foreground mb-6">Core Identity</h3>
+                <ProfileForm user={user} />
             </div>
 
             {/* Persona Section */}
-            <div className="border-t border-gray-100 pt-6">
+            <div className="pb-8 border-b border-border">
+                 <h3 className="text-xl font-semibold text-foreground mb-6">My Personas</h3>
                 <PersonaManager />
             </div>
 
@@ -93,9 +103,9 @@ const Profile = async () => {
             </div>
 
             {/* Actions */}
-            <div className="border-t border-gray-100 pt-6 flex justify-end">
+            <div className="flex justify-end pt-4">
                 <SignOutButton>
-                    <Button variant="destructive">{t('signOut')}</Button>
+                    <Button variant="destructive" size="lg">{t('signOut')}</Button>
                 </SignOutButton>
             </div>
         </div>

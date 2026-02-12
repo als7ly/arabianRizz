@@ -1,8 +1,8 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import Image from "next/image";
-import { Sparkles, Share2, Volume2, Loader2, RotateCw, Copy } from "lucide-react";
+import { Sparkles, Share2, Volume2, Loader2, RotateCw, Copy, Check, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Feedback from "./Feedback";
@@ -21,139 +21,134 @@ export type Message = {
 interface MessageBubbleProps {
   msg: Message;
   index: number;
-  playingAudioId: string | null;
+  isPlaying: boolean;
   isLoading: boolean;
   onPlayAudio: (msg: Message, idx: number) => void;
   onRegenerate: (idx: number) => void;
   onCopy: (text: string) => void;
   onShare: (text: string, isImage?: boolean) => void;
+  onToggleSave: (msg: Message) => void;
+  isSaved: boolean;
 }
 
 const MessageBubble = memo(({
   msg,
   index,
-  playingAudioId,
+  isPlaying,
   isLoading,
   onPlayAudio,
   onRegenerate,
   onCopy,
-  onShare
+  onShare,
+  onToggleSave,
+  isSaved
 }: MessageBubbleProps) => {
   const t = useTranslations('Chat');
+  const [isCopied, setIsCopied] = useState(false);
   const isWingman = msg.role === "wingman";
   const isUser = msg.role === "user";
   const isGirl = msg.role === "girl";
-  const isPlaying = playingAudioId === index.toString();
+
+  const handleCopyClick = () => {
+    onCopy(msg.content);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   return (
     <div
       className={cn(
-        "flex w-full group animate-fade-in-up",
+        "flex w-full group animate-fade-in-up mb-4",
         isUser ? "justify-end" : "justify-start"
       )}
       style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl p-4 text-sm whitespace-pre-wrap relative",
+          "max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm md:text-base leading-relaxed relative shadow-sm transition-all",
           isUser
-            ? "bg-purple-600 text-white rounded-br-none"
+            ? "bg-primary text-primary-foreground rounded-ee-sm"
             : isWingman
-            ? "bg-white border border-purple-100 text-dark-600 rounded-bl-none shadow-sm"
-            : "bg-gray-200 text-dark-600 rounded-bl-none" // Girl/Screenshot
+            ? "bg-secondary text-secondary-foreground rounded-es-sm border border-border"
+            : "bg-muted text-muted-foreground rounded-es-sm italic" // Girl/Screenshot
         )}
       >
         {isWingman && (
-          <div className="text-xs font-bold text-purple-500 mb-1 flex items-center gap-1">
-            <Sparkles size={12}/> {t('wingman')}
+          <div className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5 uppercase tracking-wide">
+            <Sparkles size={14} className="animate-pulse" /> {t('wingman')}
           </div>
         )}
         {isGirl && (
-          <div className="text-xs font-bold text-gray-500 mb-1">{t('sheSaid')}</div>
+          <div className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">{t('sheSaid')}</div>
         )}
 
         {msg.content.startsWith("[IMAGE]:") ? (
-            <div className="relative">
+            <div className="relative group/image overflow-hidden rounded-lg">
               <Image
                   src={msg.content.replace("[IMAGE]: ", "")}
                   alt="Generated"
                   width={500}
                   height={500}
-                  className="rounded-lg max-w-full h-auto"
+                  className="rounded-lg max-w-full h-auto transition-transform duration-500 group-hover/image:scale-105"
               />
-              <Button
-                  variant="secondary"
-                  size="icon"
-                  className="absolute bottom-2 right-2 bg-white/80 hover:bg-white text-gray-700"
-                  onClick={() => onShare(msg.content.replace("[IMAGE]: ", ""), true)}
-                  title="Share Image"
-              >
-                  <Share2 size={16} />
-              </Button>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 focus-within:opacity-100 transition-opacity flex-center">
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/90 hover:bg-white text-gray-900 font-bold"
+                      onClick={() => onShare(msg.content.replace("[IMAGE]: ", ""), true)}
+                  >
+                      <Share2 size={16} className="me-2" />
+                      {t('shareTitle')}
+                  </Button>
+              </div>
             </div>
         ) : (
-            <div className="flex flex-col gap-1">
-                <div className="flex items-start gap-2">
-                    <span className="flex-1">{msg.content}</span>
+            <div className="flex flex-col gap-2">
+                <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                <div className="flex items-center justify-between mt-1 min-h-[24px]">
+                    <span className={cn("text-[10px] font-medium", isUser ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t('justNow')}
+                    </span>
+
                     {isWingman && (
-                        <div className="flex flex-col gap-1">
-                      <div className="flex gap-1">
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-purple-400 hover:text-purple-600"
-                              onClick={() => onPlayAudio(msg, index)}
-                              disabled={playingAudioId !== null}
-                              title="Play Audio"
-                              aria-label="Play audio"
-                          >
-                              {isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />}
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-blue-400 hover:text-blue-600"
-                              onClick={() => onRegenerate(index)}
-                              disabled={isLoading}
-                              title="Regenerate Response"
-                              aria-label="Regenerate response"
-                          >
-                              <RotateCw size={14} className={isLoading ? "animate-spin" : ""} />
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                              onClick={() => onCopy(msg.content)}
-                              title="Copy to Clipboard"
-                              aria-label="Copy to clipboard"
-                          >
-                              <Copy size={14} />
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-gray-400 hover:text-green-600"
-                              onClick={() => onShare(msg.content)}
-                              title="Share"
-                              aria-label="Share message"
-                          >
-                              <Share2 size={14} />
-                          </Button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200" role="toolbar" aria-label="Message actions">
+                          <ActionButton icon={isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />} onClick={() => onPlayAudio(msg, index)} label={t('playAudioTitle')} />
+                          <ActionButton icon={<RotateCw size={14} className={isLoading ? "animate-spin" : ""} />} onClick={() => onRegenerate(index)} label={t('regenerateTitle')} disabled={isLoading} />
+                          <ActionButton icon={isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} onClick={handleCopyClick} label={t('copyTitle')} />
+                          <ActionButton
+                            icon={<Bookmark size={14} className={cn("transition-colors", isSaved ? "fill-current text-purple-500" : "")} />}
+                            onClick={() => onToggleSave(msg)}
+                            label={isSaved ? t('unsaveTitle') : t('saveTitle')}
+                            aria-pressed={isSaved}
+                          />
+                          <ActionButton icon={<Share2 size={14} />} onClick={() => onShare(msg.content)} label={t('shareTitle')} />
+                          {msg._id && <Feedback messageId={msg._id} />}
                       </div>
-                      {msg._id && <Feedback messageId={msg._id} />}
-                    </div>
                     )}
                 </div>
-                <span className="text-[10px] text-gray-400 self-end">
-                  {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
             </div>
         )}
       </div>
     </div>
   );
 });
+
+const ActionButton = ({ icon, onClick, label, disabled, ...props }: { icon: React.ReactNode, onClick: () => void, label: string, disabled?: boolean } & React.ComponentProps<typeof Button>) => (
+    <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+        onClick={onClick}
+        disabled={disabled}
+        title={label}
+        aria-label={label}
+        {...props}
+    >
+        {icon}
+    </Button>
+)
 
 MessageBubble.displayName = "MessageBubble";
 

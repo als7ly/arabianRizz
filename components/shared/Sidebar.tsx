@@ -2,76 +2,91 @@
 
 import { navLinks } from "@/constants";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import Image from "next/image";
 import { Link, usePathname } from "@/navigation";
 import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
-import LanguageSwitcher from "@/components/shared/LanguageSwitcher";
-import { Home, User, Bookmark } from "lucide-react";
+import { Icons } from "../ui/icons";
+import { cn } from "@/lib/utils";
 
 const Sidebar = () => {
   const pathname = usePathname();
   const t = useTranslations("Sidebar");
 
-  const iconMap: { [key: string]: any } = {
-    home: Home,
-    user: User,
-    bookmark: Bookmark
+  // Map icon strings to components
+  const getIcon = (iconName: string) => {
+    // @ts-ignore
+    const Icon = Icons[iconName] || Icons.help;
+    return Icon;
   };
 
   return (
-    <aside className="sidebar">
-      <div className="flex size-full flex-col gap-4">
-        <Link href="/" className="sidebar-logo">
-          <Image src="/assets/images/logo-text.svg" alt="ArabianRizz" width={180} height={28} />
+    <aside className="fixed start-0 top-0 z-40 h-screen w-72 border-e border-border bg-background transition-transform lg:translate-x-0 hidden lg:flex flex-col">
+      <div className="flex h-full flex-col px-6 py-8">
+        <Link href="/dashboard" className="flex items-center gap-2 mb-10 ps-2">
+            <Icons.zap className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold tracking-tight text-foreground">
+              {t('appName')}
+            </span>
         </Link>
 
-        <nav className="sidebar-nav">
+        <nav className="flex-1 space-y-2">
           <SignedIn>
-            <ul className="sidebar-nav_elements">
+            <ul className="space-y-2">
               {navLinks.slice(0, 6).map((link) => {
-                const isActive = link.route === pathname;
-                const IconComponent = iconMap[link.icon] || Home;
+                const isActive = link.route === pathname || (link.route !== '/dashboard' && pathname.startsWith(link.route));
+                const IconComponent = getIcon(link.icon);
 
                 return (
-                  <li
-                    key={link.route}
-                    className={`sidebar-nav_element group ${
-                      isActive ? "bg-purple-gradient text-white" : "text-gray-700"
-                    }`}
-                  >
-                    <Link className="sidebar-link" href={link.route}>
-                      <Image
-                        src={link.icon}
-                        alt={t(link.key)}
-                        width={24}
-                        height={24}
-                        className={`${isActive && "brightness-200"}`}
-                      />
+                  <li key={link.route}>
+                    <Link
+                      href={link.route}
+                      className={cn(
+                        "group flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all hover:bg-secondary",
+                        isActive ? "bg-secondary text-primary" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <IconComponent className={cn("h-5 w-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                       {t(link.key)}
                     </Link>
                   </li>
                 );
               })}
             </ul>
-
-            <ul className="sidebar-nav_elements">
-                <li className="flex-center cursor-pointer gap-2 p-4">
-                    <UserButton afterSignOutUrl="/" showName />
-                </li>
-            </ul>
           </SignedIn>
 
           <SignedOut>
-            <Button asChild className="button bg-purple-gradient bg-cover">
+            <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25">
               <Link href="/sign-in">{t('login')}</Link>
             </Button>
           </SignedOut>
-
-          <div className="mt-4">
-            <LanguageSwitcher />
-          </div>
         </nav>
+
+        <div className="mt-auto space-y-4">
+            <div className="rounded-xl bg-card border border-border p-4 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                <div className="flex items-center gap-3 mb-3 relative z-10">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <Icons.sparkles className="h-4 w-4" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-foreground">{t('proPlan')}</p>
+                        <p className="text-xs text-muted-foreground">{t('unlimitedRizz')}</p>
+                    </div>
+                </div>
+                <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold shadow-sm" asChild>
+                    <Link href="/dashboard/credits">{t('upgradeNow')}</Link>
+                </Button>
+            </div>
+
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-secondary transition-colors cursor-pointer border border-transparent hover:border-border">
+                <UserButton afterSignOutUrl="/" showName appearance={{
+                    elements: {
+                        userButtonBox: "flex flex-row-reverse",
+                        userButtonOuterIdentifier: "text-foreground font-medium text-sm ms-0 me-2",
+                    }
+                }} />
+            </div>
+        </div>
       </div>
     </aside>
   );
