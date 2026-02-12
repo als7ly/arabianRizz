@@ -1,6 +1,6 @@
 import { getUserUsage } from '@/lib/actions/usage-log.actions';
 import { logUsage } from '@/lib/services/usage.service';
-import { deductCredits } from '@/lib/actions/user.actions';
+import { deductCredits } from '@/lib/services/user.service';
 import UsageLog from '@/lib/database/models/usage-log.model';
 import User from '@/lib/database/models/user.model';
 import { connectToDatabase } from '@/lib/database/mongoose';

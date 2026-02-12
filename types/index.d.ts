@@ -11,10 +11,15 @@ declare type CreateUserParams = {
 };
 
 declare type UpdateUserParams = {
-  firstName: string | null;
-  lastName: string | null;
-  username: string;
-  photo: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string;
+  photo?: string;
+  bio?: string;
+  age?: number;
+  gender?: string;
+  occupation?: string;
+  relationshipGoal?: string;
 };
 
 // ====== GIRL PARAMS

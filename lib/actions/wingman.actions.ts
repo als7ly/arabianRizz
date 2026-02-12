@@ -19,7 +19,7 @@ import { updateGamification } from "@/lib/services/gamification.service";
 import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
 import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
-import { deductCredits } from "./user.actions";
+import { deductCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
 
 cloudinary.config({
@@ -80,6 +80,11 @@ async function getUserAndGirl(girlId: string) {
 
 // Low Balance Check Utility
 async function checkAndNotifyLowBalance(user: any) {
+    // Check if user disabled alerts
+    if (user.settings?.lowBalanceAlerts === false) {
+        return;
+    }
+
     // Threshold: 10 credits
     if (user.creditBalance < LOW_BALANCE_THRESHOLD) {
         // Rate Limiting: Check last email sent timestamp
@@ -215,7 +220,13 @@ Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}
 Tone requested: ${safeTone}.
 
 Context about The User ("Me"):
-${userContextString || "No specific details provided."}
+Name: ${user.firstName || user.username}
+Age: ${user.age || "Unknown"}
+Gender: ${user.gender || "Unknown"}
+Occupation: ${user.occupation || "Unknown"}
+Relationship Goal: ${user.relationshipGoal || "Unknown"}
+Bio/Vibe: ${user.bio || "Unknown"}
+${userContextString ? `Additional Memories:\n${userContextString}` : ""}
 
 Expert Tips & Cultural Context (from Knowledge Base):
 ${globalContextString || "No specific tips found."}
@@ -497,9 +508,13 @@ export async function generateHookupLine(girlId: string) {
 
     const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
 
+    // Optimization: Generate embedding once and reuse
+    const combinedQuery = "best hookup lines flirting dating advice";
+    const embedding = await generateEmbedding(combinedQuery);
+
     const [userContext, globalKnowledge] = await Promise.all([
-      getUserContext(girl.author.toString(), "hookup line flirting"),
-      getGlobalKnowledge("best hookup lines dating advice", language)
+      getUserContext(girl.author.toString(), combinedQuery, embedding),
+      getGlobalKnowledge(combinedQuery, language, embedding)
     ]);
 
     const userContextString = userContext.map((k: any) => k.content).join("\n");
@@ -515,7 +530,13 @@ Your Goal: Generate a DIRECT, UNCENSORED, and FLIRTY hookup line for the user to
 Details about her: ${girl.vibe || "Unknown"}. Status: ${girl.relationshipStatus}.
 
 Context about The User:
-${userContextString}
+Name: ${user.firstName || user.username}
+Age: ${user.age || "Unknown"}
+Gender: ${user.gender || "Unknown"}
+Occupation: ${user.occupation || "Unknown"}
+Relationship Goal: ${user.relationshipGoal || "Unknown"}
+Bio/Vibe: ${user.bio || "Unknown"}
+${userContextString ? `Additional Memories:\n${userContextString}` : ""}
 
 Expert Tips & Cultural Context:
 ${globalContextString}

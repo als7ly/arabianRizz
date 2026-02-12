@@ -20,12 +20,12 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-72 border-r border-border bg-background transition-transform lg:translate-x-0 hidden lg:flex flex-col">
+    <aside className="fixed start-0 top-0 z-40 h-screen w-72 border-e border-border bg-background transition-transform lg:translate-x-0 hidden lg:flex flex-col">
       <div className="flex h-full flex-col px-6 py-8">
-        <Link href="/dashboard" className="flex items-center gap-2 mb-10 pl-2">
+        <Link href="/dashboard" className="flex items-center gap-2 mb-10 ps-2">
             <Icons.zap className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold tracking-tight text-foreground">
-              ArabianRizz
+              {t('appName')}
             </span>
         </Link>
 
@@ -69,12 +69,12 @@ const Sidebar = () => {
                         <Icons.sparkles className="h-4 w-4" />
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-foreground">Pro Plan</p>
-                        <p className="text-xs text-muted-foreground">Get unlimited Rizz</p>
+                        <p className="text-sm font-bold text-foreground">{t('proPlan')}</p>
+                        <p className="text-xs text-muted-foreground">{t('unlimitedRizz')}</p>
                     </div>
                 </div>
                 <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold shadow-sm" asChild>
-                    <Link href="/dashboard/credits">Upgrade Now</Link>
+                    <Link href="/dashboard/credits">{t('upgradeNow')}</Link>
                 </Button>
             </div>
 
@@ -82,7 +82,7 @@ const Sidebar = () => {
                 <UserButton afterSignOutUrl="/" showName appearance={{
                     elements: {
                         userButtonBox: "flex flex-row-reverse",
-                        userButtonOuterIdentifier: "text-foreground font-medium text-sm ml-0 mr-2",
+                        userButtonOuterIdentifier: "text-foreground font-medium text-sm ms-0 me-2",
                     }
                 }} />
             </div>

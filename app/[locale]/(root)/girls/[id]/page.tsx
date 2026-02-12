@@ -53,6 +53,7 @@ const GirlPage = async ({ params: { id } }: { params: { id: string } }) => {
             girlId={girl._id}
             initialMessages={serializedMessages}
             creditBalance={user.creditBalance}
+            defaultTone={user.settings?.defaultTone}
           />
         </ChatErrorBoundary>
       </section>
