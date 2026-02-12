@@ -10,12 +10,14 @@ import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import { Link, usePathname } from "@/navigation"
 import { Button } from "../ui/button"
 import { Icons } from "@/components/ui/icons"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 
 const MobileNav = () => {
   const pathname = usePathname();
   const t = useTranslations("Sidebar");
+  const locale = useLocale();
+  const isRtl = locale === 'ar';
 
   const getIcon = (iconName: string) => {
     // @ts-ignore
@@ -27,7 +29,7 @@ const MobileNav = () => {
       <Link href="/dashboard" className="flex items-center gap-2">
         <Icons.zap className="h-6 w-6 text-primary" />
         <span className="text-xl font-bold tracking-tight text-foreground">
-            ArabianRizz
+            {t('appName')}
         </span>
       </Link>
 
@@ -35,11 +37,11 @@ const MobileNav = () => {
         <SheetTrigger>
           <Icons.menu className="h-6 w-6 text-foreground" />
         </SheetTrigger>
-        <SheetContent side="left" className="border-r border-border bg-background sm:w-72">
+        <SheetContent side={isRtl ? 'right' : 'left'} className="border-e border-border bg-background sm:w-72">
             <Link href="/dashboard" className="flex items-center gap-2 mb-8 px-4">
                 <Icons.zap className="h-6 w-6 text-primary" />
                 <span className="text-xl font-bold tracking-tight text-foreground">
-                    ArabianRizz
+                    {t('appName')}
                 </span>
             </Link>
 
@@ -70,7 +72,7 @@ const MobileNav = () => {
 
                 <SignedOut>
                     <Button asChild className="w-full bg-primary text-white">
-                        <Link href="/sign-in">Login</Link>
+                        <Link href="/sign-in">{t('login')}</Link>
                     </Button>
                 </SignedOut>
             </nav>
