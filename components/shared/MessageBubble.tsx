@@ -67,10 +67,10 @@ const MessageBubble = memo(({
         className={cn(
           "max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 text-sm md:text-base leading-relaxed relative shadow-sm transition-all",
           isUser
-            ? "bg-primary text-primary-foreground rounded-br-sm"
+            ? "bg-primary text-primary-foreground rounded-ee-sm"
             : isWingman
-            ? "bg-secondary text-secondary-foreground rounded-bl-sm border border-border"
-            : "bg-muted text-muted-foreground rounded-bl-sm italic" // Girl/Screenshot
+            ? "bg-secondary text-secondary-foreground rounded-es-sm border border-border"
+            : "bg-muted text-muted-foreground rounded-es-sm italic" // Girl/Screenshot
         )}
       >
         {isWingman && (
@@ -98,8 +98,8 @@ const MessageBubble = memo(({
                       className="bg-white/90 hover:bg-white text-gray-900 font-bold"
                       onClick={() => onShare(msg.content.replace("[IMAGE]: ", ""), true)}
                   >
-                      <Share2 size={16} className="mr-2" />
-                      Share
+                      <Share2 size={16} className="me-2" />
+                      {t('shareTitle')}
                   </Button>
               </div>
             </div>
@@ -109,7 +109,7 @@ const MessageBubble = memo(({
 
                 <div className="flex items-center justify-between mt-1 min-h-[24px]">
                     <span className={cn("text-[10px] font-medium", isUser ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t('justNow')}
                     </span>
 
                     {isWingman && (

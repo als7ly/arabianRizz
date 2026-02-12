@@ -91,9 +91,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     try {
         const result = await toggleSaveMessage(msg._id, pathname);
         if (result.isSaved) {
-             toast({ title: "Saved", description: "Message saved to bookmarks." });
+             toast({ title: t('saved'), description: t('savedDesc') });
         } else {
-             toast({ title: "Removed", description: "Message removed from bookmarks." });
+             toast({ title: t('removed'), description: t('removedDesc') });
         }
     } catch (e) {
         // Rollback
@@ -103,9 +103,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
              else reverted.delete(msg._id!);
              return reverted;
         });
-        toast({ title: "Error", description: "Failed to save message.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('saveError'), variant: "destructive" });
     }
-  }, [pathname, toast]);
+  }, [pathname, toast, t]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -173,7 +173,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     try {
         setMessages(prev => {
             const newMsgs = [...prev];
-            newMsgs[index] = { ...newMsgs[index], content: "Regenerating..." };
+            newMsgs[index] = { ...newMsgs[index], content: t('regenerating') };
             return newMsgs;
         });
 
@@ -186,7 +186,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
         });
 
         toast({
-            title: "Regenerated Tip",
+            title: t('wingmanTip'),
             description: explanation,
             duration: 6000,
         });
@@ -203,16 +203,16 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-        title: "Copied!",
-        description: "Message copied to clipboard.",
+        title: t('copied'),
+        description: t('copiedDesc'),
         duration: 3000,
     });
-  }, [toast]);
+  }, [toast, t]);
 
   const handleShare = useCallback(async (text: string, isImage: boolean = false) => {
       const shareData = {
           title: 'ArabianRizz',
-          text: isImage ? 'Check out this generated image!' : text,
+          text: isImage ? t('shareImageText') : text,
           url: isImage ? text : undefined
       };
 
@@ -224,9 +224,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           }
       } else {
           handleCopy(text);
-          toast({ title: "Copied Link", description: "Sharing not supported, link copied." });
+          toast({ title: t('shareLinkTitle'), description: t('shareLinkText') });
       }
-  }, [handleCopy, toast]);
+  }, [handleCopy, toast, t]);
 
   const handlePlayAudio = useCallback(async (message: Message, idx: number) => {
     try {
@@ -250,12 +250,12 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             audio.onended = () => setPlayingAudioId(null);
             await audio.play();
         } else {
-             toast({ title: t('errorTitle'), description: "Could not generate audio.", variant: "destructive" });
+             toast({ title: t('errorTitle'), description: t('audioError'), variant: "destructive" });
              setPlayingAudioId(null);
         }
     } catch (e) {
         console.error(e);
-        toast({ title: t('errorTitle'), description: "Audio playback failed.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('audioPlaybackError'), variant: "destructive" });
         setPlayingAudioId(null);
     }
   }, [voiceId, t, toast]);
@@ -305,7 +305,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
 
   const handleGenerateArt = async (prompt: string, mode: 'standard' | 'selfie') => {
     setIsLoading(true);
-    toast({ title: "Generating Art", description: "This may take a few seconds..." });
+    toast({ title: t('generatingArt'), description: t('generatingArtDesc') });
 
     try {
         const { imageUrl, error } = await generateArt(prompt, girlId, mode);
@@ -315,12 +315,12 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             setMessages((prev) => [...prev, imgMsg]);
             await addMessage({ girlId, role: "wingman", content: `[IMAGE]: ${imageUrl}` });
         } else {
-             toast({ title: "Error", description: error || "Could not generate image.", variant: "destructive" });
+             toast({ title: t('errorTitle'), description: error || t('artError'), variant: "destructive" });
         }
     } catch(e) {
         console.error(e);
-        const errorMessage = e instanceof Error ? e.message : "Something went wrong.";
-        toast({ title: "Error", description: errorMessage, variant: "destructive" });
+        const errorMessage = e instanceof Error ? e.message : t('genericError');
+        toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -353,12 +353,12 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
         await clearChatAction(girlId, pathname);
         setMessages([]);
         toast({
-            title: "Chat Cleared",
-            description: "All messages have been deleted.",
+            title: t('chatCleared'),
+            description: t('chatClearedDesc'),
         });
     } catch (error) {
         console.error(error);
-        toast({ title: "Error", description: "Failed to clear chat.", variant: "destructive" });
+        toast({ title: t('errorTitle'), description: t('clearError'), variant: "destructive" });
     } finally {
         setIsLoading(false);
     }
@@ -404,7 +404,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
 
     } catch (error) {
         console.error(error);
-        const errorMessage = error instanceof Error ? error.message : "Failed to generate action.";
+        const errorMessage = error instanceof Error ? error.message : t('actionError');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
     } finally {
         setIsLoading(false);
@@ -414,7 +414,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] md:h-[calc(100vh-200px)] w-full bg-background border border-border rounded-2xl overflow-hidden relative shadow-sm">
 
-      <div className="absolute top-2 right-2 z-10 flex gap-2">
+      <div className="absolute top-2 end-2 z-10 flex gap-2">
           {messages.length > 0 && (
             <ChatHeaderActions girlId={girlId} onClearChat={handleClearChat} />
           )}
@@ -457,7 +457,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
       {creditBalance !== undefined && creditBalance < 5 && (
         <Link href="/credits" className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-destructive/20 transition-colors">
             <AlertCircle size={12} />
-            {creditBalance === 0 ? "No Credits Left" : `Low Credits: ${creditBalance}`}
+            {creditBalance === 0 ? t('noCredits') : `${t('lowCredits')} ${creditBalance}`}
         </Link>
       )}
 
