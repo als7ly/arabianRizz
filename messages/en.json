@@ -23,7 +23,20 @@
     "deleteDialogCancel": "Cancel",
     "deleteDialogConfirm": "Delete",
     "chatBtn": "Chat",
-    "noNotes": "No notes yet."
+    "noNotes": "No notes yet.",
+    "welcomeSubtitle": "Ready to level up your game today?",
+    "topUpCredits": "Top Up Credits",
+    "newPersonaTitle": "New Persona",
+    "newPersonaDesc": "Create a new girl profile to start chatting.",
+    "savedLinesTitle": "Saved Lines",
+    "savedLinesDesc": "Access your best pickup lines and replies.",
+    "myProfileTitle": "My Profile",
+    "myProfileDesc": "Update your bio to get better advice.",
+    "recentPersonas": "Recent Personas",
+    "viewAll": "View All",
+    "noPersonasTitle": "No personas yet",
+    "noPersonasDesc": "Create your first AI persona to start getting tailored advice.",
+    "createPersonaBtn": "Create Persona"
   },
   "Sidebar": {
     "home": "Home",
