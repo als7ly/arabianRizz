@@ -21,7 +21,7 @@ export type Message = {
 interface MessageBubbleProps {
   msg: Message;
   index: number;
-  playingAudioId: string | null;
+  isPlaying: boolean;
   isLoading: boolean;
   onPlayAudio: (msg: Message, idx: number) => void;
   onRegenerate: (idx: number) => void;
@@ -34,7 +34,7 @@ interface MessageBubbleProps {
 const MessageBubble = memo(({
   msg,
   index,
-  playingAudioId,
+  isPlaying,
   isLoading,
   onPlayAudio,
   onRegenerate,
@@ -48,7 +48,6 @@ const MessageBubble = memo(({
   const isWingman = msg.role === "wingman";
   const isUser = msg.role === "user";
   const isGirl = msg.role === "girl";
-  const isPlaying = playingAudioId === index.toString();
 
   const handleCopyClick = () => {
     onCopy(msg.content);
@@ -115,7 +114,7 @@ const MessageBubble = memo(({
 
                     {isWingman && (
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200" role="toolbar" aria-label="Message actions">
-                          <ActionButton icon={isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />} onClick={() => onPlayAudio(msg, index)} label={t('playAudioTitle')} disabled={playingAudioId !== null} />
+                          <ActionButton icon={isPlaying ? <Loader2 size={14} className="animate-spin"/> : <Volume2 size={14} />} onClick={() => onPlayAudio(msg, index)} label={t('playAudioTitle')} />
                           <ActionButton icon={<RotateCw size={14} className={isLoading ? "animate-spin" : ""} />} onClick={() => onRegenerate(index)} label={t('regenerateTitle')} disabled={isLoading} />
                           <ActionButton icon={isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} onClick={handleCopyClick} label={t('copyTitle')} />
                           <ActionButton

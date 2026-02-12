@@ -432,7 +432,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             key={msg._id || idx}
             msg={msg}
             index={idx}
-            playingAudioId={playingAudioId}
+            isPlaying={playingAudioId === idx.toString()}
             isLoading={isLoading}
             onPlayAudio={handlePlayAudio}
             onRegenerate={handleRegenerate}
