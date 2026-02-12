@@ -10,9 +10,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Gift, Sparkles, Loader2 } from "lucide-react";
+import { ExternalLink, Gift, Sparkles } from "lucide-react";
 import { getWingmanRecommendations } from "@/lib/actions/referral.actions";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RecommendationsDialogProps {
   girlId: string;
@@ -51,9 +52,24 @@ export function RecommendationsDialog({ girlId, open, onOpenChange }: Recommenda
 
         <div className="py-4">
             {loading ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-4">
-                    <Loader2 className="animate-spin text-purple-600" size={32} />
-                    <p className="text-sm text-gray-500">Analyzing her vibe and finding the perfect match...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="list" aria-label="Loading recommendations">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="border rounded-xl p-4 flex gap-4" role="listitem">
+                            <Skeleton className="w-24 h-24 rounded-lg shrink-0" />
+                            <div className="flex-1 flex flex-col gap-2 min-w-0">
+                                <div className="flex justify-between items-start gap-2">
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-5 w-16" />
+                                </div>
+                                <Skeleton className="h-3 w-full mt-1" />
+                                <Skeleton className="h-3 w-2/3" />
+                                <div className="mt-auto pt-2 flex justify-between items-center">
+                                    <Skeleton className="h-4 w-12" />
+                                    <Skeleton className="h-8 w-24 rounded-md" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : items.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -64,9 +80,9 @@ export function RecommendationsDialog({ girlId, open, onOpenChange }: Recommenda
                     <p className="text-sm">Keep chatting to give me more context!</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="list">
                     {items.map((item) => (
-                        <div key={item._id} className="border rounded-xl p-4 flex flex-col hover:bg-gray-50/50 transition-colors shadow-sm group">
+                        <div key={item._id} role="listitem" className="border rounded-xl p-4 flex flex-col hover:bg-gray-50/50 transition-colors shadow-sm group">
                             <div className="flex gap-4">
                                 {item.imageUrl ? (
                                     <div className="w-24 h-24 rounded-lg overflow-hidden bg-white border shrink-0">
