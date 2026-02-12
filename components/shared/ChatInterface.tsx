@@ -152,7 +152,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : t('errorReply');
       toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -191,7 +191,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             duration: 6000,
         });
 
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
         const errorMessage = e instanceof Error ? e.message : "Failed to regenerate.";
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -294,7 +294,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             duration: 6000,
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : t('errorProcessImage');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -338,7 +338,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
                 duration: 6000,
             });
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
         const errorMessage = e instanceof Error ? e.message : t('errorHookup');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -402,7 +402,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           });
       }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : t('actionError');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });

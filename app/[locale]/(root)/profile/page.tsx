@@ -14,6 +14,7 @@ import CreditBalance from "@/components/shared/CreditBalance";
 import PersonaManager from "@/components/shared/PersonaManager";
 import BillingHistory from "@/components/shared/BillingHistory";
 import ManageSubscriptionButton from "@/components/shared/ManageSubscriptionButton";
+import ExportDataButton from "@/components/shared/ExportDataButton";
 import { ProfileForm } from "@/components/shared/ProfileForm";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -87,6 +88,18 @@ const Profile = async () => {
             <div className="pb-8 border-b border-border">
                  <h3 className="text-xl font-semibold text-foreground mb-6">My Personas</h3>
                 <PersonaManager />
+            </div>
+
+            {/* Settings & Privacy */}
+            <div className="border-t border-gray-100 pt-6">
+                <h3 className="h4-medium text-dark-600 mb-4">Settings & Privacy</h3>
+                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <p className="p-16-semibold text-dark-600">My Data</p>
+                        <p className="text-sm text-gray-500">Download a copy of your personal data and chat history.</p>
+                    </div>
+                    <ExportDataButton />
+                </div>
             </div>
 
             {/* Actions */}
