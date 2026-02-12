@@ -1,12 +1,18 @@
 "use server";
 
 import { ImageAnnotatorClient } from "@google-cloud/vision";
+import { auth } from "@clerk/nextjs";
 
 // Initialize the client
 // Ensure GOOGLE_APPLICATION_CREDENTIALS env var is set or credentials are passed here
 const client = new ImageAnnotatorClient();
 
 export async function extractTextFromImage(imageUrl: string): Promise<string> {
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
   try {
     // If no credentials are setup, return mock data for development
     if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && !process.env.GOOGLE_API_KEY) {
