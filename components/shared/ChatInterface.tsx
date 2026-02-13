@@ -28,6 +28,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string>("nova");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { toast } = useToast();
   const t = useTranslations('Chat');
   const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
@@ -57,6 +58,20 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   useEffect(() => {
     if (scrollRef.current && isAtBottom.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  // Smart auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
+      const lastMessage = messages[messages.length - 1];
+      const isUserMessage = lastMessage?.role === 'user';
+
+      if (isAtBottom || isUserMessage) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
   }, [messages]);
 
