@@ -9,6 +9,7 @@ import { handleError } from "../utils";
 import { auth } from "@clerk/nextjs";
 import { updateUser } from "../services/user.service";
 import { revalidatePath } from "next/cache";
+import { UserUpdateSchema } from "../validations/user";
 
 // UPDATE PROFILE
 export async function updateUserProfile(data: UpdateUserParams) {
@@ -16,7 +17,10 @@ export async function updateUserProfile(data: UpdateUserParams) {
     const { userId: clerkId } = auth();
     if (!clerkId) throw new Error("Unauthorized");
 
-    const user = await updateUser(clerkId, data);
+    // Security: Validate input to prevent Mass Assignment
+    const validatedData = UserUpdateSchema.parse(data);
+
+    const user = await updateUser(clerkId, validatedData);
 
     revalidatePath("/profile");
     return JSON.parse(JSON.stringify(user));
