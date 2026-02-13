@@ -248,7 +248,8 @@
     "exporting": "Exporting...",
     "exportChat": "Export Chat",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "scrollToBottom": "Scroll to bottom"
   },
   "Saved": {
     "title": "Saved Lines",
