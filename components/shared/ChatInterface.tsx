@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { Sparkles, AlertCircle, ChevronDown } from "lucide-react";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
@@ -27,6 +27,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string>("nova");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { toast } = useToast();
   const t = useTranslations('Chat');
   const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
@@ -36,9 +37,32 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     messagesRef.current = messages;
   }, [messages]);
 
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
+      setShowScrollButton(!isAtBottom);
+    }
+  };
+
+  // Initial scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  // Smart auto-scroll
+  useEffect(() => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
+      const lastMessage = messages[messages.length - 1];
+      const isUserMessage = lastMessage?.role === 'user';
+
+      if (isAtBottom || isUserMessage) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -420,7 +444,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef} onScroll={handleScroll}>
         {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                 <Sparkles className="h-10 w-10 text-muted-foreground/50" />
@@ -453,6 +477,18 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             </div>
         )}
       </div>
+
+      {showScrollButton && (
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute bottom-20 right-4 rounded-full shadow-md z-20 animate-in fade-in zoom-in duration-200"
+          onClick={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })}
+          aria-label="Scroll to bottom"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </Button>
+      )}
 
       {creditBalance !== undefined && creditBalance < 5 && (
         <Link href="/credits" className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-destructive/20 transition-colors">
