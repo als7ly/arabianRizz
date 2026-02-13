@@ -65,5 +65,7 @@ export async function validateUrl(url: string): Promise<void> {
       if (address.toLowerCase().startsWith("fe80")) {
           throw new Error("Access to link-local address is denied");
       }
+      return false;
   }
+  return false;
 }

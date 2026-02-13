@@ -4,19 +4,47 @@ import { validateUrl } from "@/lib/security/url-validator";
 
 export async function fetchProductMetadata(url: string) {
   try {
-    // Validate URL to prevent SSRF
+    // Validate initial URL to prevent SSRF
     await validateUrl(url);
 
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; WingmanBot/1.0; +https://arabianrizz.com)",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-      },
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    let currentUrl = url;
+    let response;
+    let redirectCount = 0;
+    const maxRedirects = 5;
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+    while (redirectCount < maxRedirects) {
+        response = await fetch(currentUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; WingmanBot/1.0; +https://arabianrizz.com)",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            next: { revalidate: 3600 }, // Cache for 1 hour
+            redirect: 'manual' // Handle redirects manually for security
+        });
+
+        if (response.status >= 300 && response.status < 400) {
+            const location = response.headers.get('location');
+            if (location) {
+                redirectCount++;
+                const nextUrl = new URL(location, currentUrl).toString();
+
+                // Validate the NEW URL before following
+                await validateUrl(nextUrl);
+
+                currentUrl = nextUrl;
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    if (redirectCount >= maxRedirects) {
+        throw new Error("Too many redirects");
+    }
+
+    if (!response || !response.ok) {
+        throw new Error(`Failed to fetch URL: ${response?.status} ${response?.statusText}`);
     }
 
     const html = await response.text();
