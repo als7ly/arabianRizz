@@ -10,7 +10,7 @@ const openai = new OpenAI({
 export const crawlUrl = async (url: string) => {
   try {
     // Validate URL to prevent SSRF
-    validateUrl(url);
+    await validateUrl(url);
 
     let currentUrl = url;
     let response: Response | undefined;
@@ -32,7 +32,7 @@ export const crawlUrl = async (url: string) => {
         const nextUrl = new URL(location, currentUrl).toString();
 
         // Validate the NEW URL
-        validateUrl(nextUrl);
+        await validateUrl(nextUrl);
 
         currentUrl = nextUrl;
         continue;

@@ -5,7 +5,7 @@ import { validateUrl } from "@/lib/security/url-validator";
 export async function fetchProductMetadata(url: string) {
   try {
     // Validate URL to prevent SSRF
-    validateUrl(url);
+    await validateUrl(url);
 
     const response = await fetch(url, {
       headers: {
