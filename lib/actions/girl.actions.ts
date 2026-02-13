@@ -16,7 +16,7 @@ async function getCurrentUser() {
     if (!clerkId) throw new Error("Unauthorized");
     
     await connectToDatabase();
-    const user = await User.findOne({ clerkId });
+    const user = await User.findOne({ clerkId }).lean();
     if (!user) throw new Error("User not found");
     
     return user;
@@ -59,7 +59,7 @@ export async function searchMessages(girlId: string, query: string): Promise<{ s
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) return { success: false, data: [], error: "Girl not found" };
 
     // Security Check
@@ -78,7 +78,7 @@ export async function searchMessages(girlId: string, query: string): Promise<{ s
     const messages = await Message.find({
         girl: girlId,
         content: { $regex: escapedQuery, $options: 'i' }
-    }).sort({ createdAt: 1 });
+    }).sort({ createdAt: 1 }).lean();
 
     return { success: true, data: JSON.parse(JSON.stringify(messages)) };
   } catch (error) {
@@ -92,7 +92,7 @@ export async function getChatHistory(girlId: string) {
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
 
     // Security Check
@@ -102,7 +102,7 @@ export async function getChatHistory(girlId: string) {
     }
 
     const messages = await Message.find({ girl: girlId })
-      .sort({ createdAt: 1 }); // Oldest first for history export
+      .sort({ createdAt: 1 }).lean(); // Oldest first for history export
 
     return JSON.parse(JSON.stringify(messages));
   } catch (error) {
@@ -116,7 +116,7 @@ export async function getGirlById(girlId: string) {
   try {
     await connectToDatabase();
     
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
     
     // Security Check
@@ -159,7 +159,7 @@ export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: 
       .skip(skipAmount)
       .limit(limit);
 
-    const girls = await girlsQuery.exec();
+    const girls = await girlsQuery.lean();
     const girlsCount = await Girl.countDocuments(condition);
 
     return {
@@ -176,7 +176,7 @@ export async function updateGirl(girl: UpdateGirlParams) {
   try {
     await connectToDatabase();
     
-    const girlToUpdate = await Girl.findById(girl._id);
+    const girlToUpdate = await Girl.findById(girl._id).lean();
     if (!girlToUpdate) throw new Error("Girl not found");
     
     // Security Check
@@ -215,7 +215,7 @@ export async function togglePinGirl(girlId: string, path?: string) {
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
 
     // Security Check
@@ -247,7 +247,7 @@ export async function deleteGirl(girlId: string) {
   try {
     await connectToDatabase();
     
-    const girlToDelete = await Girl.findById(girlId);
+    const girlToDelete = await Girl.findById(girlId).lean();
     if (!girlToDelete) throw new Error("Girl not found");
 
     // Security Check
@@ -269,7 +269,7 @@ export async function clearChat(girlId: string, path?: string) {
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
 
     // Security Check
