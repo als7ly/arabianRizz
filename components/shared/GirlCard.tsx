@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, Star } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { DeleteGirlButton } from "./DeleteGirlButton";
+import { PinGirlButton } from "./PinGirlButton";
 import { useTranslations } from "next-intl";
 
-export const GirlCard = ({ girl }: { girl: any }) => {
+export const GirlCard = ({ girl }: { girl: Girl }) => {
   const pathname = usePathname();
   const locale = pathname.split('/')[1] || 'en';
   const t = useTranslations('Dashboard');
@@ -54,11 +55,21 @@ export const GirlCard = ({ girl }: { girl: any }) => {
         </p>
 
         <div className="flex justify-between items-center mt-2">
-            <Button variant="ghost" size="sm" className="text-purple-500 gap-2 ps-0 hover:bg-transparent hover:text-purple-600">
+            <Button
+                variant="ghost"
+                size="sm"
+                className="text-purple-500 gap-2 ps-0 hover:bg-transparent hover:text-purple-600"
+                aria-label={t('chatBtn')}
+            >
                 <MessageCircle size={18} />
                 {t('chatBtn')}
             </Button>
-            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+            <div className="flex items-center gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <PinGirlButton
+                    girlId={girl._id}
+                    isPinned={girl.isPinned || false}
+                    iconSize={18}
+                />
                 <DeleteGirlButton
                     girlId={girl._id}
                     className="text-red-400 hover:bg-red-50 hover:text-red-600 z-10"

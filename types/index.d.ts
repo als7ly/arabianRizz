@@ -62,6 +62,7 @@ declare type Girl = {
   relationshipStatus?: string;
   rating?: number;
   socialMediaHandle?: string;
+  isPinned?: boolean;
   author: string;
   createdAt: string;
   updatedAt: string;

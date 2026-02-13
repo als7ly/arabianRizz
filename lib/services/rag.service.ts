@@ -79,13 +79,14 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
   }
 }
 
-// Retrieve User Context (RAG) - Internal Service Function
+// Retrieve User Knowledge (RAG) - Internal Service Function (No Auth Verification)
 export async function retrieveUserContext(userId: string, query: string, embedding?: number[]) {
   try {
     await connectToDatabase();
 
     const queryEmbedding = embedding || await generateEmbedding(query);
 
+    // MongoDB Atlas Vector Search
     const results = await UserKnowledge.aggregate([
       {
         $vectorSearch: {
@@ -115,12 +116,12 @@ export async function retrieveUserContext(userId: string, query: string, embeddi
             .limit(3)
             .select("content");
 
-        return recent.map((k: any) => ({ content: k.content }));
+        return recent.map(k => ({ content: k.content }));
     }
 
     return results;
   } catch (error) {
-    console.error("User RAG Error:", error);
+    console.error("User RAG Retrieval Error:", error);
     return [];
   }
 }

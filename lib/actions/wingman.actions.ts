@@ -62,8 +62,8 @@ async function getUserAndGirl(girlId: string) {
     await connectToDatabase();
 
     const [user, girl] = await Promise.all([
-        User.findOne({ clerkId }),
-        Girl.findById(girlId)
+        User.findOne({ clerkId }).lean(),
+        Girl.findById(girlId).lean()
     ]);
 
     if (!user) throw new Error("User not found");
@@ -76,8 +76,18 @@ async function getUserAndGirl(girlId: string) {
     return { user, girl };
 }
 
+interface UserWithSettings {
+    _id: string;
+    email: string;
+    creditBalance: number;
+    settings?: {
+        lowBalanceAlerts: boolean;
+    };
+    lastLowBalanceEmailSent?: Date;
+}
+
 // Low Balance Check Utility
-async function checkAndNotifyLowBalance(user: any) {
+async function checkAndNotifyLowBalance(user: UserWithSettings) {
     // Check if user disabled alerts
     if (user.settings?.lowBalanceAlerts === false) {
         return;
@@ -270,7 +280,7 @@ ${contextString}
 
     if (aiContent) {
         // Deduct Credit on Success
-        const updatedUser = await deductCredits(user._id, 1);
+        const updatedUser = await deductCredits(user._id.toString(), 1);
         await logUsage({ userId: user._id, action: "message_generation", cost: 1, metadata: { girlId } });
 
         // Check for Low Balance
@@ -565,7 +575,7 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        const updatedUser = await deductCredits(user._id, 1);
+        const updatedUser = await deductCredits(user._id.toString(), 1);
         await logUsage({ userId: user._id, action: "hookup_line", cost: 1, metadata: { girlId } });
 
         // Check for Low Balance
