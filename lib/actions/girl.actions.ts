@@ -9,6 +9,7 @@ import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
 import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
+import { logger } from "../services/logger.service";
 
 async function getCurrentUser() {
     const { userId: clerkId } = auth();
@@ -81,7 +82,7 @@ export async function searchMessages(girlId: string, query: string): Promise<{ s
 
     return { success: true, data: JSON.parse(JSON.stringify(messages)) };
   } catch (error) {
-    console.error("Search Messages Error:", error);
+    logger.error("Search Messages Error:", error);
     return { success: false, data: [], error: "Internal Server Error" };
   }
 }
