@@ -17,8 +17,9 @@ import { updateGamification } from "@/lib/services/gamification.service";
 import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
 import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
-import { deductCredits } from "../services/user.service";
+import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
+import { getGirlById } from "./girl.actions";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -364,26 +365,45 @@ export async function analyzeProfile(imageUrl: string) {
         };
     }
 
-    const completion = await openrouter.chat.completions.create({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Profile Text:\n${text}` },
-      ],
-      model: WINGMAN_MODEL,
-      response_format: { type: "json_object" }
-    });
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) throw new Error("User not found");
 
-    const aiContent = completion.choices[0]?.message?.content;
-    if (aiContent) {
-        try {
-            return JSON.parse(aiContent);
-        } catch (e) {
-            logger.error("JSON Parse Error:", e);
-            return null;
+    // Deduct Credit (Analysis uses OCR + LLM)
+    const ANALYSIS_COST = 1;
+    await deductCredits(user._id.toString(), ANALYSIS_COST);
+
+    try {
+        const completion = await openrouter.chat.completions.create({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Profile Text:\n${text}` },
+          ],
+          model: WINGMAN_MODEL,
+          response_format: { type: "json_object" }
+        });
+
+        const aiContent = completion.choices[0]?.message?.content;
+        if (aiContent) {
+            try {
+                const parsed = JSON.parse(aiContent);
+                await logUsage({ userId: user._id, action: "profile_analysis", cost: ANALYSIS_COST, metadata: { imageUrl: imageUrl.substring(0, 100) } });
+                return parsed;
+            } catch (e) {
+                logger.error("JSON Parse Error:", e);
+                await refundCredits(user._id.toString(), ANALYSIS_COST);
+                return null;
+            }
         }
-    }
-    return null;
 
+        await refundCredits(user._id.toString(), ANALYSIS_COST);
+        return null;
+
+    } catch (error) {
+        // Rollback credits on API failure
+        await refundCredits(user._id.toString(), ANALYSIS_COST);
+        throw error;
+    }
   } catch (error) {
     logger.error("Analyze Profile Error:", error);
     return null;
@@ -399,24 +419,43 @@ export async function generateResponseImage(prompt: string) {
         return "https://via.placeholder.com/1024x1024.png?text=Mock+AI+Image";
     }
 
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) throw new Error("User not found");
+
+    // Deduct Credit (Image generation is expensive)
+    const IMAGE_COST = 3;
+    await deductCredits(user._id.toString(), IMAGE_COST);
+
     // Safety Check for Image Generation
     const isSafe = await checkContentSafety(prompt);
     if (!isSafe) {
         logger.warn("Content safety violation blocked in image gen", { prompt });
+        await refundCredits(user._id.toString(), IMAGE_COST);
         return "https://via.placeholder.com/1024x1024.png?text=Content+Violation";
     }
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-    });
+    try {
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+        });
 
-    if (response.data && response.data.length > 0) {
-        return response.data[0].url;
+        if (response.data && response.data.length > 0) {
+            await logUsage({ userId: user._id, action: "image_generation", cost: IMAGE_COST, metadata: { prompt: prompt.substring(0, 100) } });
+            return response.data[0].url;
+        }
+
+        await refundCredits(user._id.toString(), IMAGE_COST);
+        return null;
+
+    } catch (error) {
+        // Rollback credits on API failure
+        await refundCredits(user._id.toString(), IMAGE_COST);
+        throw error;
     }
-    return null;
   } catch (error) {
     logger.error("Image Gen Error:", error);
     return null;
@@ -432,27 +471,39 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
         return null;
     }
 
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) return null;
+
     // Security Check: If associating with a message, ensure user owns the girl.
     if (messageId) {
-        await connectToDatabase();
         const message = await Message.findById(messageId);
         if (message) {
              // This will throw Unauthorized if user is not author
              await getGirlById(message.girl.toString());
         } else {
-             // If messageId provided but not found, maybe stop?
-             // Or proceed without linking? Safer to stop or return null to prevent confusion.
              return null;
         }
     }
 
+    // Deduct Credit (TTS is expensive)
+    const SPEECH_COST = 1;
+    const userWithCredits = await deductCredits(user._id.toString(), SPEECH_COST);
+
     // 1. Generate Speech via OpenAI
     const voice = voiceId as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-    const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: voice,
-      input: text,
-    });
+    let mp3;
+    try {
+        mp3 = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: voice,
+          input: text,
+        });
+    } catch (error) {
+        // Rollback credits on API failure
+        await refundCredits(user._id.toString(), SPEECH_COST);
+        throw error;
+    }
 
     const buffer = Buffer.from(await mp3.arrayBuffer());
 
@@ -488,10 +539,19 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
             await Message.findByIdAndUpdate(messageId, { audioUrl });
         }
 
+        // Log Usage & Check Balance
+        await logUsage({ userId: user._id, action: "speech_generation", cost: SPEECH_COST, metadata: { messageId } });
+        checkAndNotifyLowBalance(userWithCredits).catch(err => logger.error("Low Balance Notify Error", err));
+
         return audioUrl;
 
     } catch (uploadError) {
         logger.error("Cloudinary Upload Error:", uploadError);
+
+        // Log Usage even on upload failure (user gets base64)
+        await logUsage({ userId: user._id, action: "speech_generation", cost: SPEECH_COST, metadata: { messageId, fallback: true } });
+        checkAndNotifyLowBalance(userWithCredits).catch(err => logger.error("Low Balance Notify Error", err));
+
         // Fallback to Base64 if upload fails, so the user still hears it
         const base64 = buffer.toString('base64');
         return `data:audio/mp3;base64,${base64}`;
