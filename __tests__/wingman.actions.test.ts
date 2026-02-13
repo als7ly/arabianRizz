@@ -1,5 +1,6 @@
-import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback } from '@/lib/actions/wingman.actions';
+import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback, generateSpeech, generateResponseImage } from '@/lib/actions/wingman.actions';
 import { openrouter } from '@/lib/openrouter';
+import { openai } from '@/lib/openai';
 import { getContext } from '@/lib/actions/rag.actions';
 import { generateEmbedding, retrieveContext, retrieveUserContext } from '@/lib/services/rag.service';
 import { getUserContext } from '@/lib/actions/user-knowledge.actions';
@@ -53,6 +54,15 @@ jest.mock('@/lib/services/gamification.service', () => ({
   updateGamification: jest.fn(),
 }));
 
+jest.mock('@/lib/services/user.service', () => ({
+  deductCredits: jest.fn(),
+  refundCredits: jest.fn(),
+}));
+
+jest.mock('@/lib/services/usage.service', () => ({
+  logUsage: jest.fn(),
+}));
+
 jest.mock('@/lib/database/mongoose', () => ({
   connectToDatabase: jest.fn(),
 }));
@@ -78,10 +88,19 @@ jest.mock("@clerk/nextjs", () => ({
 describe('Wingman Actions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const mockUser = { _id: 'user123', clerkId: 'clerk_user_123', email: 'test@test.com', creditBalance: 10 };
     (connectToDatabase as jest.Mock).mockResolvedValue(true);
     (auth as jest.Mock).mockReturnValue({ userId: 'clerk_user_123' });
-    (User.findOne as jest.Mock).mockResolvedValue({ _id: 'user123', creditBalance: 10 });
+    (User.findOne as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockUser)
+    });
     (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
+
+    // Mock deductCredits to return the updated user
+    const { deductCredits } = require('@/lib/services/user.service');
+    (deductCredits as jest.Mock).mockImplementation((userId: string, amount: number) => {
+        return Promise.resolve({ ...mockUser, creditBalance: mockUser.creditBalance - amount });
+    });
   });
 
   describe('generateWingmanReply', () => {
@@ -216,7 +235,8 @@ describe('Wingman Actions', () => {
       expect(openrouter.chat.completions.create).not.toHaveBeenCalled();
     });
 
-    it('should return null on JSON parse error', async () => {
+    it('should return null on JSON parse error and refund credits', async () => {
+        const { deductCredits, refundCredits } = require('@/lib/services/user.service');
         (extractTextFromImage as jest.Mock).mockResolvedValue('text');
         (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
             choices: [{ message: { content: 'Bad JSON' } }],
@@ -224,7 +244,70 @@ describe('Wingman Actions', () => {
 
         const result = await analyzeProfile('url');
         expect(result).toBeNull();
+        expect(deductCredits).toHaveBeenCalled();
+        expect(refundCredits).toHaveBeenCalled();
     });
+  });
+
+  describe('generateSpeech', () => {
+    it('should generate speech successfully and deduct credits', async () => {
+        const { deductCredits } = require('@/lib/services/user.service');
+        const { logUsage } = require('@/lib/services/usage.service');
+
+        const mockAudioResponse = {
+            arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8))
+        };
+        (openai.audio.speech.create as jest.Mock).mockResolvedValue(mockAudioResponse);
+
+        const result = await generateSpeech('Hello world', 'nova');
+
+        expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+        expect(logUsage).toHaveBeenCalledWith(expect.objectContaining({ action: 'speech_generation', cost: 1 }));
+        expect(result).toContain('data:audio/mp3;base64,');
+    });
+
+    it('should refund credits if OpenAI fails', async () => {
+        const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+        (openai.audio.speech.create as jest.Mock).mockRejectedValue(new Error('OpenAI Error'));
+
+        await expect(generateSpeech('Hello', 'nova')).rejects.toThrow('OpenAI Error');
+
+        expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+        expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+    });
+  });
+
+  describe('generateResponseImage', () => {
+      it('should generate image successfully and deduct 3 credits', async () => {
+          const { deductCredits } = require('@/lib/services/user.service');
+          const { logUsage } = require('@/lib/services/usage.service');
+
+          (openai.images.generate as jest.Mock).mockResolvedValue({
+              data: [{ url: 'http://image.url' }]
+          });
+
+          const result = await generateResponseImage('A beautiful sunset');
+
+          expect(deductCredits).toHaveBeenCalledWith('user123', 3);
+          expect(logUsage).toHaveBeenCalledWith(expect.objectContaining({ action: 'image_generation', cost: 3 }));
+          expect(result).toBe('http://image.url');
+      });
+
+      it('should refund credits if safety check fails', async () => {
+          const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+          // checkContentSafety is internal but we can trigger it via openai mock if we wanted,
+          // or just mock it if it was exported. Since it's internal, we trigger its failure.
+          // Wait, checkContentSafety uses openai.moderations.create
+          (openai.moderations.create as jest.Mock).mockResolvedValue({
+              results: [{ flagged: true, categories: {} }]
+          });
+
+          const result = await generateResponseImage('bad prompt');
+
+          expect(result).toContain('Content+Violation');
+          expect(deductCredits).toHaveBeenCalledWith('user123', 3);
+          expect(refundCredits).toHaveBeenCalledWith('user123', 3);
+      });
   });
 
   describe('generateHookupLine', () => {
