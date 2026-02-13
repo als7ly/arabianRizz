@@ -185,13 +185,19 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
 
     const { user, girl } = await getUserAndGirl(girlId);
 
-    if (user.creditBalance < 1) {
+    // Deduct Credit (Generate Reply is 1 credit)
+    const COST = 1;
+    let updatedUser;
+    try {
+        updatedUser = await deductCredits(user._id.toString(), COST);
+    } catch (e) {
         return {
             reply: "You are out of credits! Please top up to continue.",
             explanation: "Insufficient credits."
         };
     }
 
+    try {
     // Language Handling
     const languageCode = girl.language || 'en';
     const languageMap: { [key: string]: string } = {
@@ -280,9 +286,7 @@ ${contextString}
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        // Deduct Credit on Success
-        const updatedUser = await deductCredits(user._id.toString(), 1);
-        await logUsage({ userId: user._id, action: "message_generation", cost: 1, metadata: { girlId } });
+        await logUsage({ userId: user._id, action: "message_generation", cost: COST, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
@@ -308,10 +312,19 @@ ${contextString}
         }
     }
 
+    // Refund if no AI content
+    await refundCredits(user._id.toString(), COST);
+
     return {
       reply: "Error: No response from AI.",
       explanation: "Something went wrong."
     };
+
+    } catch (apiError) {
+        // Refund on API error
+        await refundCredits(user._id.toString(), COST);
+        throw apiError;
+    }
 
   } catch (error: any) {
     logger.error("Wingman Error:", error);
@@ -567,13 +580,19 @@ export async function generateHookupLine(girlId: string) {
   try {
     const { user, girl } = await getUserAndGirl(girlId);
 
-    if (user.creditBalance < 1) {
+    // Deduct Credit (Hookup Line is 1 credit)
+    const COST = 1;
+    let updatedUser;
+    try {
+        updatedUser = await deductCredits(user._id.toString(), COST);
+    } catch (e) {
          return {
             line: "You are out of credits! Please top up.",
             explanation: "Insufficient credits."
         };
     }
 
+    try {
     const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
 
     // Optimization: Generate embedding once and reuse
@@ -635,8 +654,7 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        const updatedUser = await deductCredits(user._id.toString(), 1);
-        await logUsage({ userId: user._id, action: "hookup_line", cost: 1, metadata: { girlId } });
+        await logUsage({ userId: user._id, action: "hookup_line", cost: COST, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
@@ -660,10 +678,16 @@ Instructions:
         }
     }
 
+    await refundCredits(user._id.toString(), COST);
     return {
         line: "Error generating line.",
         explanation: "AI failure."
     };
+
+    } catch (apiError) {
+        await refundCredits(user._id.toString(), COST);
+        throw apiError;
+    }
 
   } catch (error) {
     logger.error("Hookup Line Error:", error);

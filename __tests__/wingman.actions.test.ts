@@ -179,6 +179,43 @@ describe('Wingman Actions', () => {
       });
     });
 
+    it('should refund credits if OpenRouter API fails', async () => {
+      const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+      (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+      (retrieveContext as jest.Mock).mockResolvedValue([]);
+      (retrieveUserContext as jest.Mock).mockResolvedValue([]);
+      (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
+
+      (openrouter.chat.completions.create as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+      const result = await generateWingmanReply('girl123', 'Hi');
+
+      expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+      expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+      expect(result).toEqual({
+        reply: "I'm having trouble thinking right now. Please try again.",
+        explanation: "Something went wrong with the AI.",
+      });
+    });
+
+    it('should refund credits if AI returns no content', async () => {
+        const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+        (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+        (retrieveContext as jest.Mock).mockResolvedValue([]);
+        (retrieveUserContext as jest.Mock).mockResolvedValue([]);
+        (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
+
+        (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+          choices: [{ message: { content: null } }],
+        });
+
+        const result = await generateWingmanReply('girl123', 'Hi');
+
+        expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+        expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+        expect(result.reply).toContain("Error: No response");
+    });
+
     it('should handle instruction sender role correctly', async () => {
         (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
         (retrieveContext as jest.Mock).mockResolvedValue([]);
@@ -343,6 +380,19 @@ describe('Wingman Actions', () => {
             ])
         }));
         expect(result).toEqual({ ...mockResponse, newBadges: [] });
+      });
+
+      it('should refund credits if OpenRouter API fails', async () => {
+          const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+          (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+          (retrieveUserContext as jest.Mock).mockResolvedValue([]);
+          (openrouter.chat.completions.create as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+          const result = await generateHookupLine('girl123');
+
+          expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+          expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+          expect(result.explanation).toBe("Something went wrong.");
       });
   });
 
