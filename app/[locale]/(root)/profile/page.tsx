@@ -10,9 +10,10 @@ import { Check } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { getUserById } from "@/lib/actions/user.actions";
 import { getTransactions } from "@/lib/actions/transaction.actions";
+import { getUserUsage } from "@/lib/actions/usage-log.actions";
 import CreditBalance from "@/components/shared/CreditBalance";
 import PersonaManager from "@/components/shared/PersonaManager";
-import BillingHistory from "@/components/shared/BillingHistory";
+import CreditHistory from "@/components/shared/CreditHistory";
 import ManageSubscriptionButton from "@/components/shared/ManageSubscriptionButton";
 import ExportDataButton from "@/components/shared/ExportDataButton";
 import { ProfileForm } from "@/components/shared/ProfileForm";
@@ -30,6 +31,7 @@ const Profile = async () => {
 
   const user = await getUserById(userId);
   const transactions = await getTransactions(user._id);
+  const usageData = await getUserUsage(user._id, 1, 10);
 
   return (
     <>
@@ -72,9 +74,13 @@ const Profile = async () => {
 
             {/* Billing History */}
             <div className="pb-8 border-b border-border">
-                <h3 className="text-xl font-semibold text-foreground mb-6">Billing History</h3>
+                <h3 className="text-xl font-semibold text-foreground mb-6">History</h3>
                 <div className="bg-background border border-border rounded-2xl overflow-hidden">
-                    <BillingHistory transactions={transactions} />
+                    <CreditHistory
+                        transactions={transactions}
+                        initialUsageLogs={usageData}
+                        userId={user._id}
+                    />
                 </div>
             </div>
 
