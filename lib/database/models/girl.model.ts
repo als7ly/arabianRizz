@@ -36,6 +36,10 @@ const GirlSchema = new Schema({
   socialMediaHandle: {
     type: String,
   },
+  isPinned: {
+    type: Boolean,
+    default: false,
+  },
   author: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -52,7 +56,7 @@ const GirlSchema = new Schema({
 });
 
 // Optimize queries by author (filtering) and createdAt (sorting)
-GirlSchema.index({ author: 1, createdAt: -1 });
+GirlSchema.index({ author: 1, isPinned: -1, createdAt: -1 });
 
 const Girl = models?.Girl || model("Girl", GirlSchema);
 

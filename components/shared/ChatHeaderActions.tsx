@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Trash2, Download, Search, Loader2 } from "lucide-react";
+import { MoreVertical, Trash2, Download, Search, Loader2, Activity } from "lucide-react";
 import { SearchChatDialog } from "./SearchChatDialog";
+import { AnalysisDialog } from "./AnalysisDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,7 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
   const [isExporting, setIsExporting] = useState(false);
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const t = useTranslations('Chat');
@@ -79,7 +81,11 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setShowSearchDialog(true)} className="cursor-pointer">
+          <DropdownMenuItem onClick={() => setShowAnalysisDialog(true)} className="cursor-pointer" aria-label="Analyze Conversation">
+            <Activity className="me-2 h-4 w-4" />
+            <span>Analyze Chat</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setShowSearchDialog(true)} className="cursor-pointer" aria-label="Search Chat">
             <Search className="me-2 h-4 w-4" />
             <span>{t('searchChat')}</span>
           </DropdownMenuItem>
@@ -132,6 +138,12 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
         girlId={girlId}
         open={showSearchDialog}
         onOpenChange={setShowSearchDialog}
+      />
+
+      <AnalysisDialog
+        girlId={girlId}
+        open={showAnalysisDialog}
+        onOpenChange={setShowAnalysisDialog}
       />
     </>
   );

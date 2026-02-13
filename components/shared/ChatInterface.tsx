@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Sparkles, AlertCircle, ChevronDown } from "lucide-react";
+import { Sparkles, AlertCircle, ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
@@ -31,6 +32,8 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const { toast } = useToast();
   const t = useTranslations('Chat');
   const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const isAtBottom = useRef(true);
 
   const messagesRef = useRef(messages);
   useEffect(() => {
@@ -40,14 +43,20 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const handleScroll = () => {
     if (scrollRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
-      setShowScrollButton(!isAtBottom);
+      const atBottom = scrollHeight - scrollTop - clientHeight < 100;
+      isAtBottom.current = atBottom;
+      setShowScrollButton(!atBottom);
     }
   };
 
-  // Initial scroll to bottom
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (scrollRef.current && isAtBottom.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, []);
@@ -444,7 +453,11 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef} onScroll={handleScroll}>
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-6"
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
         {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                 <Sparkles className="h-10 w-10 text-muted-foreground/50" />
@@ -481,12 +494,11 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
       {showScrollButton && (
         <Button
           size="icon"
-          variant="secondary"
-          className="absolute bottom-20 right-4 rounded-full shadow-md z-20 animate-in fade-in zoom-in duration-200"
-          onClick={() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })}
-          aria-label="Scroll to bottom"
+          className="absolute bottom-24 right-4 rounded-full shadow-lg z-20 bg-primary/90 hover:bg-primary animate-in fade-in zoom-in duration-300"
+          onClick={scrollToBottom}
+          aria-label={t('scrollToBottom')}
         >
-          <ChevronDown className="h-4 w-4" />
+          <ArrowDown size={20} />
         </Button>
       )}
 
