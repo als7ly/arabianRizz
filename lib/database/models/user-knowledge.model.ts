@@ -13,6 +13,7 @@ const UserKnowledgeSchema = new Schema({
   embedding: {
     type: [Number], // Vector embedding for RAG
     required: true,
+    select: false,
   },
   createdAt: {
     type: Date,
