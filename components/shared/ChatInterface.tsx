@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { Sparkles, AlertCircle, ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
@@ -30,14 +31,31 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const { toast } = useToast();
   const t = useTranslations('Chat');
   const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const isAtBottom = useRef(true);
 
   const messagesRef = useRef(messages);
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
 
-  useEffect(() => {
+  const handleScroll = () => {
     if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 100;
+      isAtBottom.current = atBottom;
+      setShowScrollButton(!atBottom);
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (scrollRef.current && isAtBottom.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
@@ -420,7 +438,11 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef}>
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-6"
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
         {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                 <Sparkles className="h-10 w-10 text-muted-foreground/50" />
@@ -453,6 +475,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             </div>
         )}
       </div>
+
+      {showScrollButton && (
+        <Button
+          size="icon"
+          className="absolute bottom-24 right-4 rounded-full shadow-lg z-20 bg-primary/90 hover:bg-primary animate-in fade-in zoom-in duration-300"
+          onClick={scrollToBottom}
+          aria-label={t('scrollToBottom')}
+        >
+          <ArrowDown size={20} />
+        </Button>
+      )}
 
       {creditBalance !== undefined && creditBalance < 5 && (
         <Link href="/credits" className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-destructive/20 transition-colors">
