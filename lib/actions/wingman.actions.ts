@@ -78,8 +78,18 @@ async function getUserAndGirl(girlId: string) {
     return { user, girl };
 }
 
+interface UserWithSettings {
+    _id: string;
+    email: string;
+    creditBalance: number;
+    settings?: {
+        lowBalanceAlerts: boolean;
+    };
+    lastLowBalanceEmailSent?: Date;
+}
+
 // Low Balance Check Utility
-async function checkAndNotifyLowBalance(user: any) {
+async function checkAndNotifyLowBalance(user: UserWithSettings) {
     // Check if user disabled alerts
     if (user.settings?.lowBalanceAlerts === false) {
         return;
