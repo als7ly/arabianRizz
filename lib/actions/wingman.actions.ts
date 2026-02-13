@@ -2,9 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { generateEmbedding } from "../services/rag.service";
-import { getContext } from "./rag.actions";
-import { getUserContext } from "./user-knowledge.actions";
+import { generateEmbedding, retrieveContext, retrieveUserContext } from "../services/rag.service";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
@@ -196,8 +194,8 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const embedding = await generateEmbedding(userMessage);
 
     const [contextMessages, userContext, globalKnowledge] = await Promise.all([
-      getContext(girlId, userMessage, embedding),
-      getUserContext(girl.author.toString(), userMessage, embedding),
+      retrieveContext(girlId, userMessage, embedding),
+      retrieveUserContext(girl.author.toString(), userMessage, embedding),
       getGlobalKnowledge(userMessage, languageCode, embedding)
     ]);
 
@@ -513,7 +511,7 @@ export async function generateHookupLine(girlId: string) {
     const embedding = await generateEmbedding(combinedQuery);
 
     const [userContext, globalKnowledge] = await Promise.all([
-      getUserContext(girl.author.toString(), combinedQuery, embedding),
+      retrieveUserContext(girl.author.toString(), combinedQuery, embedding),
       getGlobalKnowledge(combinedQuery, language, embedding)
     ]);
 

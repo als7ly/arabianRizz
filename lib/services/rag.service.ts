@@ -1,6 +1,7 @@
 import { openai } from "../openai";
 import { connectToDatabase } from "../database/mongoose";
 import Message from "../database/models/message.model";
+import UserKnowledge from "../database/models/user-knowledge.model";
 import mongoose from "mongoose";
 
 // Generate Embedding
@@ -75,5 +76,51 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
         .sort({ createdAt: -1 })
         .limit(10);
     return JSON.parse(JSON.stringify(recentMessages.reverse()));
+  }
+}
+
+// Retrieve User Context (RAG) - Internal Service Function
+export async function retrieveUserContext(userId: string, query: string, embedding?: number[]) {
+  try {
+    await connectToDatabase();
+
+    const queryEmbedding = embedding || await generateEmbedding(query);
+
+    const results = await UserKnowledge.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: 50,
+          limit: 3,
+          filter: {
+            user: { $eq: new mongoose.Types.ObjectId(userId) }
+          }
+        }
+      } as any,
+      {
+        $project: {
+          _id: 0,
+          content: 1,
+          score: { $meta: "vectorSearchScore" }
+        }
+      }
+    ]);
+
+    if (!results || results.length === 0) {
+        // Fallback: Return recent 3 items
+        const recent = await UserKnowledge.find({ user: userId })
+            .sort({ createdAt: -1 })
+            .limit(3)
+            .select("content");
+
+        return recent.map((k: any) => ({ content: k.content }));
+    }
+
+    return results;
+  } catch (error) {
+    console.error("User RAG Error:", error);
+    return [];
   }
 }
