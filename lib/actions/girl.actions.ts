@@ -154,7 +154,7 @@ export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: 
     };
 
     const girlsQuery = Girl.find(condition)
-      .sort({ createdAt: -1 })
+      .sort({ isPinned: -1, createdAt: -1 })
       .skip(skipAmount)
       .limit(limit);
 
@@ -202,6 +202,38 @@ export async function updateGirl(girl: UpdateGirlParams) {
 
     if (!updatedGirl) throw new Error("Girl update failed");
     revalidatePath(girl.path);
+
+    return JSON.parse(JSON.stringify(updatedGirl));
+  } catch (error) {
+    handleError(error);
+  }
+}
+
+// TOGGLE PIN GIRL
+export async function togglePinGirl(girlId: string, path?: string) {
+  try {
+    await connectToDatabase();
+
+    const girl = await Girl.findById(girlId);
+    if (!girl) throw new Error("Girl not found");
+
+    // Security Check
+    const user = await getCurrentUser();
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    const updatedGirl = await Girl.findByIdAndUpdate(
+      girlId,
+      { isPinned: !girl.isPinned },
+      { new: true }
+    );
+
+    if (!updatedGirl) throw new Error("Girl update failed");
+
+    if (path) {
+      revalidatePath(path);
+    }
 
     return JSON.parse(JSON.stringify(updatedGirl));
   } catch (error) {
