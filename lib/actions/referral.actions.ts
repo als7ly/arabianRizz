@@ -121,21 +121,37 @@ export async function getReferralItems({ page = 1, limit = 20, category = 'all' 
 
 // --- Recommendation Logic ---
 
-function cosineSimilarity(vecA: number[], vecB: number[]) {
+function calculateNorm(vec: number[]): number {
+    let norm = 0;
+    for (let i = 0; i < vec.length; i++) {
+        norm += vec[i] * vec[i];
+    }
+    return norm;
+}
+
+function cosineSimilarity(vecA: number[], vecB: number[], precomputedNormA?: number) {
     if (!vecA || !vecB || vecA.length !== vecB.length) return -1;
 
     let dotProduct = 0;
-    let normA = 0;
     let normB = 0;
-    for (let i = 0; i < vecA.length; i++) {
-        dotProduct += vecA[i] * vecB[i];
-        normA += vecA[i] * vecA[i];
-        normB += vecB[i] * vecB[i];
+
+    if (precomputedNormA !== undefined) {
+        for (let i = 0; i < vecA.length; i++) {
+            dotProduct += vecA[i] * vecB[i];
+            normB += vecB[i] * vecB[i];
+        }
+        if (precomputedNormA === 0 || normB === 0) return 0;
+        return dotProduct / (Math.sqrt(precomputedNormA) * Math.sqrt(normB));
+    } else {
+        let normA = 0;
+        for (let i = 0; i < vecA.length; i++) {
+            dotProduct += vecA[i] * vecB[i];
+            normA += vecA[i] * vecA[i];
+            normB += vecB[i] * vecB[i];
+        }
+        if (normA === 0 || normB === 0) return 0;
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
-
-    if (normA === 0 || normB === 0) return 0;
-
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
 export async function getWingmanRecommendations(girlId: string) {
@@ -174,6 +190,7 @@ export async function getWingmanRecommendations(girlId: string) {
 
     // 2. Generate Embedding for Context
     const queryEmbedding = await generateEmbedding(contextText);
+    const queryNorm = calculateNorm(queryEmbedding);
 
     // 3. Fetch Candidates (Active Items Only)
     // We explicitly select the hidden 'embedding' field
@@ -189,7 +206,7 @@ export async function getWingmanRecommendations(girlId: string) {
         // If embedding is missing (e.g. old items), score is low
         if (!item.embedding || item.embedding.length === 0) return { item, score: -1 };
 
-        const score = cosineSimilarity(queryEmbedding, item.embedding);
+        const score = cosineSimilarity(queryEmbedding, item.embedding, queryNorm);
         return { item, score };
     });
 
