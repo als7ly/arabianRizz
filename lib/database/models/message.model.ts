@@ -18,6 +18,7 @@ const MessageSchema = new Schema({
   embedding: {
     type: [Number], // Vector embedding for RAG
     default: [],
+    select: false,
   },
   audioUrl: {
     type: String, // URL to persistent audio file (Cloudinary)
