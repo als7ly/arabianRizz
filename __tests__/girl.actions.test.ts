@@ -1,4 +1,4 @@
-import { getChatHistory } from '@/lib/actions/girl.actions';
+import { getChatHistory, togglePinGirl } from '@/lib/actions/girl.actions';
 import { connectToDatabase } from '@/lib/database/mongoose';
 import Girl from '@/lib/database/models/girl.model';
 import User from '@/lib/database/models/user.model';
@@ -74,6 +74,33 @@ describe('Girl Actions', () => {
              (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
 
              await expect(getChatHistory(mockGirlId)).rejects.toThrow();
+        });
+    });
+
+    describe('togglePinGirl', () => {
+        it('should toggle isPinned status', async () => {
+            const mockGirl = { _id: mockGirlId, author: mockUserId, isPinned: false };
+            const updatedGirl = { ...mockGirl, isPinned: true };
+
+            (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+            (Girl.findByIdAndUpdate as jest.Mock).mockResolvedValue(updatedGirl);
+
+            const result = await togglePinGirl(mockGirlId);
+
+            expect(Girl.findById).toHaveBeenCalledWith(mockGirlId);
+            expect(Girl.findByIdAndUpdate).toHaveBeenCalledWith(
+                mockGirlId,
+                { isPinned: true },
+                { new: true }
+            );
+            expect(result).toEqual(updatedGirl);
+        });
+
+         it('should throw if unauthorized', async () => {
+             const mockGirl = { _id: mockGirlId, author: 'other_user', isPinned: false };
+             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+
+             await expect(togglePinGirl(mockGirlId)).rejects.toThrow();
         });
     });
 });
