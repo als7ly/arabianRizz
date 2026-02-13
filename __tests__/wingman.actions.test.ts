@@ -1,7 +1,7 @@
 import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback } from '@/lib/actions/wingman.actions';
 import { openrouter } from '@/lib/openrouter';
 import { getContext } from '@/lib/actions/rag.actions';
-import { generateEmbedding } from '@/lib/services/rag.service';
+import { generateEmbedding, retrieveContext, retrieveUserContext } from '@/lib/services/rag.service';
 import { getUserContext } from '@/lib/actions/user-knowledge.actions';
 import { extractTextFromImage } from '@/lib/actions/ocr.actions';
 import { updateGamification } from '@/lib/services/gamification.service';
@@ -37,6 +37,8 @@ jest.mock('@/lib/actions/rag.actions', () => ({
 
 jest.mock('@/lib/services/rag.service', () => ({
   generateEmbedding: jest.fn(),
+  retrieveContext: jest.fn(),
+  retrieveUserContext: jest.fn(),
 }));
 
 jest.mock('@/lib/actions/user-knowledge.actions', () => ({
@@ -98,8 +100,8 @@ describe('Wingman Actions', () => {
 
     it('should generate a reply successfully with valid JSON response', async () => {
       (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-      (getContext as jest.Mock).mockResolvedValue(mockContext);
-      (getUserContext as jest.Mock).mockResolvedValue(mockUserContext);
+      (retrieveContext as jest.Mock).mockResolvedValue(mockContext);
+      (retrieveUserContext as jest.Mock).mockResolvedValue(mockUserContext);
       (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
 
       const mockAiResponse = {
@@ -115,8 +117,8 @@ describe('Wingman Actions', () => {
 
       expect(Girl.findById).toHaveBeenCalledWith('girl123');
       expect(generateEmbedding).toHaveBeenCalledWith('I want to go hiking');
-      expect(getContext).toHaveBeenCalledWith('girl123', 'I want to go hiking', mockEmbedding);
-      expect(getUserContext).toHaveBeenCalledWith('user123', 'I want to go hiking', mockEmbedding);
+      expect(retrieveContext).toHaveBeenCalledWith('girl123', 'I want to go hiking', mockEmbedding);
+      expect(retrieveUserContext).toHaveBeenCalledWith('user123', 'I want to go hiking', mockEmbedding);
 
       expect(openrouter.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
         model: 'mock-model',
@@ -130,8 +132,8 @@ describe('Wingman Actions', () => {
 
     it('should handle invalid JSON from AI gracefully', async () => {
       (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-      (getContext as jest.Mock).mockResolvedValue([]);
-      (getUserContext as jest.Mock).mockResolvedValue([]);
+      (retrieveContext as jest.Mock).mockResolvedValue([]);
+      (retrieveUserContext as jest.Mock).mockResolvedValue([]);
       (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
 
       (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
@@ -160,8 +162,8 @@ describe('Wingman Actions', () => {
 
     it('should handle instruction sender role correctly', async () => {
         (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-        (getContext as jest.Mock).mockResolvedValue([]);
-        (getUserContext as jest.Mock).mockResolvedValue([]);
+        (retrieveContext as jest.Mock).mockResolvedValue([]);
+        (retrieveUserContext as jest.Mock).mockResolvedValue([]);
         (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
 
         const mockAiResponse = {
@@ -237,7 +239,7 @@ describe('Wingman Actions', () => {
 
       it('should generate hookup line successfully', async () => {
         (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-        (getUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
+        (retrieveUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
         (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
 
         const mockResponse = {
