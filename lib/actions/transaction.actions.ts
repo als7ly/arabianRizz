@@ -23,20 +23,27 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
   if (!selectedPlan) throw new Error("Invalid plan selected");
 
   // Securely get price from server-side constant
-  const amount = selectedPlan.price * 100;
   const credits = selectedPlan.credits;
   const mode = transaction.mode || 'payment';
+
+  // Check if we have a real Stripe Price ID (starts with price_ and not a placeholder)
+  const isRealPriceId = selectedPlan.stripePriceId &&
+                       selectedPlan.stripePriceId.startsWith('price_') &&
+                       !selectedPlan.stripePriceId.includes('placeholder');
 
   try {
     const session = await stripe.checkout.sessions.create({
       line_items: [
-        {
+        isRealPriceId ? {
+          price: selectedPlan.stripePriceId,
+          quantity: 1,
+        } : {
           price_data: {
             currency: 'usd',
             product_data: {
               name: transaction.plan,
             },
-            unit_amount: amount,
+            unit_amount: selectedPlan.price * 100,
             recurring: mode === 'subscription' ? { interval: 'month' } : undefined,
           },
           quantity: 1,
