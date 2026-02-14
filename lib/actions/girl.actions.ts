@@ -160,12 +160,18 @@ export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: 
       .limit(limit);
 
     const [girls, girlsCount] = await Promise.all([
-      girlsQuery.lean(),
+      girlsQuery.lean().exec(),
       Girl.countDocuments(condition),
     ]);
 
     return {
-      data: JSON.parse(JSON.stringify(girls)),
+      data: girls.map((girl: any) => ({
+        ...girl,
+        _id: girl._id.toString(),
+        author: girl.author.toString(),
+        createdAt: girl.createdAt.toISOString(),
+        updatedAt: girl.updatedAt.toISOString(),
+      })),
       totalPages: Math.ceil(girlsCount / limit),
     };
   } catch (error) {
