@@ -1,9 +1,15 @@
 "use server";
 
 import { validateUrl } from "@/lib/security/url-validator";
+import { auth } from "@clerk/nextjs";
 
 export async function fetchProductMetadata(url: string) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
     // Validate initial URL to prevent SSRF
     await validateUrl(url);
 
