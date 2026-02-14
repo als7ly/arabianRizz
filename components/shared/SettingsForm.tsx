@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { updateUserSettings } from "@/lib/actions/settings.actions";
 import ExportDataButton from "./ExportDataButton";
+import DeleteAccount from "./DeleteAccount";
 import { Loader2 } from "lucide-react";
 
 interface SettingsFormProps {
@@ -125,6 +126,18 @@ export const SettingsForm = ({ initialSettings }: SettingsFormProps) => {
                 <p className="text-xs text-muted-foreground">Download a copy of your personal data and chat history.</p>
             </div>
             <ExportDataButton />
+        </div>
+
+        {/* Danger Zone */}
+        <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5 space-y-4">
+            <h3 className="text-destructive font-semibold">Danger Zone</h3>
+            <div className="flex items-center justify-between">
+                 <div className="space-y-0.5">
+                    <Label className="text-base font-medium">Delete Account</Label>
+                    <p className="text-xs text-muted-foreground">Permanently remove your account and all data.</p>
+                </div>
+                <DeleteAccount />
+            </div>
         </div>
 
       </div>
