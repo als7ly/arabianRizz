@@ -159,8 +159,10 @@ export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: 
       .skip(skipAmount)
       .limit(limit);
 
-    const girls = await girlsQuery.lean();
-    const girlsCount = await Girl.countDocuments(condition);
+    const [girls, girlsCount] = await Promise.all([
+      girlsQuery.lean(),
+      Girl.countDocuments(condition),
+    ]);
 
     return {
       data: JSON.parse(JSON.stringify(girls)),
