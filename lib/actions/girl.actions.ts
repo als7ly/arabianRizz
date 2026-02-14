@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../database/mongoose";
-import { handleError } from "../utils";
+import { handleError, escapeRegex } from "../utils";
 import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
 import Message from "../database/models/message.model";
@@ -73,7 +73,7 @@ export async function searchMessages(girlId: string, query: string): Promise<{ s
     }
 
     // Escape special regex characters
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedQuery = escapeRegex(query);
 
     const messages = await Message.find({
         girl: girlId,
@@ -148,8 +148,8 @@ export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: 
         author: userId,
         ...(query && {
             $or: [
-                { name: { $regex: query, $options: 'i' } },
-                { vibe: { $regex: query, $options: 'i' } }
+                { name: { $regex: escapeRegex(query), $options: 'i' } },
+                { vibe: { $regex: escapeRegex(query), $options: 'i' } }
             ]
         })
     };
