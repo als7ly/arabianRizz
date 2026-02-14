@@ -28,20 +28,29 @@ export async function generateArt(prompt: string, girlId: string, mode: 'standar
     const user = await User.findOne({ clerkId });
     if (!user) throw new Error("User not found");
 
-    // 1. Check & Deduct Credits
+    // 1. Start Fetching Girl Details (Parallel)
+    // We catch errors here to prevent unhandled rejections if deductCredits fails.
+    // The result will be { result: Girl | null, error: Error | null }
+    const girlPromise = Girl.findById(girlId)
+        .then((res: any) => ({ result: res, error: null }))
+        .catch((err: any) => ({ result: null, error: err }));
+
+    // 2. Check & Deduct Credits
     const updatedUser = await deductCredits(user._id, IMAGE_COST);
 
     try {
-        // 2. Fetch Girl Details
-        const girl = await Girl.findById(girlId);
+        // 3. Await Girl Details
+        const { result: girl, error: girlError } = await girlPromise;
+
+        if (girlError) throw girlError;
         if (!girl) throw new Error("Girl not found");
 
-        // Security Check: Verify Ownership
+        // 4. Security Check: Verify Ownership
         if (girl.author.toString() !== user._id.toString()) {
             throw new Error("Unauthorized");
         }
 
-        // 3. Construct Prompt
+        // 5. Construct Prompt
         let fullPrompt = "";
 
         if (mode === 'selfie') {
@@ -62,7 +71,7 @@ export async function generateArt(prompt: string, girlId: string, mode: 'standar
             `;
         }
 
-        // 4. Call DALL-E 3
+        // 6. Call DALL-E 3
         if (process.env.OPENAI_API_KEY === "dummy-key" && !process.env.OPENAI_BASE_URL) {
             return {
                 imageUrl: "https://via.placeholder.com/1024x1024.png?text=Mock+DALL-E+Image",
