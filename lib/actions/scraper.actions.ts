@@ -49,15 +49,22 @@ export async function fetchProductMetadata(url: string) {
 
     const html = await response.text();
 
+    const metaMap = new Map<string, string>();
+    // Regex to match <meta property="..." content="..."> or <meta name="..." content="...">
+    // Handles single/double quotes and extra spaces.
+    // Optimization: Parse all meta tags once instead of re-compiling regex for each property.
+    const metaRegex = /<meta\s+(?:property|name)=["']([^"']+)["']\s+content=["']([^"']+)["']/gi;
+    let match;
+    while ((match = metaRegex.exec(html)) !== null) {
+        const key = match[1].toLowerCase();
+        // Keep the first occurrence to match original behavior (html.match finds first)
+        if (!metaMap.has(key)) {
+            metaMap.set(key, match[2]);
+        }
+    }
+
     const getMetaContent = (prop: string) => {
-        // Regex to match <meta property="..." content="..."> or <meta name="..." content="...">
-        // Handles single/double quotes and extra spaces
-        const regex = new RegExp(
-            `<meta\\s+(?:property|name)=["']${prop}["']\\s+content=["']([^"']+)["']`,
-            "i"
-        );
-        const match = html.match(regex);
-        return match ? match[1] : null;
+        return metaMap.get(prop.toLowerCase()) || null;
     };
 
     // 1. Title
