@@ -260,7 +260,9 @@
     "subtitle": "Your collection of best Rizz",
     "empty": "No saved lines yet. Start chatting to save some!",
     "copy": "Copy",
-    "remove": "Remove"
+    "remove": "Remove",
+    "deleteDialogTitle": "Delete Saved Message?",
+    "deleteDialogDesc": "This action cannot be undone."
   },
   "Languages": {
     "en": "English",
