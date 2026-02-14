@@ -300,14 +300,16 @@ ${contextString}
             return {
                 reply: parsed.reply || "Error parsing reply",
                 explanation: parsed.explanation || "No explanation provided",
-                newBadges // Include badges in response
+                newBadges, // Include badges in response
+                newBalance: updatedUser.creditBalance
             };
         } catch (e) {
             logger.error("JSON Parse Error:", e);
             return {
                 reply: aiContent,
                 explanation: "Could not parse AI response.",
-                newBadges
+                newBadges,
+                newBalance: updatedUser.creditBalance
             };
         }
     }
@@ -667,13 +669,15 @@ Instructions:
             return {
                 line: parsed.line || parsed.reply || "Error parsing line",
                 explanation: parsed.explanation || "No explanation provided",
-                newBadges
+                newBadges,
+                newBalance: updatedUser.creditBalance
             };
         } catch (e) {
              return {
                 line: aiContent,
                 explanation: "Could not parse AI response.",
-                newBadges
+                newBadges,
+                newBalance: updatedUser.creditBalance
             };
         }
     }

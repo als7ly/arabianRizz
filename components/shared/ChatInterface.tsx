@@ -18,8 +18,9 @@ import { ChatInputArea } from "./ChatInputArea";
 import { Link } from "@/navigation";
 import { RecommendationsDialog } from "./RecommendationsDialog";
 
-export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultTone }: { girlId: string, initialMessages: Message[], creditBalance?: number, defaultTone?: string }) => {
+export const ChatInterface = ({ girlId, initialMessages, creditBalance: initialCreditBalance, defaultTone }: { girlId: string, initialMessages: Message[], creditBalance?: number, defaultTone?: string }) => {
   const pathname = usePathname();
+  const [creditBalance, setCreditBalance] = useState(initialCreditBalance);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [sender, setSender] = useState<'user' | 'girl'>('user');
@@ -155,8 +156,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     try {
       await addMessage({ girlId, role: role, content: msgContent });
 
-      const { reply, explanation, newBadges } = await generateWingmanReply(girlId, msgContent, tone, role);
+      const { reply, explanation, newBadges, newBalance } = await generateWingmanReply(girlId, msgContent, tone, role);
       
+      if (newBalance !== undefined) setCreditBalance(newBalance);
+
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
@@ -362,7 +365,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const handleGenerateHookupLine = async () => {
     setIsLoading(true);
     try {
-        const { line, explanation } = await generateHookupLine(girlId);
+        const { line, explanation, newBalance } = await generateHookupLine(girlId);
+
+        if (newBalance !== undefined) setCreditBalance(newBalance);
+
         if (line) {
             setInputValue(line);
             toast({
@@ -405,7 +411,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     setIsLoading(true);
 
     try {
-        const { reply, explanation, newBadges } = await generateWingmanReply(girlId, instruction, tone, "instruction");
+        const { reply, explanation, newBadges, newBalance } = await generateWingmanReply(girlId, instruction, tone, "instruction");
+
+        if (newBalance !== undefined) setCreditBalance(newBalance);
 
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);

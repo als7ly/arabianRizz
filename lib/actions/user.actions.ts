@@ -4,9 +4,11 @@ import User from "../database/models/user.model";
 import Girl from "../database/models/girl.model";
 import Message from "../database/models/message.model";
 import UserKnowledge from "../database/models/user-knowledge.model";
+import Event from "../database/models/event.model";
+import UsageLog from "../database/models/usage-log.model";
 import { connectToDatabase } from "../database/mongoose";
 import { handleError } from "../utils";
-import { auth } from "@clerk/nextjs";
+import { auth, clerkClient } from "@clerk/nextjs";
 import { updateUser } from "../services/user.service";
 import { revalidatePath } from "next/cache";
 import { UserUpdateSchema } from "../validations/user";
@@ -26,6 +28,54 @@ export async function updateUserProfile(data: UpdateUserParams) {
     return JSON.parse(JSON.stringify(user));
   } catch (error) {
     handleError(error);
+  }
+}
+
+// DELETE ACCOUNT
+export async function deleteAccount() {
+  try {
+    await connectToDatabase();
+
+    const { userId: clerkId } = auth();
+    if (!clerkId) throw new Error("Unauthorized");
+
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    // 1. Find Girls to delete related Messages
+    const girls = await Girl.find({ author: user._id });
+    const girlIds = girls.map((g) => g._id);
+
+    // 2. Delete Messages associated with User's Girls
+    await Message.deleteMany({ girl: { $in: girlIds } });
+
+    // 3. Delete Girls
+    await Girl.deleteMany({ author: user._id });
+
+    // 4. Delete Persona (UserKnowledge)
+    await UserKnowledge.deleteMany({ user: user._id });
+
+    // 5. Delete UsageLogs
+    await UsageLog.deleteMany({ user: user._id });
+
+    // 6. Delete Events (Analytics)
+    await Event.deleteMany({ user: user._id });
+
+    // 7. Delete User from DB
+    await User.findByIdAndDelete(user._id);
+
+    // 8. Delete User from Clerk
+    // We attempt this last. If it fails (e.g. no permission), we still deleted local data.
+    try {
+      await clerkClient.users.deleteUser(clerkId);
+    } catch (clerkError) {
+      console.error("Failed to delete user from Clerk:", clerkError);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Delete Account Error:", error);
+    return { success: false, error: error.message };
   }
 }
 
