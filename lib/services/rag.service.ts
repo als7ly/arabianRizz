@@ -61,8 +61,9 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
     if (results.length === 0) {
         const recentMessages = await Message.find({ girl: girlId })
             .sort({ createdAt: -1 })
-            .limit(10);
-        return recentMessages.reverse().map((msg) => ({
+            .limit(10)
+            .lean();
+        return recentMessages.reverse().map((msg: any) => ({
             role: msg.role,
             content: msg.content
         }));
@@ -74,7 +75,8 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
     // Fallback: Return recent messages
     const recentMessages = await Message.find({ girl: girlId })
         .sort({ createdAt: -1 })
-        .limit(10);
+        .limit(10)
+        .lean();
     return JSON.parse(JSON.stringify(recentMessages.reverse()));
   }
 }
@@ -114,9 +116,10 @@ export async function retrieveUserContext(userId: string, query: string, embeddi
         const recent = await UserKnowledge.find({ user: userId })
             .sort({ createdAt: -1 })
             .limit(3)
-            .select("content");
+            .select("content")
+            .lean();
 
-        return recent.map(k => ({ content: k.content }));
+        return recent.map((k: any) => ({ content: k.content }));
     }
 
     return results;
