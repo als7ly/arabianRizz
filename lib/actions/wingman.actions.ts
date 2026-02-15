@@ -438,7 +438,7 @@ export async function generateResponseImage(prompt: string) {
     const user = await User.findOne({ clerkId }).lean();
     if (!user) throw new Error("User not found");
 
-    // Deduct Credit (Image generation is expensive)
+    // SECURITY: Deduct 3 credits before expensive image generation to prevent Denial of Wallet
     const IMAGE_COST = 3;
     await deductCredits(user._id.toString(), IMAGE_COST);
 
