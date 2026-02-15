@@ -125,6 +125,31 @@ async function checkAndNotifyLowBalance(user: UserWithSettings) {
     }
 }
 
+async function saveFeedbackToKnowledgeBase(message: any) {
+    try {
+        const arabicPattern = /[\u0600-\u06FF]/;
+        const language = arabicPattern.test(message.content) ? 'ar' : 'en';
+
+        const embeddingResponse = await openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: message.content,
+        });
+        const embedding = embeddingResponse.data[0].embedding;
+
+        await GlobalKnowledge.create({
+            content: message.content,
+            embedding: embedding,
+            language: language,
+            sourceUrl: "user-feedback",
+            status: 'pending',
+            tags: ['user-feedback', 'auto-learned']
+        });
+        logger.info("Feedback saved to GlobalKnowledge", { messageId: message._id });
+    } catch (error) {
+        logger.error("Failed to save feedback to GlobalKnowledge", error);
+    }
+}
+
 export async function submitFeedback(messageId: string, feedback: 'positive' | 'negative') {
   try {
     await connectToDatabase();
@@ -142,22 +167,9 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
 
     // 2. Auto-Learning: If positive, save to GlobalKnowledge
     if (feedback === 'positive' && message && message.role === 'wingman') {
-        const arabicPattern = /[\u0600-\u06FF]/;
-        const language = arabicPattern.test(message.content) ? 'ar' : 'en';
-
-        const embeddingResponse = await openai.embeddings.create({
-            model: "text-embedding-3-small",
-            input: message.content,
-        });
-        const embedding = embeddingResponse.data[0].embedding;
-
-        await GlobalKnowledge.create({
-            content: message.content,
-            embedding: embedding,
-            language: language,
-            sourceUrl: "user-feedback",
-            status: 'pending',
-            tags: ['user-feedback', 'auto-learned']
+        // Optimization: Fire-and-forget background task to prevent blocking the UI
+        saveFeedbackToKnowledgeBase(message).catch(err => {
+             logger.error("Background Knowledge Save Error", err);
         });
     }
 
