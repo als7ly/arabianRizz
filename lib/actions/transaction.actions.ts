@@ -32,7 +32,7 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
                        !selectedPlan.stripePriceId.includes('placeholder');
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         isRealPriceId ? {
           price: selectedPlan.stripePriceId,
@@ -57,7 +57,15 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
       mode: mode,
       success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/?canceled=true`,
-    });
+    };
+
+    if (user.stripeCustomerId) {
+      sessionParams.customer = user.stripeCustomerId;
+    } else {
+      sessionParams.customer_email = user.email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     redirect(session.url!);
   } catch (error) {
@@ -115,10 +123,8 @@ export async function createCustomerPortalSession() {
             if (customers.data.length > 0) {
                 customerId = customers.data[0].id;
 
-                // Optional: Save it back to the user for next time?
-                // We'll leave it as just a lookup to avoid side-effects in this read-heavy action,
-                // but strictly speaking we should probably save it.
-                // For now, just using it is enough.
+                // Save it back to the user for next time
+                await User.findByIdAndUpdate(user._id, { stripeCustomerId: customerId });
             }
         }
 

@@ -19,26 +19,21 @@ This file provides critical context for future developers (human or AI) working 
 
 ## 🧩 Key Decisions & "Gotchas"
 
-### 1. Subscription Management (MVP)
-*   **Context:** The `User` model does not explicitly store a `stripeCustomerId`.
-*   **Workaround:** The `createCustomerPortalSession` action looks up the Stripe Customer by **email address**.
-*   **Future Fix:** In a future migration, add `stripeCustomerId` to the `User` schema and populate it during the `checkout.session.completed` webhook.
-
-### 2. Mock Email Service
+### 1. Mock Email Service
 *   **File:** `lib/services/email.service.ts`
 *   **Status:** Currently logs email payloads to the console (`logger.info`).
 *   **Action:** Before scaling, replace the body of `sendEmail` with a real provider call (Resend, SendGrid, SES).
 
-### 3. Stripe Price IDs
+### 2. Stripe Price IDs
 *   **File:** `constants/index.ts`
 *   **Status:** Contains placeholders like `price_starter_pack_placeholder`.
 *   **Action:** These **MUST** be replaced with real Price IDs from the Stripe Dashboard before deploying to Production.
 
-### 4. Content Safety
+### 3. Content Safety
 *   **Mechanism:** `checkContentSafety` in `wingman.actions.ts`.
 *   **Logic:** Tries OpenAI Moderation API first. If that fails (or key is missing/dummy), falls back to a basic keyword blocklist.
 
-### 5. Internal Analytics
+### 4. Internal Analytics
 *   **Mechanism:** `Event` model + `logEvent` action.
 *   **Usage:** Tracks 'page_view' via `AnalyticsProvider` in the root layout.
 *   **Limit:** `Event` documents have a TTL index (`expires`) of 30 days to prevent DB bloat.
