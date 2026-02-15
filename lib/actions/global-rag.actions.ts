@@ -50,7 +50,8 @@ export const getGlobalKnowledge = async (query: string, language: string, embedd
     const fallbackResults = await GlobalKnowledge.find({ status: 'approved', language })
         .sort({ createdAt: -1 })
         .limit(3)
-        .select('content');
+        .select('content -_id')
+        .lean();
 
     return fallbackResults;
 

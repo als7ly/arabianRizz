@@ -62,6 +62,7 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
         const recentMessages = await Message.find({ girl: girlId })
             .sort({ createdAt: -1 })
             .limit(10)
+            .select("role content -_id")
             .lean();
         return recentMessages.reverse().map((msg: any) => ({
             role: msg.role,
@@ -76,8 +77,12 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
     const recentMessages = await Message.find({ girl: girlId })
         .sort({ createdAt: -1 })
         .limit(10)
+        .select("role content -_id")
         .lean();
-    return JSON.parse(JSON.stringify(recentMessages.reverse()));
+    return recentMessages.reverse().map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+    }));
   }
 }
 
