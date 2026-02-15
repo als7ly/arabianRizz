@@ -115,10 +115,13 @@ export async function createCustomerPortalSession() {
             if (customers.data.length > 0) {
                 customerId = customers.data[0].id;
 
-                // Optional: Save it back to the user for next time?
-                // We'll leave it as just a lookup to avoid side-effects in this read-heavy action,
-                // but strictly speaking we should probably save it.
-                // For now, just using it is enough.
+                // Persist the discovered Stripe Customer ID to avoid future lookups
+                try {
+                    await User.findByIdAndUpdate(user._id, { stripeCustomerId: customerId });
+                } catch (saveError) {
+                    console.error("Failed to persist discovered Stripe Customer ID:", saveError);
+                    // Continue without failing the main request
+                }
             }
         }
 
