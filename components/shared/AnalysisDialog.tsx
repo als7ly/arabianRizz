@@ -11,8 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { analyzeConversation } from "@/lib/actions/analysis.actions";
 import { ConversationAnalysis } from "@/lib/validations/analysis";
-import { Loader2, ThumbsUp, ThumbsDown, Lightbulb, Activity } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Lightbulb, Activity } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslations } from "next-intl";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AnalysisDialogProps {
   girlId: string;
@@ -24,6 +26,7 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
   const [data, setData] = useState<ConversationAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const t = useTranslations('Analysis');
 
   useEffect(() => {
     if (open && !data) {
@@ -34,8 +37,8 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
             setData(result);
           } else {
              toast({
-                title: "Analysis Failed",
-                description: "Could not analyze conversation. Try again later or clear chat.",
+                title: t('failedTitle'),
+                description: t('failedDesc'),
                 variant: "destructive"
              });
              onOpenChange(false);
@@ -44,15 +47,15 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
         .catch((err) => {
             console.error(err);
              toast({
-                title: "Error",
-                description: "Something went wrong.",
+                title: t('errorTitle'),
+                description: t('errorDesc'),
                 variant: "destructive"
              });
             onOpenChange(false);
         })
         .finally(() => setLoading(false));
     }
-  }, [open, girlId, data, onOpenChange, toast]);
+  }, [open, girlId, data, onOpenChange, toast, t]);
 
   useEffect(() => {
       setData(null);
@@ -70,18 +73,38 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Activity className="text-purple-600" />
-            Rizz Analysis
+            {t('title')}
           </DialogTitle>
           <DialogDescription>
-            AI-powered breakdown of your conversation skills.
+            {t('description')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-6">
+        <div className="py-4 space-y-6" aria-live="polite">
           {loading ? (
-             <div className="space-y-4 flex flex-col items-center justify-center py-8">
-                <Loader2 className="h-10 w-10 animate-spin text-purple-600" />
-                <p className="text-muted-foreground animate-pulse">Analyzing your rizz...</p>
+             <div className="space-y-6 flex flex-col items-center justify-center py-2 animate-pulse">
+                {/* Score Skeleton */}
+                <div className="flex flex-col items-center gap-2">
+                    <Skeleton className="w-24 h-24 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
+                </div>
+
+                {/* Summary Skeleton */}
+                <Skeleton className="h-20 w-full rounded-xl" />
+
+                {/* Lists Skeleton */}
+                <div className="w-full space-y-4">
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </div>
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-40" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                    </div>
+                </div>
              </div>
           ) : data ? (
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -90,7 +113,7 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
                     <div className={`w-24 h-24 rounded-full border-4 flex items-center justify-center text-3xl font-bold ${getScoreColor(data.score)}`}>
                         {data.score}
                     </div>
-                    <span className="text-sm text-muted-foreground mt-2">Rizz Score</span>
+                    <span className="text-sm text-muted-foreground mt-2">{t('score')}</span>
                 </div>
 
                 {/* Summary */}
@@ -101,7 +124,7 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
                 {/* Strengths */}
                 <div className="space-y-2">
                     <h4 className="flex items-center gap-2 font-semibold text-green-700">
-                        <ThumbsUp size={16} /> Strengths
+                        <ThumbsUp size={16} /> {t('strengths')}
                     </h4>
                     <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground ml-1">
                         {data.strengths.map((s, i) => <li key={i}>{s}</li>)}
@@ -111,7 +134,7 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
                 {/* Weaknesses */}
                 <div className="space-y-2">
                     <h4 className="flex items-center gap-2 font-semibold text-red-700">
-                        <ThumbsDown size={16} /> Areas for Improvement
+                        <ThumbsDown size={16} /> {t('weaknesses')}
                     </h4>
                     <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground ml-1">
                         {data.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
@@ -121,7 +144,7 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
                 {/* Tips */}
                 <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl space-y-2">
                      <h4 className="flex items-center gap-2 font-semibold text-purple-700">
-                        <Lightbulb size={16} /> Coach's Tip
+                        <Lightbulb size={16} /> {t('tips')}
                     </h4>
                     <p className="text-sm text-purple-900">
                         {data.tips}
@@ -130,13 +153,13 @@ export function AnalysisDialog({ girlId, open, onOpenChange }: AnalysisDialogPro
 
                  <div className="flex justify-center pt-2">
                     <Button variant="outline" size="sm" onClick={() => setData(null)} className="text-xs">
-                        Refresh Analysis (1 Credit)
+                        {t('refresh')}
                     </Button>
                  </div>
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-                No analysis available.
+                {t('noAnalysis')}
             </div>
           )}
         </div>
