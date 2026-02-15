@@ -254,9 +254,25 @@
     "searchChat": "Search Chat",
     "exporting": "Exporting...",
     "exportChat": "Export Chat",
+    "analyzeChat": "Analyze Chat",
     "cancel": "Cancel",
     "delete": "Delete",
     "scrollToBottom": "Scroll to bottom"
+  },
+  "Analysis": {
+    "title": "Rizz Analysis",
+    "description": "AI-powered breakdown of your conversation skills.",
+    "loading": "Analyzing your rizz...",
+    "score": "Rizz Score",
+    "strengths": "Strengths",
+    "weaknesses": "Areas for Improvement",
+    "tips": "Coach's Tip",
+    "refresh": "Refresh Analysis (1 Credit)",
+    "failedTitle": "Analysis Failed",
+    "failedDesc": "Could not analyze conversation. Try again later or clear chat.",
+    "errorTitle": "Error",
+    "errorDesc": "Something went wrong.",
+    "noAnalysis": "No analysis available."
   },
   "Saved": {
     "title": "Saved Lines",

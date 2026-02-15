@@ -75,17 +75,17 @@ export const ChatHeaderActions = ({ girlId, onClearChat }: ChatHeaderActionsProp
             variant="ghost"
             size="icon"
             className="h-8 w-8 text-gray-400 hover:text-purple-500 bg-white/50 backdrop-blur-sm shadow-sm"
-            aria-label="Chat Actions"
+            aria-label={t('QuickActions.title')}
           >
             <MoreVertical size={16} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setShowAnalysisDialog(true)} className="cursor-pointer" aria-label="Analyze Conversation">
+          <DropdownMenuItem onClick={() => setShowAnalysisDialog(true)} className="cursor-pointer" aria-label={t('analyzeChat')}>
             <Activity className="me-2 h-4 w-4" />
-            <span>Analyze Chat</span>
+            <span>{t('analyzeChat')}</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowSearchDialog(true)} className="cursor-pointer" aria-label="Search Chat">
+          <DropdownMenuItem onClick={() => setShowSearchDialog(true)} className="cursor-pointer" aria-label={t('searchChat')}>
             <Search className="me-2 h-4 w-4" />
             <span>{t('searchChat')}</span>
           </DropdownMenuItem>
