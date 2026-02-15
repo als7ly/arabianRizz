@@ -193,34 +193,48 @@ export async function getWingmanRecommendations(girlId: string) {
     const queryNorm = calculateNorm(queryEmbedding);
 
     // 3. Fetch Candidates (Active Items Only)
-    // We explicitly select the hidden 'embedding' field
-    const candidates = await ReferralItem.find({ isActive: true }).select('+embedding');
+    // Optimization: Fetch only _id and embedding using .lean() to reduce memory usage and avoid hydration overhead.
+    // We explicitly select the hidden 'embedding' field and _id.
+    const candidates = await ReferralItem.find({ isActive: true })
+        .select('_id embedding')
+        .lean<{ _id: unknown, embedding: number[] }[]>();
 
     if (!candidates || candidates.length === 0) {
         return [];
     }
 
     // 4. Rank by Similarity
-    // Map to array of { item, score }
-    const scoredItems = candidates.map((item: any) => {
+    // Map to array of { _id, score } using lightweight objects
+    const scoredIds = candidates.map((candidate) => {
         // If embedding is missing (e.g. old items), score is low
-        if (!item.embedding || item.embedding.length === 0) return { item, score: -1 };
+        if (!candidate.embedding || candidate.embedding.length === 0) return { _id: candidate._id, score: -1 };
 
-        const score = cosineSimilarity(queryEmbedding, item.embedding, queryNorm);
-        return { item, score };
+        const score = cosineSimilarity(queryEmbedding, candidate.embedding, queryNorm);
+        return { _id: candidate._id, score };
     });
 
     // Sort descending by score
-    scoredItems.sort((a: any, b: any) => b.score - a.score);
+    scoredIds.sort((a, b) => b.score - a.score);
 
-    // Return top 5 items (removing embedding from result to save bandwidth)
-    const topItems = scoredItems.slice(0, 5).map((entry: any) => {
-        const itemObj = entry.item.toObject();
-        delete itemObj.embedding; // Ensure embedding is not sent to client
-        return itemObj;
-    });
+    // Get top 5 IDs
+    const topIds = scoredIds.slice(0, 5).map((entry) => entry._id);
 
-    return JSON.parse(JSON.stringify(topItems));
+    if (topIds.length === 0) {
+        return [];
+    }
+
+    // 5. Fetch Full Documents for Top Items
+    // Fetch only the needed full documents. Embedding is excluded by default (select: false).
+    const topItemsDocs = await ReferralItem.find({ _id: { $in: topIds } });
+
+    // Re-order to match the score order (DB doesn't guarantee order with $in)
+    const topItemsMap = new Map(topItemsDocs.map((item: any) => [item._id.toString(), item]));
+
+    const orderedItems = topIds
+        .map((id) => topItemsMap.get(String(id)))
+        .filter((item) => item !== undefined);
+
+    return JSON.parse(JSON.stringify(orderedItems));
 
   } catch (error) {
     console.error("Recommendation Error:", error);
