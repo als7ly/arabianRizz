@@ -6,9 +6,9 @@ import { auth } from "@clerk/nextjs";
 import { connectToDatabase } from "../database/mongoose";
 import User from "../database/models/user.model";
 import Girl from "../database/models/girl.model";
+import Message from "../database/models/message.model";
 import { deductCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
-import { getChatHistory } from "./girl.actions";
 import { ConversationAnalysisSchema, ConversationAnalysis } from "../validations/analysis";
 import { sendEmail } from "@/lib/services/email.service";
 import { LOW_BALANCE_THRESHOLD } from "@/constants";
@@ -42,10 +42,14 @@ export async function analyzeConversation(girlId: string): Promise<ConversationA
     if (!clerkId) throw new Error("Unauthorized");
 
     await connectToDatabase();
-    const user = await User.findOne({ clerkId });
-    if (!user) throw new Error("User not found");
 
-    const girl = await Girl.findById(girlId);
+    // Optimization: Parallelize User and Girl fetch
+    const [user, girl] = await Promise.all([
+        User.findOne({ clerkId }).lean(),
+        Girl.findById(girlId).lean()
+    ]);
+
+    if (!user) throw new Error("User not found");
     if (!girl) throw new Error("Girl not found");
 
     if (girl.author.toString() !== user._id.toString()) {
@@ -56,13 +60,20 @@ export async function analyzeConversation(girlId: string): Promise<ConversationA
         throw new Error("Insufficient credits");
     }
 
-    const messages = await getChatHistory(girlId);
-    // Take last 20 messages
-    const recentMessages = messages.slice(-20).map((m: any) => `${m.role}: ${m.content}`).join("\n");
+    // Optimization: Fetch only last 20 messages instead of entire history
+    // Also use .select() to avoid fetching embeddings and .lean() for performance
+    const lastMessages = await Message.find({ girl: girlId })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .select('role content')
+        .lean();
 
-    if (!recentMessages) {
+    if (!lastMessages || lastMessages.length === 0) {
         throw new Error("Not enough messages to analyze.");
     }
+
+    // Reverse to chronological order (oldest first) for context
+    const recentMessages = lastMessages.reverse().map((m: any) => `${m.role}: ${m.content}`).join("\n");
 
     const systemPrompt = `
     You are an expert dating coach ("The Wingman").
@@ -110,8 +121,8 @@ export async function analyzeConversation(girlId: string): Promise<ConversationA
     const result = ConversationAnalysisSchema.parse(parsed);
 
     // Deduct credits and log usage ONLY if successful
-    const updatedUser = await deductCredits(user._id, 1);
-    await logUsage({ userId: user._id, action: "conversation_analysis", cost: 1, metadata: { girlId } });
+    const updatedUser = await deductCredits(user._id.toString(), 1);
+    await logUsage({ userId: user._id.toString(), action: "conversation_analysis", cost: 1, metadata: { girlId } });
 
     checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
 
