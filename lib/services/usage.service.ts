@@ -2,7 +2,7 @@ import UsageLog from "../database/models/usage-log.model";
 import { connectToDatabase } from "../database/mongoose";
 import { revalidatePath } from "next/cache";
 
-export type UsageAction = "message_generation" | "image_generation" | "girl_creation" | "hookup_line";
+export type UsageAction = "message_generation" | "image_generation" | "girl_creation" | "hookup_line" | "speech_generation" | "profile_analysis";
 
 export async function logUsage(params: { userId: string, action: UsageAction, cost: number, metadata?: any }) {
   try {

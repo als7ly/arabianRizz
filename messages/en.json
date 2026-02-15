@@ -22,6 +22,10 @@
     "deleteDialogDesc": "Are you sure you want to delete this profile? This cannot be undone.",
     "deleteDialogCancel": "Cancel",
     "deleteDialogConfirm": "Delete",
+    "pinProfileTitle": "Pin Profile",
+    "pinProfileAria": "Pin Profile",
+    "unpinProfileTitle": "Unpin Profile",
+    "unpinProfileAria": "Unpin Profile",
     "chatBtn": "Chat",
     "noNotes": "No notes yet.",
     "welcomeSubtitle": "Ready to level up your game today?",
@@ -248,14 +252,17 @@
     "exporting": "Exporting...",
     "exportChat": "Export Chat",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "scrollToBottom": "Scroll to bottom"
   },
   "Saved": {
     "title": "Saved Lines",
     "subtitle": "Your collection of best Rizz",
     "empty": "No saved lines yet. Start chatting to save some!",
     "copy": "Copy",
-    "remove": "Remove"
+    "remove": "Remove",
+    "deleteDialogTitle": "Delete Saved Message?",
+    "deleteDialogDesc": "This action cannot be undone."
   },
   "Languages": {
     "en": "English",

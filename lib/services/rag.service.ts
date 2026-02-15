@@ -1,6 +1,7 @@
 import { openai } from "../openai";
 import { connectToDatabase } from "../database/mongoose";
 import Message from "../database/models/message.model";
+import UserKnowledge from "../database/models/user-knowledge.model";
 import mongoose from "mongoose";
 
 // Generate Embedding
@@ -60,8 +61,9 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
     if (results.length === 0) {
         const recentMessages = await Message.find({ girl: girlId })
             .sort({ createdAt: -1 })
-            .limit(10);
-        return recentMessages.reverse().map((msg) => ({
+            .limit(10)
+            .lean();
+        return recentMessages.reverse().map((msg: any) => ({
             role: msg.role,
             content: msg.content
         }));
@@ -73,7 +75,56 @@ export async function retrieveContext(girlId: string, query: string, embedding?:
     // Fallback: Return recent messages
     const recentMessages = await Message.find({ girl: girlId })
         .sort({ createdAt: -1 })
-        .limit(10);
+        .limit(10)
+        .lean();
     return JSON.parse(JSON.stringify(recentMessages.reverse()));
+  }
+}
+
+// Retrieve User Knowledge (RAG) - Internal Service Function (No Auth Verification)
+export async function retrieveUserContext(userId: string, query: string, embedding?: number[]) {
+  try {
+    await connectToDatabase();
+
+    const queryEmbedding = embedding || await generateEmbedding(query);
+
+    // MongoDB Atlas Vector Search
+    const results = await UserKnowledge.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: 50,
+          limit: 3,
+          filter: {
+            user: { $eq: new mongoose.Types.ObjectId(userId) }
+          }
+        }
+      } as any,
+      {
+        $project: {
+          _id: 0,
+          content: 1,
+          score: { $meta: "vectorSearchScore" }
+        }
+      }
+    ]);
+
+    if (!results || results.length === 0) {
+        // Fallback: Return recent 3 items
+        const recent = await UserKnowledge.find({ user: userId })
+            .sort({ createdAt: -1 })
+            .limit(3)
+            .select("content")
+            .lean();
+
+        return recent.map((k: any) => ({ content: k.content }));
+    }
+
+    return results;
+  } catch (error) {
+    console.error("User RAG Retrieval Error:", error);
+    return [];
   }
 }

@@ -1,35 +1,67 @@
 "use server";
 
-import { validateUrl } from "@/lib/security/url-validator";
+import { safeFetch } from "@/lib/security/safe-fetch";
 
 export async function fetchProductMetadata(url: string) {
   try {
-    // Validate URL to prevent SSRF
-    validateUrl(url);
+    // Validation is handled by safeFetch during connection to prevent TOCTOU
 
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; WingmanBot/1.0; +https://arabianrizz.com)",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-      },
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    let currentUrl = url;
+    let response;
+    let redirectCount = 0;
+    const maxRedirects = 5;
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+    while (redirectCount < maxRedirects) {
+        response = await safeFetch(currentUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; WingmanBot/1.0; +https://arabianrizz.com)",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            // next: { revalidate: 3600 }, // Caching not supported with safeFetch
+            // redirect: 'manual' // Default behavior for safeFetch
+        });
+
+        if (response.status >= 300 && response.status < 400) {
+            const location = response.headers.get('location');
+            if (location) {
+                redirectCount++;
+                const nextUrl = new URL(location, currentUrl).toString();
+
+                // Validation of new URL is handled by safeFetch on next iteration
+                currentUrl = nextUrl;
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    if (redirectCount >= maxRedirects) {
+        throw new Error("Too many redirects");
+    }
+
+    if (!response || !response.ok) {
+        throw new Error(`Failed to fetch URL: ${response?.status} ${response?.statusText}`);
     }
 
     const html = await response.text();
 
+    const metaMap = new Map<string, string>();
+    // Regex to match <meta property="..." content="..."> or <meta name="..." content="...">
+    // Handles single/double quotes and extra spaces.
+    // Optimization: Parse all meta tags once instead of re-compiling regex for each property.
+    const metaRegex = /<meta\s+(?:property|name)=["']([^"']+)["']\s+content=["']([^"']+)["']/gi;
+    let match;
+    while ((match = metaRegex.exec(html)) !== null) {
+        const key = match[1].toLowerCase();
+        // Keep the first occurrence to match original behavior (html.match finds first)
+        if (!metaMap.has(key)) {
+            metaMap.set(key, match[2]);
+        }
+    }
+
     const getMetaContent = (prop: string) => {
-        // Regex to match <meta property="..." content="..."> or <meta name="..." content="...">
-        // Handles single/double quotes and extra spaces
-        const regex = new RegExp(
-            `<meta\\s+(?:property|name)=["']${prop}["']\\s+content=["']([^"']+)["']`,
-            "i"
-        );
-        const match = html.match(regex);
-        return match ? match[1] : null;
+        return metaMap.get(prop.toLowerCase()) || null;
     };
 
     // 1. Title

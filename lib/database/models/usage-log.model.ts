@@ -8,7 +8,7 @@ const UsageLogSchema = new Schema({
   },
   action: {
     type: String,
-    enum: ["message_generation", "image_generation", "girl_creation", "hookup_line"],
+    enum: ["message_generation", "image_generation", "girl_creation", "hookup_line", "speech_generation", "profile_analysis"],
     required: true,
   },
   cost: {

@@ -13,7 +13,7 @@ export interface IGlobalKnowledge extends Document {
 
 const GlobalKnowledgeSchema = new Schema({
   content: { type: String, required: true },
-  embedding: { type: [Number], required: true },
+  embedding: { type: [Number], required: true, select: false },
   language: { type: String, required: true, index: true },
   sourceUrl: { type: String },
   status: { type: String, enum: ['pending', 'approved'], default: 'pending', index: true },

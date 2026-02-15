@@ -1,7 +1,8 @@
-import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback } from '@/lib/actions/wingman.actions';
+import { generateWingmanReply, analyzeProfile, generateHookupLine, submitFeedback, generateSpeech, generateResponseImage } from '@/lib/actions/wingman.actions';
 import { openrouter } from '@/lib/openrouter';
+import { openai } from '@/lib/openai';
 import { getContext } from '@/lib/actions/rag.actions';
-import { generateEmbedding } from '@/lib/services/rag.service';
+import { generateEmbedding, retrieveContext, retrieveUserContext } from '@/lib/services/rag.service';
 import { getUserContext } from '@/lib/actions/user-knowledge.actions';
 import { extractTextFromImage } from '@/lib/actions/ocr.actions';
 import { updateGamification } from '@/lib/services/gamification.service';
@@ -37,6 +38,8 @@ jest.mock('@/lib/actions/rag.actions', () => ({
 
 jest.mock('@/lib/services/rag.service', () => ({
   generateEmbedding: jest.fn(),
+  retrieveContext: jest.fn(),
+  retrieveUserContext: jest.fn(),
 }));
 
 jest.mock('@/lib/actions/user-knowledge.actions', () => ({
@@ -49,6 +52,15 @@ jest.mock('@/lib/actions/ocr.actions', () => ({
 
 jest.mock('@/lib/services/gamification.service', () => ({
   updateGamification: jest.fn(),
+}));
+
+jest.mock('@/lib/services/user.service', () => ({
+  deductCredits: jest.fn(),
+  refundCredits: jest.fn(),
+}));
+
+jest.mock('@/lib/services/usage.service', () => ({
+  logUsage: jest.fn(),
 }));
 
 jest.mock('@/lib/database/mongoose', () => ({
@@ -76,10 +88,19 @@ jest.mock("@clerk/nextjs", () => ({
 describe('Wingman Actions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const mockUser = { _id: 'user123', clerkId: 'clerk_user_123', email: 'test@test.com', creditBalance: 10 };
     (connectToDatabase as jest.Mock).mockResolvedValue(true);
     (auth as jest.Mock).mockReturnValue({ userId: 'clerk_user_123' });
-    (User.findOne as jest.Mock).mockResolvedValue({ _id: 'user123', creditBalance: 10 });
+    (User.findOne as jest.Mock).mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockUser)
+    });
     (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
+
+    // Mock deductCredits to return the updated user
+    const { deductCredits } = require('@/lib/services/user.service');
+    (deductCredits as jest.Mock).mockImplementation((userId: string, amount: number) => {
+        return Promise.resolve({ ...mockUser, creditBalance: mockUser.creditBalance - amount });
+    });
   });
 
   describe('generateWingmanReply', () => {
@@ -98,8 +119,8 @@ describe('Wingman Actions', () => {
 
     it('should generate a reply successfully with valid JSON response', async () => {
       (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-      (getContext as jest.Mock).mockResolvedValue(mockContext);
-      (getUserContext as jest.Mock).mockResolvedValue(mockUserContext);
+      (retrieveContext as jest.Mock).mockResolvedValue(mockContext);
+      (retrieveUserContext as jest.Mock).mockResolvedValue(mockUserContext);
       (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
 
       const mockAiResponse = {
@@ -115,8 +136,8 @@ describe('Wingman Actions', () => {
 
       expect(Girl.findById).toHaveBeenCalledWith('girl123');
       expect(generateEmbedding).toHaveBeenCalledWith('I want to go hiking');
-      expect(getContext).toHaveBeenCalledWith('girl123', 'I want to go hiking', mockEmbedding);
-      expect(getUserContext).toHaveBeenCalledWith('user123', 'I want to go hiking', mockEmbedding);
+      expect(retrieveContext).toHaveBeenCalledWith('girl123', 'I want to go hiking', mockEmbedding);
+      expect(retrieveUserContext).toHaveBeenCalledWith('user123', 'I want to go hiking', mockEmbedding);
 
       expect(openrouter.chat.completions.create).toHaveBeenCalledWith(expect.objectContaining({
         model: 'mock-model',
@@ -130,8 +151,8 @@ describe('Wingman Actions', () => {
 
     it('should handle invalid JSON from AI gracefully', async () => {
       (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-      (getContext as jest.Mock).mockResolvedValue([]);
-      (getUserContext as jest.Mock).mockResolvedValue([]);
+      (retrieveContext as jest.Mock).mockResolvedValue([]);
+      (retrieveUserContext as jest.Mock).mockResolvedValue([]);
       (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
 
       (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
@@ -158,10 +179,47 @@ describe('Wingman Actions', () => {
       });
     });
 
+    it('should refund credits if OpenRouter API fails', async () => {
+      const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+      (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+      (retrieveContext as jest.Mock).mockResolvedValue([]);
+      (retrieveUserContext as jest.Mock).mockResolvedValue([]);
+      (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
+
+      (openrouter.chat.completions.create as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+      const result = await generateWingmanReply('girl123', 'Hi');
+
+      expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+      expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+      expect(result).toEqual({
+        reply: "I'm having trouble thinking right now. Please try again.",
+        explanation: "Something went wrong with the AI.",
+      });
+    });
+
+    it('should refund credits if AI returns no content', async () => {
+        const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+        (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+        (retrieveContext as jest.Mock).mockResolvedValue([]);
+        (retrieveUserContext as jest.Mock).mockResolvedValue([]);
+        (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
+
+        (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
+          choices: [{ message: { content: null } }],
+        });
+
+        const result = await generateWingmanReply('girl123', 'Hi');
+
+        expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+        expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+        expect(result.reply).toContain("Error: No response");
+    });
+
     it('should handle instruction sender role correctly', async () => {
         (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-        (getContext as jest.Mock).mockResolvedValue([]);
-        (getUserContext as jest.Mock).mockResolvedValue([]);
+        (retrieveContext as jest.Mock).mockResolvedValue([]);
+        (retrieveUserContext as jest.Mock).mockResolvedValue([]);
         (generateEmbedding as jest.Mock).mockResolvedValue(mockEmbedding);
 
         const mockAiResponse = {
@@ -214,7 +272,8 @@ describe('Wingman Actions', () => {
       expect(openrouter.chat.completions.create).not.toHaveBeenCalled();
     });
 
-    it('should return null on JSON parse error', async () => {
+    it('should return null on JSON parse error and refund credits', async () => {
+        const { deductCredits, refundCredits } = require('@/lib/services/user.service');
         (extractTextFromImage as jest.Mock).mockResolvedValue('text');
         (openrouter.chat.completions.create as jest.Mock).mockResolvedValue({
             choices: [{ message: { content: 'Bad JSON' } }],
@@ -222,7 +281,70 @@ describe('Wingman Actions', () => {
 
         const result = await analyzeProfile('url');
         expect(result).toBeNull();
+        expect(deductCredits).toHaveBeenCalled();
+        expect(refundCredits).toHaveBeenCalled();
     });
+  });
+
+  describe('generateSpeech', () => {
+    it('should generate speech successfully and deduct credits', async () => {
+        const { deductCredits } = require('@/lib/services/user.service');
+        const { logUsage } = require('@/lib/services/usage.service');
+
+        const mockAudioResponse = {
+            arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(8))
+        };
+        (openai.audio.speech.create as jest.Mock).mockResolvedValue(mockAudioResponse);
+
+        const result = await generateSpeech('Hello world', 'nova');
+
+        expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+        expect(logUsage).toHaveBeenCalledWith(expect.objectContaining({ action: 'speech_generation', cost: 1 }));
+        expect(result).toContain('data:audio/mp3;base64,');
+    });
+
+    it('should refund credits if OpenAI fails', async () => {
+        const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+        (openai.audio.speech.create as jest.Mock).mockRejectedValue(new Error('OpenAI Error'));
+
+        await expect(generateSpeech('Hello', 'nova')).rejects.toThrow('OpenAI Error');
+
+        expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+        expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+    });
+  });
+
+  describe('generateResponseImage', () => {
+      it('should generate image successfully and deduct 3 credits', async () => {
+          const { deductCredits } = require('@/lib/services/user.service');
+          const { logUsage } = require('@/lib/services/usage.service');
+
+          (openai.images.generate as jest.Mock).mockResolvedValue({
+              data: [{ url: 'http://image.url' }]
+          });
+
+          const result = await generateResponseImage('A beautiful sunset');
+
+          expect(deductCredits).toHaveBeenCalledWith('user123', 3);
+          expect(logUsage).toHaveBeenCalledWith(expect.objectContaining({ action: 'image_generation', cost: 3 }));
+          expect(result).toBe('http://image.url');
+      });
+
+      it('should refund credits if safety check fails', async () => {
+          const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+          // checkContentSafety is internal but we can trigger it via openai mock if we wanted,
+          // or just mock it if it was exported. Since it's internal, we trigger its failure.
+          // Wait, checkContentSafety uses openai.moderations.create
+          (openai.moderations.create as jest.Mock).mockResolvedValue({
+              results: [{ flagged: true, categories: {} }]
+          });
+
+          const result = await generateResponseImage('bad prompt');
+
+          expect(result).toContain('Content+Violation');
+          expect(deductCredits).toHaveBeenCalledWith('user123', 3);
+          expect(refundCredits).toHaveBeenCalledWith('user123', 3);
+      });
   });
 
   describe('generateHookupLine', () => {
@@ -237,7 +359,7 @@ describe('Wingman Actions', () => {
 
       it('should generate hookup line successfully', async () => {
         (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-        (getUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
+        (retrieveUserContext as jest.Mock).mockResolvedValue([{ content: 'Context' }]);
         (updateGamification as jest.Mock).mockResolvedValue({ newBadges: [] });
 
         const mockResponse = {
@@ -258,6 +380,19 @@ describe('Wingman Actions', () => {
             ])
         }));
         expect(result).toEqual({ ...mockResponse, newBadges: [] });
+      });
+
+      it('should refund credits if OpenRouter API fails', async () => {
+          const { deductCredits, refundCredits } = require('@/lib/services/user.service');
+          (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+          (retrieveUserContext as jest.Mock).mockResolvedValue([]);
+          (openrouter.chat.completions.create as jest.Mock).mockRejectedValue(new Error('API Error'));
+
+          const result = await generateHookupLine('girl123');
+
+          expect(deductCredits).toHaveBeenCalledWith('user123', 1);
+          expect(refundCredits).toHaveBeenCalledWith('user123', 1);
+          expect(result.explanation).toBe("Something went wrong.");
       });
   });
 

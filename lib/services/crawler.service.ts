@@ -1,7 +1,7 @@
 import GlobalKnowledge from "@/lib/database/models/global-knowledge.model";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import OpenAI from "openai";
-import { validateUrl } from "@/lib/security/url-validator";
+import { safeFetch } from "@/lib/security/safe-fetch";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -9,16 +9,15 @@ const openai = new OpenAI({
 
 export const crawlUrl = async (url: string) => {
   try {
-    // Validate URL to prevent SSRF
-    validateUrl(url);
+    // URL validation is handled by safeFetch to prevent TOCTOU
 
     let currentUrl = url;
-    let response: Response | undefined;
+    let response: any;
     const maxRedirects = 5;
     let redirectCount = 0;
 
     while (redirectCount < maxRedirects) {
-      response = await fetch(currentUrl, { redirect: 'manual' });
+      response = await safeFetch(currentUrl, { redirect: 'manual' });
       const status = response.status;
 
       if (status >= 300 && status < 400 && response.headers.get('location')) {
@@ -31,9 +30,7 @@ export const crawlUrl = async (url: string) => {
         // Resolve relative URLs
         const nextUrl = new URL(location, currentUrl).toString();
 
-        // Validate the NEW URL
-        validateUrl(nextUrl);
-
+        // Validation of new URL is handled by safeFetch on next iteration
         currentUrl = nextUrl;
         continue;
       }

@@ -72,7 +72,7 @@ export const plans = [
     icon: "/assets/icons/free-plan.svg",
     price: 9.99,
     credits: 100,
-    stripePriceId: "price_starter_pack_placeholder",
+    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || "price_starter_pack_placeholder",
     inclusions: [
       {
         label: "100 Credits",
@@ -103,7 +103,7 @@ export const plans = [
     icon: "/assets/icons/free-plan.svg",
     price: 19.99,
     credits: 250,
-    stripePriceId: "price_playboy_pack_placeholder",
+    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_PLAYBOY_PRICE_ID || "price_playboy_pack_placeholder",
     inclusions: [
       {
         label: "250 Credits",
@@ -134,7 +134,7 @@ export const plans = [
     icon: "/assets/icons/free-plan.svg",
     price: 49.99,
     credits: 1000,
-    stripePriceId: "price_rizz_god_pack_placeholder",
+    stripePriceId: process.env.NEXT_PUBLIC_STRIPE_RIZZ_GOD_PRICE_ID || "price_rizz_god_pack_placeholder",
     inclusions: [
       {
         label: "1000 Credits",

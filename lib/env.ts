@@ -11,6 +11,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
+  // Stripe Price IDs
+  NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_PLAYBOY_PRICE_ID: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_RIZZ_GOD_PRICE_ID: z.string().optional(),
   // Optional but recommended
   OPENAI_API_KEY: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),

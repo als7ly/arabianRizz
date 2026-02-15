@@ -96,8 +96,8 @@ export const ChatInputArea = ({
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         <div className="space-y-2">
-                            <Label>{t('style')}</Label>
-                            <RadioGroup defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
+                            <Label id="art-style-label">{t('style')}</Label>
+                            <RadioGroup aria-labelledby="art-style-label" defaultValue="standard" onValueChange={(val) => setArtMode(val as 'standard' | 'selfie')} className="flex gap-4">
                                 <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-gray-50 flex-1">
                                     <RadioGroupItem value="standard" id="mode-standard" />
                                     <Label htmlFor="mode-standard" className="cursor-pointer">{t('standardArt')}</Label>

@@ -5,9 +5,20 @@ import { useTranslations } from "next-intl";
 import { deleteSavedMessage } from "@/lib/actions/saved-message.actions";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Copy, Trash2, MessageCircle, Quote } from "lucide-react";
+import { Copy, Trash2, MessageCircle, Quote, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Link } from "@/navigation";
 
 type SavedMessage = {
@@ -25,6 +36,7 @@ type SavedMessage = {
 
 export default function SavedList({ initialMessages }: { initialMessages: SavedMessage[] }) {
   const t = useTranslations("Saved");
+  const tChat = useTranslations("Chat");
   const { toast } = useToast();
   const pathname = usePathname();
   const [messages, setMessages] = useState<SavedMessage[]>(initialMessages);
@@ -96,17 +108,42 @@ export default function SavedList({ initialMessages }: { initialMessages: SavedM
               >
                 <Copy size={18} />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(msg._id)}
-                disabled={isDeleting === msg._id}
-                title={t("remove")}
-                aria-label={t("remove")}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={18} />
-              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isDeleting === msg._id}
+                    title={t("remove")}
+                    aria-label={t("remove")}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    {isDeleting === msg._id ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={18} />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("deleteDialogTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("deleteDialogDesc")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{tChat("cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDelete(msg._id)}
+                      className="bg-red-500 hover:bg-red-600"
+                    >
+                      {tChat("delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>

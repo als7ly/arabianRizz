@@ -2,9 +2,7 @@
 
 import { openai } from "../openai";
 import { openrouter, WINGMAN_MODEL } from "../openrouter";
-import { generateEmbedding } from "../services/rag.service";
-import { getContext } from "./rag.actions";
-import { getUserContext } from "./user-knowledge.actions";
+import { generateEmbedding, retrieveContext, retrieveUserContext } from "../services/rag.service";
 import { getGlobalKnowledge } from "./global-rag.actions";
 import { extractTextFromImage } from "./ocr.actions";
 import Message from "../database/models/message.model";
@@ -19,8 +17,9 @@ import { updateGamification } from "@/lib/services/gamification.service";
 import { logger } from "@/lib/services/logger.service";
 import { sendEmail } from "@/lib/services/email.service";
 import { BLOCKED_KEYWORDS, LOW_BALANCE_THRESHOLD } from "@/constants";
-import { deductCredits } from "../services/user.service";
+import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
+import { getGirlById } from "./girl.actions";
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -64,8 +63,8 @@ async function getUserAndGirl(girlId: string) {
     await connectToDatabase();
 
     const [user, girl] = await Promise.all([
-        User.findOne({ clerkId }),
-        Girl.findById(girlId)
+        User.findOne({ clerkId }).lean(),
+        Girl.findById(girlId).lean()
     ]);
 
     if (!user) throw new Error("User not found");
@@ -78,8 +77,18 @@ async function getUserAndGirl(girlId: string) {
     return { user, girl };
 }
 
+interface UserWithSettings {
+    _id: string;
+    email: string;
+    creditBalance: number;
+    settings?: {
+        lowBalanceAlerts: boolean;
+    };
+    lastLowBalanceEmailSent?: Date;
+}
+
 // Low Balance Check Utility
-async function checkAndNotifyLowBalance(user: any) {
+async function checkAndNotifyLowBalance(user: UserWithSettings) {
     // Check if user disabled alerts
     if (user.settings?.lowBalanceAlerts === false) {
         return;
@@ -176,13 +185,19 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
 
     const { user, girl } = await getUserAndGirl(girlId);
 
-    if (user.creditBalance < 1) {
+    // Deduct Credit (Generate Reply is 1 credit)
+    const COST = 1;
+    let updatedUser;
+    try {
+        updatedUser = await deductCredits(user._id.toString(), COST);
+    } catch (e) {
         return {
             reply: "You are out of credits! Please top up to continue.",
             explanation: "Insufficient credits."
         };
     }
 
+    try {
     // Language Handling
     const languageCode = girl.language || 'en';
     const languageMap: { [key: string]: string } = {
@@ -196,8 +211,8 @@ export async function generateWingmanReply(girlId: string, userMessage: string, 
     const embedding = await generateEmbedding(userMessage);
 
     const [contextMessages, userContext, globalKnowledge] = await Promise.all([
-      getContext(girlId, userMessage, embedding),
-      getUserContext(girl.author.toString(), userMessage, embedding),
+      retrieveContext(girlId, userMessage, embedding),
+      retrieveUserContext(girl.author.toString(), userMessage, embedding),
       getGlobalKnowledge(userMessage, languageCode, embedding)
     ]);
 
@@ -271,9 +286,7 @@ ${contextString}
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        // Deduct Credit on Success
-        const updatedUser = await deductCredits(user._id, 1);
-        await logUsage({ userId: user._id, action: "message_generation", cost: 1, metadata: { girlId } });
+        await logUsage({ userId: user._id, action: "message_generation", cost: COST, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
@@ -287,22 +300,33 @@ ${contextString}
             return {
                 reply: parsed.reply || "Error parsing reply",
                 explanation: parsed.explanation || "No explanation provided",
-                newBadges // Include badges in response
+                newBadges, // Include badges in response
+                newBalance: updatedUser.creditBalance
             };
         } catch (e) {
             logger.error("JSON Parse Error:", e);
             return {
                 reply: aiContent,
                 explanation: "Could not parse AI response.",
-                newBadges
+                newBadges,
+                newBalance: updatedUser.creditBalance
             };
         }
     }
+
+    // Refund if no AI content
+    await refundCredits(user._id.toString(), COST);
 
     return {
       reply: "Error: No response from AI.",
       explanation: "Something went wrong."
     };
+
+    } catch (apiError) {
+        // Refund on API error
+        await refundCredits(user._id.toString(), COST);
+        throw apiError;
+    }
 
   } catch (error: any) {
     logger.error("Wingman Error:", error);
@@ -356,26 +380,45 @@ export async function analyzeProfile(imageUrl: string) {
         };
     }
 
-    const completion = await openrouter.chat.completions.create({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Profile Text:\n${text}` },
-      ],
-      model: WINGMAN_MODEL,
-      response_format: { type: "json_object" }
-    });
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) throw new Error("User not found");
 
-    const aiContent = completion.choices[0]?.message?.content;
-    if (aiContent) {
-        try {
-            return JSON.parse(aiContent);
-        } catch (e) {
-            logger.error("JSON Parse Error:", e);
-            return null;
+    // Deduct Credit (Analysis uses OCR + LLM)
+    const ANALYSIS_COST = 1;
+    await deductCredits(user._id.toString(), ANALYSIS_COST);
+
+    try {
+        const completion = await openrouter.chat.completions.create({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Profile Text:\n${text}` },
+          ],
+          model: WINGMAN_MODEL,
+          response_format: { type: "json_object" }
+        });
+
+        const aiContent = completion.choices[0]?.message?.content;
+        if (aiContent) {
+            try {
+                const parsed = JSON.parse(aiContent);
+                await logUsage({ userId: user._id, action: "profile_analysis", cost: ANALYSIS_COST, metadata: { imageUrl: imageUrl.substring(0, 100) } });
+                return parsed;
+            } catch (e) {
+                logger.error("JSON Parse Error:", e);
+                await refundCredits(user._id.toString(), ANALYSIS_COST);
+                return null;
+            }
         }
-    }
-    return null;
 
+        await refundCredits(user._id.toString(), ANALYSIS_COST);
+        return null;
+
+    } catch (error) {
+        // Rollback credits on API failure
+        await refundCredits(user._id.toString(), ANALYSIS_COST);
+        throw error;
+    }
   } catch (error) {
     logger.error("Analyze Profile Error:", error);
     return null;
@@ -391,24 +434,43 @@ export async function generateResponseImage(prompt: string) {
         return "https://via.placeholder.com/1024x1024.png?text=Mock+AI+Image";
     }
 
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) throw new Error("User not found");
+
+    // Deduct Credit (Image generation is expensive)
+    const IMAGE_COST = 3;
+    await deductCredits(user._id.toString(), IMAGE_COST);
+
     // Safety Check for Image Generation
     const isSafe = await checkContentSafety(prompt);
     if (!isSafe) {
         logger.warn("Content safety violation blocked in image gen", { prompt });
+        await refundCredits(user._id.toString(), IMAGE_COST);
         return "https://via.placeholder.com/1024x1024.png?text=Content+Violation";
     }
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-    });
+    try {
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+        });
 
-    if (response.data && response.data.length > 0) {
-        return response.data[0].url;
+        if (response.data && response.data.length > 0) {
+            await logUsage({ userId: user._id, action: "image_generation", cost: IMAGE_COST, metadata: { prompt: prompt.substring(0, 100) } });
+            return response.data[0].url;
+        }
+
+        await refundCredits(user._id.toString(), IMAGE_COST);
+        return null;
+
+    } catch (error) {
+        // Rollback credits on API failure
+        await refundCredits(user._id.toString(), IMAGE_COST);
+        throw error;
     }
-    return null;
   } catch (error) {
     logger.error("Image Gen Error:", error);
     return null;
@@ -424,27 +486,39 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
         return null;
     }
 
+    await connectToDatabase();
+    const user = await User.findOne({ clerkId }).lean();
+    if (!user) return null;
+
     // Security Check: If associating with a message, ensure user owns the girl.
     if (messageId) {
-        await connectToDatabase();
         const message = await Message.findById(messageId);
         if (message) {
              // This will throw Unauthorized if user is not author
              await getGirlById(message.girl.toString());
         } else {
-             // If messageId provided but not found, maybe stop?
-             // Or proceed without linking? Safer to stop or return null to prevent confusion.
              return null;
         }
     }
 
+    // Deduct Credit (TTS is expensive)
+    const SPEECH_COST = 1;
+    const userWithCredits = await deductCredits(user._id.toString(), SPEECH_COST);
+
     // 1. Generate Speech via OpenAI
     const voice = voiceId as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
-    const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: voice,
-      input: text,
-    });
+    let mp3;
+    try {
+        mp3 = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: voice,
+          input: text,
+        });
+    } catch (error) {
+        // Rollback credits on API failure
+        await refundCredits(user._id.toString(), SPEECH_COST);
+        throw error;
+    }
 
     const buffer = Buffer.from(await mp3.arrayBuffer());
 
@@ -480,10 +554,19 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
             await Message.findByIdAndUpdate(messageId, { audioUrl });
         }
 
+        // Log Usage & Check Balance
+        await logUsage({ userId: user._id, action: "speech_generation", cost: SPEECH_COST, metadata: { messageId } });
+        checkAndNotifyLowBalance(userWithCredits).catch(err => logger.error("Low Balance Notify Error", err));
+
         return audioUrl;
 
     } catch (uploadError) {
         logger.error("Cloudinary Upload Error:", uploadError);
+
+        // Log Usage even on upload failure (user gets base64)
+        await logUsage({ userId: user._id, action: "speech_generation", cost: SPEECH_COST, metadata: { messageId, fallback: true } });
+        checkAndNotifyLowBalance(userWithCredits).catch(err => logger.error("Low Balance Notify Error", err));
+
         // Fallback to Base64 if upload fails, so the user still hears it
         const base64 = buffer.toString('base64');
         return `data:audio/mp3;base64,${base64}`;
@@ -499,13 +582,19 @@ export async function generateHookupLine(girlId: string) {
   try {
     const { user, girl } = await getUserAndGirl(girlId);
 
-    if (user.creditBalance < 1) {
+    // Deduct Credit (Hookup Line is 1 credit)
+    const COST = 1;
+    let updatedUser;
+    try {
+        updatedUser = await deductCredits(user._id.toString(), COST);
+    } catch (e) {
          return {
             line: "You are out of credits! Please top up.",
             explanation: "Insufficient credits."
         };
     }
 
+    try {
     const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
 
     // Optimization: Generate embedding once and reuse
@@ -513,7 +602,7 @@ export async function generateHookupLine(girlId: string) {
     const embedding = await generateEmbedding(combinedQuery);
 
     const [userContext, globalKnowledge] = await Promise.all([
-      getUserContext(girl.author.toString(), combinedQuery, embedding),
+      retrieveUserContext(girl.author.toString(), combinedQuery, embedding),
       getGlobalKnowledge(combinedQuery, language, embedding)
     ]);
 
@@ -567,8 +656,7 @@ Instructions:
     const aiContent = completion.choices[0]?.message?.content;
 
     if (aiContent) {
-        const updatedUser = await deductCredits(user._id, 1);
-        await logUsage({ userId: user._id, action: "hookup_line", cost: 1, metadata: { girlId } });
+        await logUsage({ userId: user._id, action: "hookup_line", cost: COST, metadata: { girlId } });
 
         // Check for Low Balance
         checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
@@ -581,21 +669,29 @@ Instructions:
             return {
                 line: parsed.line || parsed.reply || "Error parsing line",
                 explanation: parsed.explanation || "No explanation provided",
-                newBadges
+                newBadges,
+                newBalance: updatedUser.creditBalance
             };
         } catch (e) {
              return {
                 line: aiContent,
                 explanation: "Could not parse AI response.",
-                newBadges
+                newBadges,
+                newBalance: updatedUser.creditBalance
             };
         }
     }
 
+    await refundCredits(user._id.toString(), COST);
     return {
         line: "Error generating line.",
         explanation: "AI failure."
     };
+
+    } catch (apiError) {
+        await refundCredits(user._id.toString(), COST);
+        throw apiError;
+    }
 
   } catch (error) {
     logger.error("Hookup Line Error:", error);

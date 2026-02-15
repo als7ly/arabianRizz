@@ -35,7 +35,9 @@ describe('Search Actions', () => {
         jest.clearAllMocks();
         (auth as jest.Mock).mockReturnValue({ userId: mockClerkId });
         (connectToDatabase as jest.Mock).mockResolvedValue(true);
-        (User.findOne as jest.Mock).mockResolvedValue({ _id: mockUserId });
+        (User.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockResolvedValue({ _id: mockUserId })
+        });
     });
 
     describe('searchMessages', () => {
@@ -44,9 +46,12 @@ describe('Search Actions', () => {
              const mockMessages = [{ content: 'Hello there' }];
              const query = "Hello";
 
-             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
 
-             const mockSort = jest.fn().mockResolvedValue(mockMessages);
+             const mockLean = jest.fn().mockResolvedValue(mockMessages);
+             const mockSort = jest.fn().mockReturnValue({ lean: mockLean });
              (Message.find as jest.Mock).mockReturnValue({ sort: mockSort });
 
              const result = await searchMessages(mockGirlId, query);
@@ -62,7 +67,9 @@ describe('Search Actions', () => {
 
         it('should return empty if query is empty', async () => {
              const mockGirl = { _id: mockGirlId, author: mockUserId };
-             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
 
              const result = await searchMessages(mockGirlId, "   ");
              expect(result.success).toBe(true);
@@ -72,7 +79,9 @@ describe('Search Actions', () => {
 
         it('should return error if unauthorized', async () => {
              const mockGirl = { _id: mockGirlId, author: 'other_user' };
-             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
 
              const result = await searchMessages(mockGirlId, "Hello");
              expect(result.success).toBe(false);
@@ -83,8 +92,12 @@ describe('Search Actions', () => {
              const mockGirl = { _id: mockGirlId, author: mockUserId };
              const query = "Hello?";
 
-             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-             const mockSort = jest.fn().mockResolvedValue([]);
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
+
+             const mockLean = jest.fn().mockResolvedValue([]);
+             const mockSort = jest.fn().mockReturnValue({ lean: mockLean });
              (Message.find as jest.Mock).mockReturnValue({ sort: mockSort });
 
              await searchMessages(mockGirlId, query);

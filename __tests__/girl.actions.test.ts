@@ -1,4 +1,4 @@
-import { getChatHistory } from '@/lib/actions/girl.actions';
+import { getChatHistory, togglePinGirl } from '@/lib/actions/girl.actions';
 import { connectToDatabase } from '@/lib/database/mongoose';
 import Girl from '@/lib/database/models/girl.model';
 import User from '@/lib/database/models/user.model';
@@ -42,7 +42,9 @@ describe('Girl Actions', () => {
         jest.clearAllMocks();
         (auth as jest.Mock).mockReturnValue({ userId: mockClerkId });
         (connectToDatabase as jest.Mock).mockResolvedValue(true);
-        (User.findOne as jest.Mock).mockResolvedValue({ _id: mockUserId });
+        (User.findOne as jest.Mock).mockReturnValue({
+            lean: jest.fn().mockResolvedValue({ _id: mockUserId })
+        });
     });
 
     describe('getChatHistory', () => {
@@ -50,9 +52,12 @@ describe('Girl Actions', () => {
              const mockGirl = { _id: mockGirlId, author: mockUserId };
              const mockMessages = [{ content: 'Hi' }, { content: 'Hello' }];
 
-             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
 
-             const mockSort = jest.fn().mockResolvedValue(mockMessages);
+             const mockLean = jest.fn().mockResolvedValue(mockMessages);
+             const mockSort = jest.fn().mockReturnValue({ lean: mockLean });
              (Message.find as jest.Mock).mockReturnValue({ sort: mockSort });
 
              const result = await getChatHistory(mockGirlId);
@@ -64,16 +69,51 @@ describe('Girl Actions', () => {
         });
 
         it('should throw if girl not found', async () => {
-            (Girl.findById as jest.Mock).mockResolvedValue(null);
+            (Girl.findById as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockResolvedValue(null)
+            });
             // handleError wraps it, but essentially it should fail
             await expect(getChatHistory(mockGirlId)).rejects.toThrow();
         });
 
         it('should throw if unauthorized (not owner)', async () => {
              const mockGirl = { _id: mockGirlId, author: 'other_user' };
-             (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
 
              await expect(getChatHistory(mockGirlId)).rejects.toThrow();
+        });
+    });
+
+    describe('togglePinGirl', () => {
+        it('should toggle isPinned status', async () => {
+            const mockGirl = { _id: mockGirlId, author: mockUserId, isPinned: false };
+            const updatedGirl = { ...mockGirl, isPinned: true };
+
+            (Girl.findById as jest.Mock).mockReturnValue({
+                lean: jest.fn().mockResolvedValue(mockGirl)
+            });
+            (Girl.findByIdAndUpdate as jest.Mock).mockResolvedValue(updatedGirl);
+
+            const result = await togglePinGirl(mockGirlId);
+
+            expect(Girl.findById).toHaveBeenCalledWith(mockGirlId);
+            expect(Girl.findByIdAndUpdate).toHaveBeenCalledWith(
+                mockGirlId,
+                { isPinned: true },
+                { new: true }
+            );
+            expect(result).toEqual(updatedGirl);
+        });
+
+         it('should throw if unauthorized', async () => {
+             const mockGirl = { _id: mockGirlId, author: 'other_user', isPinned: false };
+             (Girl.findById as jest.Mock).mockReturnValue({
+                 lean: jest.fn().mockResolvedValue(mockGirl)
+             });
+
+             await expect(togglePinGirl(mockGirlId)).rejects.toThrow();
         });
     });
 });

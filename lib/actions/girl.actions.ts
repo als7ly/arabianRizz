@@ -2,20 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "../database/mongoose";
-import { handleError } from "../utils";
+import { handleError, escapeRegex } from "../utils";
 import Girl from "../database/models/girl.model";
 import User from "../database/models/user.model";
 import Message from "../database/models/message.model";
 import { auth } from "@clerk/nextjs";
 import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
+import { logger } from "../services/logger.service";
 
 async function getCurrentUser() {
     const { userId: clerkId } = auth();
     if (!clerkId) throw new Error("Unauthorized");
     
     await connectToDatabase();
-    const user = await User.findOne({ clerkId });
+    const user = await User.findOne({ clerkId }).lean();
     if (!user) throw new Error("User not found");
     
     return user;
@@ -58,7 +59,7 @@ export async function searchMessages(girlId: string, query: string): Promise<{ s
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) return { success: false, data: [], error: "Girl not found" };
 
     // Security Check
@@ -72,16 +73,16 @@ export async function searchMessages(girlId: string, query: string): Promise<{ s
     }
 
     // Escape special regex characters
-    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedQuery = escapeRegex(query);
 
     const messages = await Message.find({
         girl: girlId,
         content: { $regex: escapedQuery, $options: 'i' }
-    }).sort({ createdAt: 1 });
+    }).sort({ createdAt: 1 }).lean();
 
     return { success: true, data: JSON.parse(JSON.stringify(messages)) };
   } catch (error) {
-    console.error("Search Messages Error:", error);
+    logger.error("Search Messages Error:", error);
     return { success: false, data: [], error: "Internal Server Error" };
   }
 }
@@ -91,7 +92,7 @@ export async function getChatHistory(girlId: string) {
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
 
     // Security Check
@@ -101,7 +102,7 @@ export async function getChatHistory(girlId: string) {
     }
 
     const messages = await Message.find({ girl: girlId })
-      .sort({ createdAt: 1 }); // Oldest first for history export
+      .sort({ createdAt: 1 }).lean(); // Oldest first for history export
 
     return JSON.parse(JSON.stringify(messages));
   } catch (error) {
@@ -115,7 +116,7 @@ export async function getGirlById(girlId: string) {
   try {
     await connectToDatabase();
     
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
     
     // Security Check
@@ -147,22 +148,30 @@ export async function getUserGirls({ userId, page = 1, limit = 9, query = "" }: 
         author: userId,
         ...(query && {
             $or: [
-                { name: { $regex: query, $options: 'i' } },
-                { vibe: { $regex: query, $options: 'i' } }
+                { name: { $regex: escapeRegex(query), $options: 'i' } },
+                { vibe: { $regex: escapeRegex(query), $options: 'i' } }
             ]
         })
     };
 
     const girlsQuery = Girl.find(condition)
-      .sort({ createdAt: -1 })
+      .sort({ isPinned: -1, createdAt: -1 })
       .skip(skipAmount)
       .limit(limit);
 
-    const girls = await girlsQuery.exec();
-    const girlsCount = await Girl.countDocuments(condition);
+    const [girls, girlsCount] = await Promise.all([
+      girlsQuery.lean().exec(),
+      Girl.countDocuments(condition),
+    ]);
 
     return {
-      data: JSON.parse(JSON.stringify(girls)),
+      data: girls.map((girl: any) => ({
+        ...girl,
+        _id: girl._id.toString(),
+        author: girl.author.toString(),
+        createdAt: girl.createdAt.toISOString(),
+        updatedAt: girl.updatedAt.toISOString(),
+      })),
       totalPages: Math.ceil(girlsCount / limit),
     };
   } catch (error) {
@@ -175,7 +184,7 @@ export async function updateGirl(girl: UpdateGirlParams) {
   try {
     await connectToDatabase();
     
-    const girlToUpdate = await Girl.findById(girl._id);
+    const girlToUpdate = await Girl.findById(girl._id).lean();
     if (!girlToUpdate) throw new Error("Girl not found");
     
     // Security Check
@@ -209,12 +218,44 @@ export async function updateGirl(girl: UpdateGirlParams) {
   }
 }
 
+// TOGGLE PIN GIRL
+export async function togglePinGirl(girlId: string, path?: string) {
+  try {
+    await connectToDatabase();
+
+    const girl = await Girl.findById(girlId).lean();
+    if (!girl) throw new Error("Girl not found");
+
+    // Security Check
+    const user = await getCurrentUser();
+    if (girl.author.toString() !== user._id.toString()) {
+        throw new Error("Unauthorized");
+    }
+
+    const updatedGirl = await Girl.findByIdAndUpdate(
+      girlId,
+      { isPinned: !girl.isPinned },
+      { new: true }
+    );
+
+    if (!updatedGirl) throw new Error("Girl update failed");
+
+    if (path) {
+      revalidatePath(path);
+    }
+
+    return JSON.parse(JSON.stringify(updatedGirl));
+  } catch (error) {
+    handleError(error);
+  }
+}
+
 // DELETE GIRL
 export async function deleteGirl(girlId: string) {
   try {
     await connectToDatabase();
     
-    const girlToDelete = await Girl.findById(girlId);
+    const girlToDelete = await Girl.findById(girlId).lean();
     if (!girlToDelete) throw new Error("Girl not found");
 
     // Security Check
@@ -236,7 +277,7 @@ export async function clearChat(girlId: string, path?: string) {
   try {
     await connectToDatabase();
 
-    const girl = await Girl.findById(girlId);
+    const girl = await Girl.findById(girlId).lean();
     if (!girl) throw new Error("Girl not found");
 
     // Security Check

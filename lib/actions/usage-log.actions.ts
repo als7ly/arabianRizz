@@ -6,7 +6,7 @@ import { handleError } from "../utils";
 import { auth } from "@clerk/nextjs";
 import User from "../database/models/user.model";
 
-export async function getUserUsage(userId: string) {
+export async function getUserUsage(userId: string, page: number = 1, limit: number = 10) {
   try {
     await connectToDatabase();
 
@@ -20,11 +20,25 @@ export async function getUserUsage(userId: string) {
         throw new Error("Unauthorized");
     }
 
-    const logs = await UsageLog.find({ user: userId }).sort({ createdAt: -1 });
+    const skip = (page - 1) * limit;
 
-    return JSON.parse(JSON.stringify(logs));
+    const [logs, total] = await Promise.all([
+        UsageLog.find({ user: userId })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+        UsageLog.countDocuments({ user: userId })
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+        data: JSON.parse(JSON.stringify(logs)),
+        totalPages,
+        currentPage: page
+    };
   } catch (error) {
     handleError(error);
-    return [];
+    return { data: [], totalPages: 0, currentPage: 1 };
   }
 }

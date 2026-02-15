@@ -42,3 +42,8 @@
 **Vulnerability:** `deductCredits` and `refundCredits` were exported from `lib/actions/user.actions.ts` (a `"use server"` file), allowing any user to arbitrarily modify any user's credit balance via a public endpoint.
 **Learning:** Functions exported from Server Action files are public APIs. Internal business logic that bypasses authorization checks (like credit deduction) must never be exported from these files.
 **Prevention:** Move sensitive internal logic to service files (e.g., `lib/services/`) which do not carry the `"use server"` directive, ensuring they can only be called by trusted server-side code.
+
+## 2026-06-25 - [CRITICAL] Mass Assignment in User Profile Update
+**Vulnerability:** The `updateUserProfile` server action accepted an arbitrary object from the client and passed it directly to `findOneAndUpdate`, allowing attackers to modify sensitive fields like `creditBalance` or `role`.
+**Learning:** TypeScript types (e.g., `UpdateUserParams`) are erased at runtime and do not provide security validation. Server Actions must explicitly validate and sanitize input.
+**Prevention:** Use schema validation (Zod) in every Server Action to strictly whitelist allowed fields before passing data to the database service.

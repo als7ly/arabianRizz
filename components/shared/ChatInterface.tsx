@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { Sparkles, AlertCircle, ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { addMessage } from "@/lib/actions/rag.actions";
 import { extractTextFromImage } from "@/lib/actions/ocr.actions";
 import { generateWingmanReply, generateHookupLine, generateSpeech } from "@/lib/actions/wingman.actions";
@@ -17,8 +18,9 @@ import { ChatInputArea } from "./ChatInputArea";
 import { Link } from "@/navigation";
 import { RecommendationsDialog } from "./RecommendationsDialog";
 
-export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultTone }: { girlId: string, initialMessages: Message[], creditBalance?: number, defaultTone?: string }) => {
+export const ChatInterface = ({ girlId, initialMessages, creditBalance: initialCreditBalance, defaultTone }: { girlId: string, initialMessages: Message[], creditBalance?: number, defaultTone?: string }) => {
   const pathname = usePathname();
+  const [creditBalance, setCreditBalance] = useState(initialCreditBalance);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
   const [sender, setSender] = useState<'user' | 'girl'>('user');
@@ -27,18 +29,50 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string>("nova");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { toast } = useToast();
   const t = useTranslations('Chat');
   const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const isAtBottom = useRef(true);
 
   const messagesRef = useRef(messages);
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
 
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 100;
+      isAtBottom.current = atBottom;
+      setShowScrollButton(!atBottom);
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (scrollRef.current && isAtBottom.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  // Smart auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 100;
+      const lastMessage = messages[messages.length - 1];
+      const isUserMessage = lastMessage?.role === 'user';
+
+      if (isAtBottom || isUserMessage) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -122,8 +156,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     try {
       await addMessage({ girlId, role: role, content: msgContent });
 
-      const { reply, explanation, newBadges } = await generateWingmanReply(girlId, msgContent, tone, role);
+      const { reply, explanation, newBadges, newBalance } = await generateWingmanReply(girlId, msgContent, tone, role);
       
+      if (newBalance !== undefined) setCreditBalance(newBalance);
+
       const aiMsg: Message = { role: "wingman", content: reply || "..." };
       setMessages((prev) => [...prev, aiMsg]);
       
@@ -152,7 +188,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : t('errorReply');
       toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -191,7 +227,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             duration: 6000,
         });
 
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
         const errorMessage = e instanceof Error ? e.message : "Failed to regenerate.";
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -294,7 +330,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             duration: 6000,
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : t('errorProcessImage');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -329,7 +365,10 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
   const handleGenerateHookupLine = async () => {
     setIsLoading(true);
     try {
-        const { line, explanation } = await generateHookupLine(girlId);
+        const { line, explanation, newBalance } = await generateHookupLine(girlId);
+
+        if (newBalance !== undefined) setCreditBalance(newBalance);
+
         if (line) {
             setInputValue(line);
             toast({
@@ -338,7 +377,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
                 duration: 6000,
             });
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error(e);
         const errorMessage = e instanceof Error ? e.message : t('errorHookup');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -372,7 +411,9 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
     setIsLoading(true);
 
     try {
-        const { reply, explanation, newBadges } = await generateWingmanReply(girlId, instruction, tone, "instruction");
+        const { reply, explanation, newBadges, newBalance } = await generateWingmanReply(girlId, instruction, tone, "instruction");
+
+        if (newBalance !== undefined) setCreditBalance(newBalance);
 
         const aiMsg: Message = { role: "wingman", content: reply || "..." };
         setMessages((prev) => [...prev, aiMsg]);
@@ -402,7 +443,7 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           });
       }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : t('actionError');
         toast({ title: t('errorTitle'), description: errorMessage, variant: "destructive" });
@@ -420,7 +461,11 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
           )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6" ref={scrollRef}>
+      <div
+        className="flex-1 overflow-y-auto p-4 space-y-6"
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
         {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                 <Sparkles className="h-10 w-10 text-muted-foreground/50" />
@@ -453,6 +498,17 @@ export const ChatInterface = ({ girlId, initialMessages, creditBalance, defaultT
             </div>
         )}
       </div>
+
+      {showScrollButton && (
+        <Button
+          size="icon"
+          className="absolute bottom-24 right-4 rounded-full shadow-lg z-20 bg-primary/90 hover:bg-primary animate-in fade-in zoom-in duration-300"
+          onClick={scrollToBottom}
+          aria-label={t('scrollToBottom')}
+        >
+          <ArrowDown size={20} />
+        </Button>
+      )}
 
       {creditBalance !== undefined && creditBalance < 5 && (
         <Link href="/credits" className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-10 flex items-center gap-1 hover:bg-destructive/20 transition-colors">
