@@ -7,6 +7,7 @@ jest.mock("@clerk/nextjs", () => ({
   auth: jest.fn(),
 }));
 
+// Mock url-validator
 jest.mock("@/lib/security/url-validator", () => ({
   validateUrl: jest.fn(),
 }));
