@@ -64,3 +64,8 @@ export const debounce = (func: (...args: any[]) => void, delay: number) => {
     timeoutId = setTimeout(() => func.apply(null, args), delay);
   };
 };
+
+// ESCAPE REGEX
+export const escapeRegex = (string: string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
