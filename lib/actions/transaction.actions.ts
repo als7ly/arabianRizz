@@ -32,7 +32,7 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
                        !selectedPlan.stripePriceId.includes('placeholder');
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       line_items: [
         isRealPriceId ? {
           price: selectedPlan.stripePriceId,
@@ -57,7 +57,15 @@ export async function checkoutCredits(transaction: CheckoutTransactionParams & {
       mode: mode,
       success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/?canceled=true`,
-    });
+    };
+
+    if (user.stripeCustomerId) {
+      sessionParams.customer = user.stripeCustomerId;
+    } else {
+      sessionParams.customer_email = user.email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     redirect(session.url!);
   } catch (error) {

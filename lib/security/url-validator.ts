@@ -1,38 +1,7 @@
 import dns from "node:dns/promises";
 import net from "node:net";
 
-export async function validateUrl(url: string): Promise<void> {
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-  } catch (error) {
-    throw new Error("Invalid URL format");
-  }
-
-  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
-    throw new Error("Invalid protocol: only http and https are allowed");
-  }
-
-  const hostname = parsedUrl.hostname;
-
-  // Block localhost string literals
-  if (hostname === "localhost" || hostname === "::1" || hostname === "[::1]" || hostname === "[::]") {
-    throw new Error("Access to localhost is denied");
-  }
-
-  let address: string;
-  try {
-    // dns.lookup uses the OS resolver (like ping/fetch)
-    const result = await dns.lookup(hostname);
-    address = result.address;
-  } catch (error) {
-     if (net.isIP(hostname)) {
-         address = hostname;
-     } else {
-         throw new Error(`Could not resolve hostname: ${hostname}`);
-     }
-  }
-
+export function validateIp(address: string): void {
   // Normalize IPv6 mapped IPv4 (::ffff:127.0.0.1)
   if (net.isIPv6(address) && address.toLowerCase().startsWith("::ffff:")) {
       address = address.substring(7);
@@ -65,7 +34,40 @@ export async function validateUrl(url: string): Promise<void> {
       if (address.toLowerCase().startsWith("fe80")) {
           throw new Error("Access to link-local address is denied");
       }
-      return false;
   }
-  return false;
+}
+
+export async function validateUrl(url: string): Promise<void> {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch (error) {
+    throw new Error("Invalid URL format");
+  }
+
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+    throw new Error("Invalid protocol: only http and https are allowed");
+  }
+
+  const hostname = parsedUrl.hostname;
+
+  // Block localhost string literals
+  if (hostname === "localhost" || hostname === "::1" || hostname === "[::1]" || hostname === "[::]") {
+    throw new Error("Access to localhost is denied");
+  }
+
+  let address: string;
+  try {
+    // dns.lookup uses the OS resolver (like ping/fetch)
+    const result = await dns.lookup(hostname);
+    address = result.address;
+  } catch (error) {
+     if (net.isIP(hostname)) {
+         address = hostname;
+     } else {
+         throw new Error(`Could not resolve hostname: ${hostname}`);
+     }
+  }
+
+  validateIp(address);
 }

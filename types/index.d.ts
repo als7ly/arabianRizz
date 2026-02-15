@@ -20,6 +20,7 @@ declare type UpdateUserParams = {
   gender?: string;
   occupation?: string;
   relationshipGoal?: string;
+  stripeCustomerId?: string;
 };
 
 // ====== GIRL PARAMS

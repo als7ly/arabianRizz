@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
 import { createUser, deleteUser, updateUser } from "@/lib/services/user.service";
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
 export async function POST(req: Request) {
   // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
@@ -69,7 +70,25 @@ export async function POST(req: Request) {
     const newUser = await createUser(user);
 
     if (newUser) {
-        // We could link this user to existing Stripe customer here if needed
+      try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+          apiVersion: "2023-10-16",
+        });
+
+        const customers = await stripe.customers.list({
+          email: newUser.email,
+          limit: 1,
+        });
+
+        if (customers.data.length > 0) {
+          const customer = customers.data[0];
+          await updateUser(newUser.clerkId, {
+            stripeCustomerId: customer.id,
+          });
+        }
+      } catch (error) {
+        console.error("Error linking Stripe customer to user:", error);
+      }
     }
 
     return NextResponse.json({ message: "OK", user: newUser });

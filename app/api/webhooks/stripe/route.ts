@@ -48,8 +48,6 @@ export async function POST(request: Request) {
         await User.findByIdAndUpdate(metadata.buyerId, updateData);
         logger.info(`Updated user ${metadata.buyerId} with Stripe Customer ID ${customer}`);
     }
-    const session = event.data.object;
-    const { id, amount_total, metadata, customer_details } = session;
 
     const transaction = {
       stripeId: id,
@@ -61,15 +59,6 @@ export async function POST(request: Request) {
     };
 
     const newTransaction = await createTransaction(transaction);
-
-    // Update User with Subscription Details if Subscription Mode
-    if (session.mode === 'subscription' && metadata?.buyerId) {
-        await connectToDatabase();
-        await User.findByIdAndUpdate(metadata.buyerId, {
-            stripeCustomerId: session.customer,
-            stripeSubscriptionId: session.subscription,
-        });
-    }
 
     // Send Receipt Email
     if (customer_details?.email) {

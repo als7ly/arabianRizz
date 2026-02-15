@@ -1,9 +1,9 @@
 import { analyzeConversation } from '@/lib/actions/analysis.actions';
 import { openrouter } from '@/lib/openrouter';
-import { getChatHistory } from '@/lib/actions/girl.actions';
 import { deductCredits } from '@/lib/services/user.service';
 import User from '@/lib/database/models/user.model';
 import Girl from '@/lib/database/models/girl.model';
+import Message from '@/lib/database/models/message.model';
 import { connectToDatabase } from '@/lib/database/mongoose';
 import { auth } from "@clerk/nextjs";
 
@@ -17,11 +17,6 @@ jest.mock('@/lib/openrouter', () => ({
     },
   },
   WINGMAN_MODEL: 'mock-model',
-}));
-
-jest.mock('@/lib/actions/girl.actions', () => ({
-  getChatHistory: jest.fn(),
-  getGirlById: jest.fn(), // If used
 }));
 
 jest.mock('@/lib/services/user.service', () => ({
@@ -50,6 +45,10 @@ jest.mock('@/lib/database/models/user.model', () => ({
 
 jest.mock('@/lib/database/models/girl.model', () => ({
   findById: jest.fn(),
+}));
+
+jest.mock('@/lib/database/models/message.model', () => ({
+  find: jest.fn(),
 }));
 
 jest.mock("@clerk/nextjs", () => ({
@@ -84,7 +83,16 @@ describe('Conversation Analysis', () => {
         (connectToDatabase as jest.Mock).mockResolvedValue(true);
         (User.findOne as jest.Mock).mockResolvedValue(mockUser);
         (Girl.findById as jest.Mock).mockResolvedValue(mockGirl);
-        (getChatHistory as jest.Mock).mockResolvedValue(mockMessages);
+
+        // Mock chainable Message.find
+        const mockQuery = {
+            sort: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            lean: jest.fn().mockResolvedValue(mockMessages),
+        };
+        (Message.find as jest.Mock).mockReturnValue(mockQuery);
+
         (deductCredits as jest.Mock).mockResolvedValue({ ...mockUser, creditBalance: 9 });
     });
 
@@ -105,7 +113,7 @@ describe('Conversation Analysis', () => {
 
         expect(User.findOne).toHaveBeenCalled();
         expect(Girl.findById).toHaveBeenCalledWith(mockGirlId);
-        expect(getChatHistory).toHaveBeenCalledWith(mockGirlId);
+        expect(Message.find).toHaveBeenCalledWith({ girl: mockGirlId });
         expect(openrouter.chat.completions.create).toHaveBeenCalled();
         expect(deductCredits).toHaveBeenCalledWith(mockUserId, 1);
         expect(result).toEqual(mockAnalysis);
