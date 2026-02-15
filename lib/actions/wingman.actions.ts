@@ -21,6 +21,20 @@ import { deductCredits, refundCredits } from "../services/user.service";
 import { logUsage } from "../services/usage.service";
 import { getGirlById } from "./girl.actions";
 
+export interface WingmanReplyResponse {
+  reply: string;
+  explanation: string;
+  newBadges?: string[];
+  newBalance?: number;
+}
+
+export interface HookupLineResponse {
+  line: string;
+  explanation: string;
+  newBadges?: string[];
+  newBalance?: number;
+}
+
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -180,7 +194,7 @@ export async function submitFeedback(messageId: string, feedback: 'positive' | '
   }
 }
 
-export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty", senderRole: "user" | "girl" | "instruction" = "user") {
+export async function generateWingmanReply(girlId: string, userMessage: string, tone: string = "Flirty", senderRole: "user" | "girl" | "instruction" = "user"): Promise<WingmanReplyResponse> {
   try {
     // Safety Check
     const isSafe = await checkContentSafety(userMessage);
@@ -590,7 +604,7 @@ export async function generateSpeech(text: string, voiceId: string = "nova", mes
   }
 }
 
-export async function generateHookupLine(girlId: string) {
+export async function generateHookupLine(girlId: string): Promise<HookupLineResponse> {
   try {
     const { user, girl } = await getUserAndGirl(girlId);
 
@@ -710,6 +724,137 @@ Instructions:
     return {
         line: "Error generating line.",
         explanation: "Something went wrong."
+    };
+  }
+}
+
+export interface DateIdeaResponse {
+  idea: string;
+  explanation: string;
+  locationType: string;
+  newBadges?: string[];
+  newBalance?: number;
+}
+
+export async function generateDateIdea(girlId: string): Promise<DateIdeaResponse> {
+  try {
+    const { user, girl } = await getUserAndGirl(girlId);
+
+    // Deduct Credit (Date Idea is 1 credit)
+    const COST = 1;
+    let updatedUser;
+    try {
+        updatedUser = await deductCredits(user._id.toString(), COST);
+    } catch (e) {
+         return {
+            idea: "You are out of credits! Please top up.",
+            explanation: "Insufficient credits.",
+            locationType: "None"
+        };
+    }
+
+    try {
+    const language = (girl.dialect && girl.dialect !== 'English') ? 'ar' : 'en';
+
+    // Optimization: Generate embedding once and reuse
+    const combinedQuery = "creative unique date ideas romantic fun activities";
+    const embedding = await generateEmbedding(combinedQuery);
+
+    const [userContext, globalKnowledge] = await Promise.all([
+      retrieveUserContext(girl.author.toString(), combinedQuery, embedding),
+      getGlobalKnowledge(combinedQuery, language, embedding)
+    ]);
+
+    const userContextString = userContext.map((k: any) => k.content).join("\n");
+    const globalContextString = globalKnowledge.map((k: any) => k.content).join("\n");
+
+    const systemPrompt = `
+You are "The Wingman", an expert dating coach.
+Your Goal: Generate a CREATIVE, PERSONALIZED DATE IDEA for the user and "${girl.name}".
+Details about her: ${girl.vibe || "Unknown"}. Age: ${girl.age || "Unknown"}. Status: ${girl.relationshipStatus}.
+
+Context about The User:
+Bio/Vibe: ${user.bio || "Unknown"}
+Interests: ${userContextString || "Unknown"}
+
+Expert Tips:
+${globalContextString}
+
+Instructions:
+1. Suggest a specific date activity that fits both personalities.
+2. Be original (no boring "dinner and movie" unless there's a twist).
+3. Explain WHY this date works for this specific couple.
+4. Classify the location type (e.g., "Outdoors", "Restaurant", "Activity", "Home").
+5. YOU MUST RESPOND IN VALID JSON FORMAT with three keys: "idea" (the activity), "explanation" (why), and "locationType".
+`;
+
+    if (process.env.OPENROUTER_API_KEY === "dummy-openrouter-key") {
+       return {
+         idea: "Pottery Class and Wine",
+         explanation: "Hands-on activity builds chemistry.",
+         locationType: "Activity",
+         newBalance: updatedUser.creditBalance
+       };
+    }
+
+    const completion = await openrouter.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: "Give me a date idea." },
+      ],
+      model: WINGMAN_MODEL,
+      response_format: { type: "json_object" }
+    });
+
+    const aiContent = completion.choices[0]?.message?.content;
+
+    if (aiContent) {
+        await logUsage({ userId: user._id, action: "date_idea_generation", cost: COST, metadata: { girlId } });
+
+        // Check for Low Balance
+        checkAndNotifyLowBalance(updatedUser).catch(err => logger.error("Background Low Balance Check Error", err));
+
+        const gamificationResult = await updateGamification(updatedUser);
+        const newBadges = gamificationResult?.newBadges || [];
+
+        try {
+            const parsed = JSON.parse(aiContent);
+            return {
+                idea: parsed.idea || "Error parsing idea",
+                explanation: parsed.explanation || "No explanation provided",
+                locationType: parsed.locationType || "General",
+                newBadges,
+                newBalance: updatedUser.creditBalance
+            };
+        } catch (e) {
+             return {
+                idea: aiContent,
+                explanation: "Could not parse AI response.",
+                locationType: "Unknown",
+                newBadges,
+                newBalance: updatedUser.creditBalance
+            };
+        }
+    }
+
+    await refundCredits(user._id.toString(), COST);
+    return {
+        idea: "Error generating idea.",
+        explanation: "AI failure.",
+        locationType: "Error"
+    };
+
+    } catch (apiError) {
+        await refundCredits(user._id.toString(), COST);
+        throw apiError;
+    }
+
+  } catch (error) {
+    logger.error("Date Idea Error:", error);
+    return {
+        idea: "Error generating idea.",
+        explanation: "Something went wrong.",
+        locationType: "Error"
     };
   }
 }

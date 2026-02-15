@@ -10,6 +10,7 @@ ArabianRizz is a cutting-edge **AI Dating Wingman** that helps men navigate mode
 *   **No Filters:** Get real, bold, and flirty advice that actually works.
 *   **Dialect Support:** Specialized in Arabic dialects (Egyptian, Levantine, Gulf) and English slang.
 *   **Hookup Generator:** One-click spicy lines to close the deal.
+*   **Date Idea Generator:** Creative, personalized date ideas based on her vibe and your interests.
 
 ### 2. "My Persona" RAG System
 *   **Personalized:** The AI learns from *you*. Add your job, hobbies, and style to the "My Persona" tab.
